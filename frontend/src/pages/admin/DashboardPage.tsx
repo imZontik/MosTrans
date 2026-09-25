@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'
-import { Activity, AlertTriangle, BarChart3, CheckCircle2, Compass, Heart, PlayCircle, ShieldCheck, Siren, Timer, Users } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { Activity, AlertTriangle, BarChart3, CheckCircle2, Compass, Download, Heart, PlayCircle, ShieldCheck, Siren, Timer, Users } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '@/api/client'
 import { useAsync } from '@/hooks/useAsync'
+import { Button } from '@/components/Button'
 import { Card, PageHeader, SectionTitle } from '@/components/Card'
 import { ErrorState, Loading } from '@/components/States'
 import { cn } from '@/lib/cn'
@@ -32,6 +33,7 @@ export default function DashboardPage() {
       <PageHeader
         title="Дашборд обучения"
         subtitle={`Данные за 30 дней, обновлено ${fmtDate(data.generated_at, true)}`}
+        action={<ReportDownload />}
       />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:gap-4">
@@ -220,6 +222,50 @@ function Kpi({ icon, label, value, hint, tone }: { icon: ReactNode; label: strin
         {value}
       </p>
       {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+    </div>
+  )
+}
+
+const REPORT_PERIODS = [7, 30, 90]
+
+/** Excel report for HR: summary, employees, competencies, frequent mistakes. */
+function ReportDownload() {
+  const [days, setDays] = useState(30)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function download() {
+    setBusy(true)
+    setError(null)
+    try {
+      await api.admin.downloadReport(days)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не удалось сформировать отчёт')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex items-center gap-2">
+        <select
+          className="input w-auto py-2"
+          value={days}
+          onChange={(e) => setDays(Number(e.target.value))}
+          aria-label="Период отчёта"
+        >
+          {REPORT_PERIODS.map((d) => (
+            <option key={d} value={d}>
+              {d} дней
+            </option>
+          ))}
+        </select>
+        <Button variant="secondary" onClick={download} loading={busy} icon={<Download className="h-4 w-4" />}>
+          Отчёт в Excel
+        </Button>
+      </div>
+      {error && <p className="text-sm text-bad" role="alert">{error}</p>}
     </div>
   )
 }

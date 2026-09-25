@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.business.services import admin, analytics, emergencies, tournaments
+from app.business.services import admin, analytics, emergencies, reports, tournaments
+from app.business.tournament import MSK
 from app.frameworks.api.deps import get_board, get_cache, get_emergency_queue, get_ml, get_session, staff_user
 from app.frameworks.api.schemas import (
     AssistantIn,
@@ -14,11 +16,15 @@ from app.frameworks.api.schemas import (
     StartNowIn,
     TournamentCreateIn,
 )
+from app.frameworks.xlsx import training_report_xlsx
 from app.repositories.cache import Cache, EmergencyQueue, TournamentBoard
 from app.repositories.ml_gateway import MLGateway
 from app.repositories.models import User
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(staff_user)])
+
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+ReportDays = Query(30, ge=1, le=365, description="Период отчёта в днях")
 
 
 @router.get("/analytics/overview")
@@ -131,3 +137,25 @@ async def assistant(
     ml: MLGateway = Depends(get_ml),
 ):
     return await admin.assistant(session, cache, ml, body.message)
+
+
+@router.get("/reports/training", tags=["reports"])
+async def training_report(days: int = ReportDays, session: AsyncSession = Depends(get_session)):
+    """Training report as JSON — for HR systems and LMS."""
+    return await reports.training_report(session, days)
+
+
+@router.get(
+    "/reports/training.xlsx",
+    tags=["reports"],
+    response_class=Response,
+    responses={200: {"content": {XLSX: {}}, "description": "Excel: сводка, сотрудники, компетенции, частые ошибки"}},
+)
+async def training_report_file(days: int = ReportDays, session: AsyncSession = Depends(get_session)):
+    report = await reports.training_report(session, days)
+    filename = f"m400-training-{report['generated_at'].astimezone(MSK):%Y-%m-%d}-{days}d.xlsx"
+    return Response(
+        training_report_xlsx(report),
+        media_type=XLSX,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

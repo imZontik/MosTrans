@@ -99,23 +99,48 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   }
 
   if (response.status === 204) return undefined as T
-  const text = await response.text()
-  let data: unknown = null
-  if (text) {
-    try {
-      data = JSON.parse(text)
-    } catch {
-      data = text
-    }
-  }
-  if (!response.ok) {
-    if (response.status === 401 && token) {
-      tokenStore.clear()
-      window.dispatchEvent(new Event(LOGOUT_EVENT))
-    }
-    throw new ApiError(detailMessage(data, response.status), response.status)
-  }
+  const data = parseBody(await response.text())
+  if (!response.ok) fail(response.status, data, token)
   return data as T
+}
+
+function parseBody(text: string): unknown {
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
+function fail(status: number, body: unknown, token: string | null): never {
+  if (status === 401 && token) {
+    tokenStore.clear()
+    window.dispatchEvent(new Event(LOGOUT_EVENT))
+  }
+  throw new ApiError(detailMessage(body, status), status)
+}
+
+/** Downloads a file from the API: the token goes in a header, so a plain <a href> would not do. */
+async function download(path: string, fallbackName: string): Promise<void> {
+  const token = tokenStore.get()
+  let response: Response
+  try {
+    response = await fetch(`/api${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  } catch {
+    throw new ApiError('Нет соединения с сервером', 0)
+  }
+  if (!response.ok) fail(response.status, parseBody(await response.text()), token)
+
+  const name = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? fallbackName
+  const url = URL.createObjectURL(await response.blob())
+  const link = document.createElement('a')
+  link.href = url
+  link.download = name
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 const get = <T>(path: string) => request<T>('GET', path)
@@ -177,5 +202,6 @@ export const api = {
     dispatch: (body: { scenario_id: number; user_ids?: number[] | null; message?: string | null }) =>
       post<DispatchResponse>('/admin/emergencies/dispatch', body),
     assistant: (message: string) => post<AssistantResponse>('/admin/assistant', { message }),
+    downloadReport: (days: number) => download(`/admin/reports/training.xlsx?days=${days}`, `m400-training-${days}d.xlsx`),
   },
 }
