@@ -170,6 +170,13 @@
     @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base outline-none transition-[border-color,box-shadow]
       placeholder:text-muted focus:border-ink/50 focus:ring-4 focus:ring-ink/[.07] sm:text-sm;
   }
+  /* touch screens: chips and fields reach the 44px tap target (min-h-* utilities still win) */
+  @media (pointer: coarse) {
+    .chip,
+    .input {
+      min-height: 44px;
+    }
+  }
   .label {
     @apply mb-1.5 block text-xs font-medium text-muted;
   }
@@ -261,6 +268,20 @@
   }
   .press:active {
     transform: scale(0.985);
+  }
+}
+
+/*
+ * Touch screens (phones, tablets, web views): every form field gets at least 17px — iOS zooms into any
+ * field under 16px on focus, iPads included. The override wins over size utilities (the editor's text-xs
+ * fields, `.input`'s sm:text-sm); fields sized larger keep their size.
+ */
+@media (pointer: coarse) {
+  input:not([type='checkbox'], [type='radio'], [type='range'], .text-lg, .text-xl, .text-2xl, .text-3xl),
+  select,
+  textarea {
+    font-size: 17px !important;
+    line-height: 24px !important;
   }
 }
 

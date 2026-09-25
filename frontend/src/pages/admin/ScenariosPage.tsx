@@ -112,7 +112,7 @@ export default function AdminScenariosPage() {
         title="Сценарии"
         subtitle="Контент тренажёра: публикация, редактирование и предпросмотр"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={create} loading={busy === 'new'} icon={<Plus className="h-4 w-4" />}>
               Создать
             </Button>
@@ -171,7 +171,8 @@ export default function AdminScenariosPage() {
                   onClick={() => togglePublish(s)}
                   disabled={busy === s.id}
                   className={cn(
-                    'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition',
+                    // 28px switch, 44px tap area
+                    'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition after:absolute after:-inset-2',
                     s.is_published ? 'bg-ok' : 'bg-ink/15',
                   )}
                   title={s.is_published ? 'Снять с публикации' : 'Опубликовать'}

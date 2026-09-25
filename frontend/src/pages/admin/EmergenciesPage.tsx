@@ -164,7 +164,7 @@ export default function EmergenciesPage() {
                   <button
                     key={k}
                     onClick={() => setTarget(k)}
-                    className={cn('flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition', target === k ? 'bg-surface shadow-sm' : 'text-muted')}
+                    className={cn('flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition coarse:min-h-[44px]', target === k ? 'bg-surface shadow-sm' : 'text-muted')}
                   >
                     {label}
                   </button>

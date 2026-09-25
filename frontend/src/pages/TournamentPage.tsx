@@ -426,7 +426,7 @@ function PastTournaments({ items }: { items: TournamentWithWinners[] }) {
                   <span className="w-5 text-center" aria-label={`${i + 1}-е место`}>
                     {['🥇', '🥈', '🥉'][i]}
                   </span>
-                  <Link to={`/users/${w.id}`} className="min-w-0 flex-1 truncate hover:underline">
+                  <Link to={`/users/${w.id}`} className="min-w-0 flex-1 truncate hover:underline coarse:leading-[44px]">
                     {w.full_name}
                   </Link>
                   <span className="digits text-base font-semibold">{w.score}</span>

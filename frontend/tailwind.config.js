@@ -85,5 +85,8 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `coarse:` — touch screens (phones, tablets, web views): 44px tap targets without bloating the mouse layout
+    ({ addVariant }) => addVariant('coarse', '@media (pointer: coarse)'),
+  ],
 }

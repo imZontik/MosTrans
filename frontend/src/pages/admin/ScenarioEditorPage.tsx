@@ -135,7 +135,7 @@ export default function ScenarioEditorPage() {
 
   return (
     <div className="space-y-5">
-      <Link to="/admin/scenarios" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
+      <Link to="/admin/scenarios" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink coarse:min-h-[44px]">
         <ArrowLeft className="h-4 w-4" /> Все сценарии
       </Link>
 
@@ -248,7 +248,7 @@ export default function ScenarioEditorPage() {
             />
           </div>
         </div>
-        <label className="flex items-center gap-2 text-sm font-semibold md:col-span-4">
+        <label className="flex items-center gap-2 text-sm font-semibold md:col-span-4 coarse:min-h-[44px]">
           <input type="checkbox" className="h-4 w-4 accent-[#e30b17]" checked={meta.is_published} onChange={(e) => updateMeta({ is_published: e.target.checked })} />
           Опубликован (виден сотрудникам)
         </label>
@@ -264,7 +264,7 @@ export default function ScenarioEditorPage() {
           <button
             key={k}
             onClick={() => switchTab(k)}
-            className={cn('flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition', tab === k ? 'bg-surface shadow-sm' : 'text-muted')}
+            className={cn('flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition coarse:min-h-[44px]', tab === k ? 'bg-surface shadow-sm' : 'text-muted')}
           >
             {label}
           </button>
