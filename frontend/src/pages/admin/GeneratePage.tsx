@@ -137,7 +137,7 @@ export default function GeneratePage() {
           <Mascot className="h-16 w-16 shrink-0" mood="thinking" />
           <div>
             <p className="text-lg font-semibold">ИИ собирает сценарий</p>
-            <p className="text-sm text-muted">Персонажи, ветки решений, баллы и обратная связь. Это может занять до минуты.</p>
+            <p className="text-sm text-muted">Персонажи, ветки решений, баллы и обратная связь. Обычно это занимает 30–40 секунд.</p>
           </div>
         </Card>
       )}

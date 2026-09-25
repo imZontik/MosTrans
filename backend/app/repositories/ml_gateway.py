@@ -21,9 +21,9 @@ class MLGateway:
         self.base_url = settings.ml_service_url.rstrip("/")
         self.timeout = settings.ml_timeout_sec
 
-    async def _post(self, path: str, payload: dict, operation: str) -> dict | None:
+    async def _post(self, path: str, payload: dict, operation: str, timeout: float | None = None) -> dict | None:
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=timeout or self.timeout) as client:
                 response = await client.post(
                     f"{self.base_url}{path}",
                     content=json.dumps(payload, default=str, ensure_ascii=False).encode(),
@@ -53,7 +53,7 @@ class MLGateway:
         )
 
     async def generate_scenario(self, payload: dict) -> dict | None:
-        return await self._post("/v1/scenarios/generate", payload, "generate")
+        return await self._post("/v1/scenarios/generate", payload, "generate", get_settings().ml_generate_timeout_sec)
 
     async def assistant(self, payload: dict) -> dict | None:
         return await self._post("/v1/assistant", payload, "assistant")

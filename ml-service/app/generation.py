@@ -52,7 +52,11 @@ SYSTEM = (
     "реалистичные действия по регламенту: проводник не назначает лекарства, не трогает бесхозные предметы, "
     "неисправности передаёт электромеханику, решения об остановке принимает машинист по докладу начальника поезда. "
     "Ответь ТОЛЬКО JSON: {\"title\": str, \"description\": str, \"cover\": эмодзи, \"graph\": <граф>}. "
-    "Формат графа (пример): " + json.dumps(FORMAT, ensure_ascii=False)
+    "Формат графа (пример): " + json.dumps(FORMAT, ensure_ascii=False) + ". "
+    # Without this the model copies the short example almost one-to-one
+    "Пример выше показывает ТОЛЬКО формат полей и короче, чем нужно. Твой граф должен быть больше: "
+    "7–10 узлов, из них 3–4 узла type=choice, 1 узел type=input и 1 узел type=end; "
+    "каждый next указывает на узел, который есть в nodes."
 )
 
 CATEGORY_TEMPLATES = {
@@ -209,14 +213,61 @@ def template_scenario(spec: str, category: str, difficulty: int) -> dict:
     }
 
 
-def _sane(data: dict) -> bool:
-    graph = data.get("graph")
-    return (
-        isinstance(graph, dict)
-        and isinstance(graph.get("nodes"), dict)
-        and graph.get("start") in graph["nodes"]
-        and any(n.get("type") == "end" for n in graph["nodes"].values() if isinstance(n, dict))
-    )
+SPEAKER_ROLES = {"conductor": "проводник", "chief": "начальник поезда", "train_chief": "начальник поезда", "mechanic": "электромеханик"}
+
+
+def _normalize(graph: dict) -> None:
+    """Fix what is safe to fix: undeclared speakers and out-of-range timers."""
+    characters = graph.get("characters")
+    if not isinstance(characters, dict):
+        characters = graph["characters"] = {}
+    for node in graph["nodes"].values():
+        speaker = node.get("speaker")
+        if speaker and speaker != "narrator" and speaker not in characters:
+            role = SPEAKER_ROLES.get(speaker, "пассажир")
+            characters[speaker] = {"name": role.capitalize(), "role": role, "avatar": "🧑"}
+        timer = node.get("timer")
+        if isinstance(timer, (int, float)):
+            node["timer"] = max(5, min(120, timer))
+
+
+def _problems(graph) -> list[str]:
+    """Structural errors that need a new draft (same rules as the admin validator)."""
+    if not isinstance(graph, dict) or not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
+        return ["нет графа с узлами"]
+    nodes = graph["nodes"]
+    if any(not isinstance(n, dict) for n in nodes.values()):
+        return ["каждый узел должен быть объектом"]
+    errors = []
+    if graph.get("start") not in nodes:
+        errors.append(f"стартовый узел «{graph.get('start')}» не найден")
+
+    def target(src: str, dst) -> None:
+        if dst not in nodes:
+            errors.append(f"узел «{src}» ссылается на несуществующий узел «{dst}»")
+
+    for node_id, node in nodes.items():
+        kind = node.get("type")
+        if kind in ("scene", "input"):
+            target(node_id, node.get("next"))
+        elif kind == "choice":
+            choices = node.get("choices") or []
+            if len(choices) < 2:
+                errors.append(f"в узле «{node_id}» меньше двух вариантов")
+            for choice in choices:
+                target(node_id, choice.get("next"))
+            if node.get("timer") and node.get("timeout"):
+                target(node_id, node["timeout"].get("next"))
+        elif kind == "end":
+            if node.get("outcome") == "auto" and not all(o in (node.get("variants") or {}) for o in ("success", "partial", "fail")):
+                errors.append(f"у финала «{node_id}» нужны variants success, partial и fail")
+        else:
+            errors.append(f"у узла «{node_id}» неизвестный тип «{kind}»")
+    if not any(n.get("type") == "end" for n in nodes.values()):
+        errors.append("нет финала (type=end)")
+    if sum(n.get("type") == "choice" for n in nodes.values()) < 2:
+        errors.append("слишком мало решений: нужно минимум 3 узла type=choice")
+    return errors
 
 
 async def generate(llm: LLMProvider | None, *, spec: str, category: str, position: str, difficulty: int) -> dict:
@@ -227,16 +278,22 @@ async def generate(llm: LLMProvider | None, *, spec: str, category: str, positio
         f"Техническое задание инструктора:\n{spec}\n\n"
         f"Категория компетенции: {category}. Должность обучаемого: {position}. Сложность 1–3: {difficulty}."
     )
-    try:
-        data = await llm.complete_json(SYSTEM, user, temperature=0.6)
-        if not _sane(data):
-            raise LLMError("Модель вернула граф без старта или финала")
-        data.setdefault("title", fallback["title"])
-        data.setdefault("description", fallback["description"])
-        data.setdefault("cover", fallback["cover"])
-        data["provider"] = llm.name
-        data["note"] = "Черновик сгенерирован ИИ — проверьте формулировки и соответствие регламенту перед публикацией."
-        return data
-    except LLMError as exc:
-        log.warning("LLM generation failed, using template: %s", exc)
-        return {**fallback, "note": f"ИИ не смог собрать сценарий ({exc}). Показан шаблонный черновик."}
+    error: LLMError | None = None
+    for _ in range(2):  # long graphs occasionally come out broken — one retry with the errors
+        try:
+            prompt = user if error is None else f"{user}\n\nПредыдущий вариант отклонён: {error}. Исправь это."
+            data = await llm.complete_json(SYSTEM, prompt, temperature=0.6, heavy=True)
+            problems = _problems(data.get("graph"))
+            if problems:
+                raise LLMError("; ".join(problems[:5]))
+            _normalize(data["graph"])
+            data.setdefault("title", fallback["title"])
+            data.setdefault("description", fallback["description"])
+            data.setdefault("cover", fallback["cover"])
+            data["provider"] = llm.name
+            data["note"] = "Черновик сгенерирован ИИ — проверьте формулировки и соответствие регламенту перед публикацией."
+            return data
+        except LLMError as exc:
+            log.warning("LLM generation failed: %s", exc)
+            error = exc
+    return {**fallback, "note": f"ИИ не смог собрать сценарий ({error}). Показан шаблонный черновик."}

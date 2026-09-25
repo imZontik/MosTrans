@@ -9,13 +9,17 @@ class Settings(BaseSettings):
     # heuristic | gigachat | ollama
     ml_provider: str = "heuristic"
     llm_timeout_sec: float = 35.0
+    # Scenario drafts: long JSON graphs, a stronger model is noticeably slower
+    llm_heavy_timeout_sec: float = 60.0
 
     gigachat_auth_key: str = ""
     gigachat_scope: str = "GIGACHAT_API_PERS"
-    gigachat_model: str = "GigaChat"
+    gigachat_model: str = "GigaChat-2"
+    # Model for scenario drafts; empty — same as gigachat_model
+    gigachat_heavy_model: str = ""
     gigachat_verify_ssl: bool = False
     gigachat_oauth_url: str = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
-    gigachat_api_url: str = "https://gigachat.devices.sberbank.ru/api/v1"
+    gigachat_api_url: str = "https://api.giga.chat/v1"
 
     ollama_url: str = "http://ollama:11434"
     ollama_model: str = "qwen2.5:3b"
