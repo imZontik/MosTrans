@@ -1,0 +1,224 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Магистраль 400 — tokens.
+ * ink «графит пути», bg «алюминий», surface «белый борт», brand «красный РЖД»,
+ * ok/warn «семафор» (semantic only). Red doubles as danger.
+ */
+:root {
+  --ink: 28 36 48; /* #1C2430 */
+  --bg: 233 236 239; /* #E9ECEF */
+  --surface: 255 255 255; /* #FFFFFF */
+  --muted: 91 102 115; /* #5B6673 */
+  --line: 205 211 217; /* #CDD3D9 */
+  --brand: 226 26 26; /* #E21A1A */
+  --brand-dark: 188 18 18; /* #BC1212 */
+  --brand-soft: 252 234 234; /* #FCEAEA */
+  --ok: 19 133 78; /* #13854E */
+  --ok-soft: 229 243 236; /* #E5F3EC */
+  --warn: 232 163 23; /* #E8A317 — fills only */
+  --warn-ink: 138 92 0; /* #8A5C00 — text on light */
+  --warn-soft: 252 243 222; /* #FCF3DE */
+
+  /* category accents: muted, harmonious with aluminium/graphite; never used as signals */
+  --cat-conflict: 148 80 127; /* #94507F plum */
+  --cat-conflict-soft: 243 232 240;
+  --cat-medical: 30 125 131; /* #1E7D83 teal */
+  --cat-medical-soft: 224 240 241;
+  --cat-safety: 55 99 160; /* #3763A0 steel blue */
+  --cat-safety-soft: 228 235 246;
+  --cat-technical: 86 101 123; /* #56657B slate */
+  --cat-technical-soft: 221 227 236;
+  --cat-service: 106 87 166; /* #6A57A6 violet */
+  --cat-service-soft: 237 234 246;
+  --cat-teamwork: 154 116 64; /* #9A7440 bronze */
+  --cat-teamwork-soft: 243 236 226;
+
+  /* achievement rarity rings */
+  --rarity-common: 167 176 186; /* #A7B0BA */
+  --rarity-rare: 59 123 208; /* #3B7BD0 */
+  --rarity-epic: 124 77 201; /* #7C4DC9 */
+  --rarity-legendary: 212 160 23; /* #D4A017 */
+  color-scheme: light;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  body {
+    @apply bg-bg font-sans text-sm text-ink antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    font-feature-settings: 'tnum' 0;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold;
+    line-height: 1.05;
+  }
+  ::selection {
+    background: rgb(var(--brand) / 0.18);
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--ink));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  .on-red :focus-visible,
+  .on-red:focus-visible {
+    outline-color: #fff;
+  }
+}
+
+@layer components {
+  /* Plain white panel — no shadow; used sparingly, not around every section. */
+  .card {
+    @apply rounded-2xl border border-line bg-surface;
+  }
+  .chip {
+    @apply inline-flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors
+      placeholder:text-muted focus:border-ink;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-muted;
+  }
+  .skeleton {
+    @apply rounded-xl bg-line/60;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .digits {
+    @apply font-display tabular-nums;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pb-tabbar {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Route hero: the one page-load motion in the app. */
+.route-train {
+  transition: left 1.4s cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+.route-passed {
+  transition: width 1.4s cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--dx, 0), 105vh, 0) rotate(540deg);
+    opacity: 0.8;
+  }
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  animation: confetti-fall var(--dur, 3s) cubic-bezier(0.2, 0.6, 0.4, 1) var(--delay, 0s) forwards;
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: typing 1.2s infinite;
+}
+
+/*
+ * «Ночная линия»: the login hero background, shared by every hero panel
+ * (home route, tournament, profile, run outcome, play header, admin sidebar).
+ */
+.night-line,
+.login-hero {
+  background-color: #0a101e;
+  background-image:
+    repeating-linear-gradient(100deg, transparent 0 22px, rgb(255 255 255 / 0.035) 22px 24px),
+    radial-gradient(120% 90% at 100% 0%, rgb(226 26 26 / 0.35), transparent 55%),
+    linear-gradient(135deg, #0a101e 0%, #1f2b47 100%);
+  color: #fff;
+}
+/* Calmer variant without the red dawn, for strips and chrome. */
+.night-line-flat {
+  background-color: #0a101e;
+  background-image:
+    repeating-linear-gradient(100deg, transparent 0 22px, rgb(255 255 255 / 0.03) 22px 24px),
+    linear-gradient(135deg, #0a101e 0%, #1f2b47 100%);
+  color: #fff;
+}
+.night-line :focus-visible,
+.night-line-flat :focus-visible,
+.login-hero :focus-visible {
+  outline-color: #fff;
+}
+/* Thin red running stripe along the bottom edge (parent must be relative + overflow-hidden). */
+.login-hero::after,
+.running-stripe::after {
+  content: '';
+  position: absolute;
+  inset: auto -10% 0 -10%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgb(var(--brand)), transparent);
+  animation: speed 2.4s linear infinite;
+  pointer-events: none;
+}
+@keyframes speed {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+.animate-speed {
+  animation: speed 2.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .confetti-piece {
+    display: none;
+  }
+  .animate-speed {
+    animation: none !important;
+    opacity: 0;
+  }
+  .login-hero::after,
+  .running-stripe::after {
+    animation: none !important;
+    transform: none;
+  }
+}
