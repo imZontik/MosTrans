@@ -83,7 +83,7 @@ function ReplayButton({ onClick, speaking, className }: { onClick: () => void; s
     <button
       onClick={onClick}
       className={cn(
-        'flex min-h-[40px] items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors hover:border-ink/40 hover:bg-surface-2',
+        'flex min-h-[40px] coarse:min-h-[44px] items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors hover:border-ink/40 hover:bg-surface-2',
         className,
       )}
     >

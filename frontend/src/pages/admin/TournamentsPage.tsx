@@ -104,6 +104,8 @@ export default function AdminTournamentsPage() {
 
       <section>
         <SectionTitle
+          // the duration control drops under the title on 320px phones
+          className="flex-wrap"
           action={
             <label className="flex items-center gap-2 text-sm text-muted">
               «Запустить сейчас» на
@@ -111,7 +113,7 @@ export default function AdminTournamentsPage() {
                 type="number"
                 min={5}
                 max={1440}
-                className="input w-20 py-1.5"
+                className="input w-20 py-1.5 coarse:py-2.5"
                 value={liveDuration}
                 onChange={(e) => setLiveDuration(Number(e.target.value))}
               />

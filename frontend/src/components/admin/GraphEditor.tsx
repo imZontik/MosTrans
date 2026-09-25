@@ -148,7 +148,7 @@ function NodeCard({
   return (
     <div id={`node-${id}`} className={cn('rounded-2xl border bg-surface', isStart ? 'border-brand/40' : 'border-line')}>
       <div className="flex items-center gap-2 px-4 py-3">
-        <button onClick={() => setOpen((v) => !v)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+        <button onClick={() => setOpen((v) => !v)} className="flex min-w-0 flex-1 items-center gap-2 text-left coarse:min-h-[44px]">
           <ChevronDown className={cn('h-4 w-4 shrink-0 text-muted transition', !open && '-rotate-90')} />
           <code className="rounded-md bg-bg px-1.5 py-0.5 text-xs font-semibold">{id}</code>
           <Badge tone={meta.tone} icon={meta.icon}>
@@ -164,7 +164,7 @@ function NodeCard({
           {!open && <span className="truncate text-sm text-muted">{node.text || node.title}</span>}
         </button>
         {edit && !isStart && (
-          <button onClick={onRemove} className="rounded-lg p-1.5 text-muted hover:bg-bad/10 hover:text-bad" title="Удалить узел">
+          <button onClick={onRemove} className="rounded-lg p-1.5 text-muted hover:bg-bad/10 hover:text-bad coarse:p-3.5" title="Удалить узел">
             <Trash2 className="h-4 w-4" />
           </button>
         )}
@@ -239,7 +239,7 @@ function NodeCard({
                       ],
                     })
                   }}
-                  className="flex items-center gap-1 text-sm font-semibold text-brand"
+                  className="flex items-center gap-1 text-sm font-semibold text-brand coarse:min-h-[44px]"
                 >
                   <Plus className="h-4 w-4" /> Вариант ответа
                 </button>
@@ -370,7 +370,7 @@ function ChoiceRow({
                 <MiniNum label="💙" value={choice.effects?.loyalty ?? 0} onChange={(v) => effect('loyalty', v)} />
                 <MiniNum label="🛡️" value={choice.effects?.safety ?? 0} onChange={(v) => effect('safety', v)} />
                 <NextSelect value={choice.next} ids={ids} edit onChange={(next) => set({ next })} compact />
-                <button onClick={onRemove} className="ml-auto rounded-lg p-1.5 text-muted hover:bg-bad/10 hover:text-bad" title="Удалить вариант">
+                <button onClick={onRemove} className="ml-auto rounded-lg p-1.5 text-muted hover:bg-bad/10 hover:text-bad coarse:p-[15px]" title="Удалить вариант">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </>
@@ -399,7 +399,7 @@ const fmtSigned = (n: number) => (n > 0 ? `+${n}` : String(n))
 
 function MiniNum({ label, value, onChange }: { label: string; value: number; onChange: (v: string) => void }) {
   return (
-    <label className="flex items-center gap-1 rounded-lg bg-surface px-2 py-1 font-semibold text-ink ring-1 ring-line">
+    <label className="flex items-center gap-1 rounded-lg bg-surface px-2 py-1 font-semibold text-ink ring-1 ring-line coarse:py-2.5">
       {label}
       <input type="number" className="w-12 bg-transparent text-right outline-none" value={value} onChange={(e) => onChange(e.target.value)} />
     </label>
@@ -423,7 +423,7 @@ function NextSelect({
 }) {
   if (!edit) return <p className="text-sm text-muted">{label ?? '→'} <code>{value}</code></p>
   return (
-    <label className={cn('flex items-center gap-2 text-sm font-semibold', compact && 'rounded-lg bg-surface px-2 py-1 text-xs ring-1 ring-line')}>
+    <label className={cn('flex items-center gap-2 text-sm font-semibold', compact && 'rounded-lg bg-surface px-2 py-1 text-xs ring-1 ring-line coarse:py-2.5')}>
       {label ?? '→'}
       <select className={cn(compact ? 'bg-transparent outline-none' : 'input w-auto py-1.5')} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         {!ids.includes(value ?? '') && <option value={value ?? ''}>{value || '—'}</option>}

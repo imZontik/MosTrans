@@ -37,7 +37,7 @@ export function ThemeSwitch({ labels = false, night = false, className }: { labe
             title={label}
             onClick={() => setPref(value)}
             className={cn(
-              'flex min-h-[40px] items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-medium transition-[color,background-color,box-shadow]',
+              'flex min-h-[40px] coarse:min-h-[44px] items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-medium transition-[color,background-color,box-shadow]',
               // narrow phones: icon above the word so «Системная» fits
               labels && 'min-h-[48px] flex-col gap-0.5 py-1 min-[400px]:flex-row min-[400px]:gap-1.5',
               night

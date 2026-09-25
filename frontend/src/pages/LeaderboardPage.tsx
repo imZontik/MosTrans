@@ -81,7 +81,7 @@ export default function LeaderboardPage() {
                 aria-selected={period === p}
                 onClick={() => setPeriod(p)}
                 className={cn(
-                  'min-h-[40px] rounded-lg px-4 font-medium transition-[color,background-color,box-shadow]',
+                  'min-h-[40px] coarse:min-h-[44px] rounded-lg px-4 font-medium transition-[color,background-color,box-shadow]',
                   period === p ? 'bg-surface text-ink shadow-card' : 'text-muted hover:text-ink',
                 )}
               >

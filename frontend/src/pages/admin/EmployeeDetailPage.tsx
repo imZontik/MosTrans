@@ -65,7 +65,7 @@ export default function EmployeeDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/admin/employees" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
+      <Link to="/admin/employees" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink coarse:min-h-[44px]">
         <ArrowLeft className="h-4 w-4" /> Все сотрудники
       </Link>
 

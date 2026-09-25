@@ -16,7 +16,7 @@ const VARIANTS: Record<Variant, string> = {
   light: 'bg-white text-[#1C2430] shadow-[0_8px_24px_-10px_rgb(0_0_0/.45)] hover:bg-white/90',
 }
 const SIZES: Record<Size, string> = {
-  sm: 'min-h-[40px] px-3.5 text-sm gap-1.5',
+  sm: 'min-h-[40px] coarse:min-h-[44px] px-3.5 text-sm gap-1.5',
   md: 'min-h-[44px] px-5 text-sm gap-2',
   lg: 'min-h-[52px] px-6 text-base gap-2',
 }

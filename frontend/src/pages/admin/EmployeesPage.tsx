@@ -83,8 +83,8 @@ export default function EmployeesPage() {
               <thead className="bg-ink/[.03]">
                 <tr>
                   {COLUMNS.map((c) => (
-                    <th key={c.key} className={cn('whitespace-nowrap px-2.5 py-3 text-xs font-semibold text-muted', c.align === 'right' ? 'text-right' : 'text-left')}>
-                      <button onClick={() => toggle(c.key)} className={cn('inline-flex items-center gap-1 hover:text-ink', sort.key === c.key && 'text-ink')}>
+                    <th key={c.key} className={cn('whitespace-nowrap px-2.5 py-3 text-xs font-semibold text-muted coarse:py-0', c.align === 'right' ? 'text-right' : 'text-left')}>
+                      <button onClick={() => toggle(c.key)} className={cn('inline-flex items-center gap-1 hover:text-ink coarse:min-h-[44px]', sort.key === c.key && 'text-ink')}>
                         {c.title}
                         {sort.key === c.key ? (
                           sort.dir === 1 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
