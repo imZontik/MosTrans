@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     valkey_url: str = "redis://valkey:6379/0"
     ml_service_url: str = "http://ml-service:8001"
     ml_timeout_sec: float = 40.0
+    # Scenario drafts: a stronger LLM plus one retry
+    ml_generate_timeout_sec: float = 150.0
 
     jwt_secret: str = "change-me-in-production"
     jwt_ttl_minutes: int = 60 * 24 * 7
