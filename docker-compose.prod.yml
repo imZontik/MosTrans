@@ -1,0 +1,38 @@
+# Production overrides for the VPS:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Caddy terminates HTTPS (Let's Encrypt) and is the only service published to the internet.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Domain(s) for automatic HTTPS, e.g. "m400.ru, www.m400.ru"; ":80" — plain HTTP by IP
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - nginx
+
+  # Docker publishes ports past ufw, so nothing but Caddy listens on public interfaces
+  nginx:
+    ports: !reset []
+
+  postgres:
+    ports: !reset []
+
+  valkey:
+    ports: !reset []
+
+  prometheus:
+    ports: !override
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+
+volumes:
+  caddy-data:
+  caddy-config:

@@ -104,6 +104,18 @@ docker compose run --rm backend python -m pytest -q
 docker compose run --rm ml-service python -m pytest -q
 ```
 
+## Деплой
+
+GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) на каждый push и PR прогоняет тесты backend и ML-сервиса и собирает фронтенд. При push в `main` после тестов идёт деплой на VPS:
+
+1. Образы собираются в CI: серверу с 1 ГБ RAM хватает памяти, чтобы работать, но не чтобы собрать фронтенд.
+2. Образы и конфиги копируются по SSH в `/opt/magistral`, [deploy/deploy.sh](deploy/deploy.sh) загружает их и перезапускает стек.
+3. Деплой считается успешным, только когда API ответил на `/api/health`.
+
+На сервере стек запускается с [docker-compose.prod.yml](docker-compose.prod.yml): Caddy выпускает HTTPS-сертификат для домена из `SITE_ADDRESS` и единственный слушает порты 80 и 443. PostgreSQL, Valkey и Prometheus наружу не открыты. Секреты (`.env` с `JWT_SECRET`, паролем БД и ключом GigaChat) хранятся только на сервере.
+
+Секреты репозитория для деплоя: `DEPLOY_HOST`, `DEPLOY_SSH_KEY` (ключ пользователя `deploy`), `DEPLOY_KNOWN_HOSTS`.
+
 ## Демо-видео
 
 `demo-video/record.sh` записывает прохождение на эмуляции iPhone (390×844, 2×): маршрут, рейс, специвент с голосовым на английском, турнир, рейтинг, профиль и панель руководителя. Затем собирает ролик 1080×1920 с подписями в `demo-video/out/magistral-400-mobile.mp4`. Перед записью скрипт сбрасывает демо-данные. Нужны только Docker и Python 3.
