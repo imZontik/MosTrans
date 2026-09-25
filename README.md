@@ -54,6 +54,24 @@ docker compose up -d --build
 | HR | hr@m400.ru | hr123 |
 | Администратор | admin@m400.ru | admin123 |
 
+### База данных
+
+PostgreSQL 17 работает в Docker вместе со всем стеком. Для IDE и `psql` порт открыт только на локальной машине:
+
+| | |
+|---|---|
+| Хост | `127.0.0.1:5432` (порт меняется через `POSTGRES_PORT`) |
+| База | `magistral` |
+| Пользователь и пароль | `magistral` / `magistral` |
+
+Схемой управляет Alembic (`backend/migrations`). При старте контейнер `backend` сам применяет миграции, затем запускает API. Новая миграция после изменения моделей:
+
+```bash
+docker compose run --rm -v "$PWD/backend/migrations:/app/migrations" backend alembic revision --autogenerate -m "описание"
+```
+
+Valkey доступен на `127.0.0.1:6379`.
+
 Сбросить демо-данные:
 
 ```bash

@@ -12,24 +12,21 @@ from app.business.errors import AppError
 from app.business.services import tournaments
 from app.frameworks.api.routers import admin, player
 from app.frameworks.config import get_settings
-from app.frameworks.database import Base, SessionLocal, engine
+from app.frameworks.database import SessionLocal, engine
 from app.frameworks.valkey import close_valkey, get_valkey
-from app.repositories import models  # noqa: F401  (registers tables)
 from app.seed.demo import seed
 
 log = logging.getLogger("magistral")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-SCHEMA_LOCK = 400_400
+SEED_LOCK = 400_400
 
 
 async def prepare_database() -> None:
-    async with engine.begin() as conn:
-        await conn.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": SCHEMA_LOCK})
-        await conn.run_sync(Base.metadata.create_all)
+    """Schema is managed by Alembic (app.frameworks.migrate runs before the API); here only demo data."""
     if get_settings().seed_demo_data:
         async with SessionLocal() as session:
-            await session.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": SCHEMA_LOCK})
+            await session.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": SEED_LOCK})
             await seed(session)
 
 

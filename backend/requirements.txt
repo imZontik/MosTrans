@@ -10,3 +10,4 @@ redis==5.2.1
 httpx==0.28.1
 prometheus-fastapi-instrumentator==7.0.0
 prometheus-client==0.21.1
+alembic==1.14.0
