@@ -8,7 +8,7 @@ export function TrainArt({ className }: { className?: string }) {
         {[18, 34, 52, 70, 84].map((top, i) => (
           <span
             key={top}
-            className="absolute left-0 h-[2px] w-1/3 animate-speed rounded-full bg-gradient-to-r from-transparent via-white/60 to-transparent"
+            className="absolute left-0 h-[2px] w-1/3 animate-wind rounded-full bg-gradient-to-r from-transparent via-white/60 to-transparent"
             style={{ top: `${top}%`, animationDelay: `${i * 0.37}s`, animationDuration: `${1.4 + (i % 3) * 0.5}s` }}
           />
         ))}

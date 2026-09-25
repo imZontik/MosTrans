@@ -85,8 +85,9 @@
     @apply inline-flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors;
   }
   .input {
-    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors
-      placeholder:text-muted focus:border-ink;
+    /* 17px on phones: iOS web views zoom into inputs smaller than 16px */
+    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base outline-none transition-colors
+      placeholder:text-muted focus:border-ink sm:text-sm;
   }
   .label {
     @apply mb-1.5 block text-xs font-medium text-muted;
@@ -199,6 +200,48 @@
 .animate-speed {
   animation: speed 2.4s linear infinite;
 }
+/* Oncoming wind: streaks run from the train's nose (right) to its tail (left) */
+@keyframes wind {
+  0% { transform: translateX(400%); }
+  100% { transform: translateX(-100%); }
+}
+.animate-wind {
+  animation: wind 2.4s linear infinite;
+}
+
+/* Login: the train pulls in once */
+@keyframes train-arrive {
+  0% { transform: translateX(-115%); }
+  100% { transform: translateX(0); }
+}
+.train-arrive {
+  animation: train-arrive 1.8s cubic-bezier(0.16, 0.84, 0.3, 1) both;
+}
+@keyframes headlight {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+.headlight {
+  background: radial-gradient(closest-side, rgb(255 236 196 / 0.7), transparent);
+  animation: headlight 2.6s ease-in-out infinite;
+}
+/* Tear-off line of the boarding-pass card; notches take the night colour behind the card */
+.ticket-perforation {
+  position: relative;
+  border-top: 2px dashed rgb(var(--line));
+}
+.ticket-perforation::before,
+.ticket-perforation::after {
+  content: '';
+  position: absolute;
+  top: -13px;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #121b31;
+}
+.ticket-perforation::before { left: -12px; }
+.ticket-perforation::after { right: -12px; }
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -212,9 +255,14 @@
   .confetti-piece {
     display: none;
   }
-  .animate-speed {
+  .animate-speed,
+  .animate-wind {
     animation: none !important;
     opacity: 0;
+  }
+  .train-arrive,
+  .headlight {
+    animation: none !important;
   }
   .login-hero::after,
   .running-stripe::after {

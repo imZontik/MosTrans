@@ -8,7 +8,7 @@ export function SpeedLines({ rows = [22, 48, 76], className }: { rows?: number[]
       {rows.map((top, i) => (
         <span
           key={top}
-          className="absolute left-0 h-px w-1/3 animate-speed rounded-full bg-gradient-to-r from-transparent via-white/35 to-transparent"
+          className="absolute left-0 h-px w-1/3 animate-wind rounded-full bg-gradient-to-r from-transparent via-white/35 to-transparent"
           style={{ top: `${top}%`, animationDelay: `${i * 0.61}s`, animationDuration: `${2.2 + (i % 3) * 0.7}s` }}
         />
       ))}
