@@ -3,15 +3,19 @@ const v = (name) => `rgb(var(--${name}) / <alpha-value>)`
 
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  // `.dark` on <html> is set before first paint by the inline script in index.html
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         // «алюминий» — app background, Sapsan body aluminium
         bg: v('bg'),
-        // «белый борт»
-        surface: v('surface'),
+        // «белый борт»; `surface-2` is the raised / hovered plate
+        surface: { DEFAULT: v('surface'), 2: v('surface-2') },
         // «графит пути»
         ink: v('ink'),
+        // text on an ink-filled plate (white in light, deep graphite in dark)
+        inverse: v('inverse'),
         muted: v('muted'),
         line: v('line'),
         // «красный РЖД» — primary actions and danger only
@@ -37,8 +41,17 @@ export default {
           teamwork: v('cat-teamwork'),
           'teamwork-soft': v('cat-teamwork-soft'),
         },
-        // achievement rarity rings
-        rarity: { common: v('rarity-common'), rare: v('rarity-rare'), epic: v('rarity-epic'), legendary: v('rarity-legendary') },
+        // achievement rarity rings and plates
+        rarity: {
+          common: v('rarity-common'),
+          rare: v('rarity-rare'),
+          epic: v('rarity-epic'),
+          legendary: v('rarity-legendary'),
+          'rare-soft': v('rarity-rare-soft'),
+          'epic-soft': v('rarity-epic-soft'),
+          'legendary-soft': v('rarity-legendary-soft'),
+          'legendary-ink': v('rarity-legendary-ink'),
+        },
       },
       fontFamily: {
         sans: ['"Golos Text"', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
@@ -56,8 +69,11 @@ export default {
       },
       borderRadius: { sheet: '20px' },
       boxShadow: {
-        dock: '0 -8px 24px -12px rgb(28 36 48 / 0.28)',
+        dock: 'var(--shadow-dock)',
+        card: 'var(--shadow-card)',
+        lift: 'var(--shadow-lift)',
         glow: '0 0 0 4px rgb(255 255 255 / 0.06), 0 0 28px 4px var(--glow, rgb(226 26 26 / 0.45))',
+        'brand-glow': '0 1px 0 rgb(255 255 255 / 0.18) inset, 0 8px 22px -8px rgb(226 26 26 / 0.65)',
       },
       keyframes: {
         ring: { '0%': { transform: 'scale(.9)', opacity: 0.6 }, '100%': { transform: 'scale(1.9)', opacity: 0 } },

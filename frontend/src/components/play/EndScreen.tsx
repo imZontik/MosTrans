@@ -9,6 +9,7 @@ import { Confetti } from '../Confetti'
 import { CountUp } from '../CountUp'
 import { Mascot } from '../Mascot'
 import { NightPanel, SpeedLines } from '../NightPanel'
+import { SignalBar } from '../SignalBar'
 
 const LAMPS = [
   { tone: 'bad', on: 'bg-[#FF3B3B] shadow-[0_0_18px_4px_rgb(255_59_59/.6)]' },
@@ -52,7 +53,7 @@ export function EndScreen({
       <Button size="lg" block onClick={onRestart} loading={restarting}>
         Пройти ещё раз
       </Button>
-      <ButtonLink to={backTo} size="lg" variant="secondary" className="w-full">
+      <ButtonLink to={backTo} size="lg" variant="secondary" className="w-full sm:w-full">
         {backLabel}
       </ButtonLink>
     </div>
@@ -60,7 +61,7 @@ export function EndScreen({
 
   if (!summary) {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 py-12">
+      <div className="mx-auto w-full max-w-3xl px-4 py-12">
         <Mascot className="h-24 w-24" mood="thinking" />
         <h1 className="mt-4 text-2xl font-semibold">{run.status === 'abandoned' ? 'Рейс прерван' : 'Рейс завершён'}</h1>
         <div className="mt-6">{actions}</div>
@@ -81,7 +82,7 @@ export function EndScreen({
   const st = summary.stats
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8 px-4 pb-16 pt-6">
+    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 pb-16 pt-6 sm:pt-8">
       {outcome === 'success' && <Confetti />}
 
       {/* outcome on the night line */}
@@ -90,11 +91,11 @@ export function EndScreen({
         <div className="relative flex items-start gap-4">
           <div className="min-w-0 flex-1">
             <p className={cn('text-base font-semibold', LABEL_ON_DARK[meta.tone])}>{meta.label}</p>
-            <h1 className="mt-1.5 text-[34px] font-bold leading-[1]">{summary.title}</h1>
+            <h1 className="mt-1.5 text-[34px] font-bold leading-[1] sm:text-[44px]">{summary.title}</h1>
           </div>
           <Semaphore tone={meta.tone} />
         </div>
-        <p className="relative mt-2 text-base leading-relaxed text-white/80">{summary.text}</p>
+        <p className="relative mt-2 max-w-prose text-base leading-relaxed text-white/80">{summary.text}</p>
         <div className="relative mt-5 flex items-end justify-between gap-4 border-t border-white/15 pt-4">
           <p className="digits text-[56px] font-bold leading-[.9]">
             +<CountUp value={r.total} duration={1400} />
@@ -106,14 +107,13 @@ export function EndScreen({
         </div>
       </NightPanel>
 
-      <p className="text-muted">
-        Пассажир <span className={cn('digits text-lg font-semibold', scaleClass(run.loyalty))}>{run.loyalty}</span>, безопасность{' '}
-        <span className={cn('digits text-lg font-semibold', scaleClass(run.safety))}>{run.safety}</span>
-      </p>
-
-      {/* points breakdown */}
-      <section className="-mt-4">
-        <ul className="divide-y divide-line border-y border-line">
+      {/* scales and points breakdown */}
+      <section className="card p-5">
+        <div className="flex gap-5">
+          <SignalBar label="Пассажир" value={run.loyalty} />
+          <SignalBar label="Безопасность" value={run.safety} />
+        </div>
+        <ul className="mt-4 divide-y divide-line/70 border-t border-line/70">
           {breakdown.map((b) => (
             <li key={b.label} className="flex items-center justify-between py-2.5">
               <span className="text-muted">{b.label}</span>
@@ -128,7 +128,7 @@ export function EndScreen({
 
       {/* level up: the train reached a new station */}
       {summary.level_up && (
-        <section className="border-l-2 border-ink pl-4">
+        <section className="card relative overflow-hidden border-l-4 border-l-brand p-5">
           <p className="text-muted">Новая станция на маршруте</p>
           <p className="mt-1 text-2xl font-semibold leading-none">{stationFor(summary.level_after).name}</p>
           <p className="mt-1.5">
@@ -138,9 +138,9 @@ export function EndScreen({
       )}
 
       {summary.achievements.length > 0 && (
-        <section>
+        <section className="card p-5">
           <h2 className="text-lg font-semibold">Новые достижения</h2>
-          <ul className="mt-1 divide-y divide-line">
+          <ul className="mt-1 divide-y divide-line/70">
             {summary.achievements.map((a) => (
               <AchievementRow key={a.code} achievement={a} />
             ))}
@@ -149,16 +149,16 @@ export function EndScreen({
       )}
 
       {/* debrief */}
-      <section>
+      <section className="card p-5">
         <h2 className="text-lg font-semibold">Разбор</h2>
         {summary.debrief.length === 0 ? (
           <p className="mt-2 text-muted">Все решения верные. Разбирать нечего.</p>
         ) : (
-          <ul className="mt-1 divide-y divide-line">
+          <ul className="mt-1 divide-y divide-line/70">
             {summary.debrief.map((d, i) => {
               const q = QUALITY_META[d.quality]
               return (
-                <li key={d.node_id + i} className="py-4">
+                <li key={d.node_id + i} className="py-4 last:pb-0">
                   <div className="flex items-start justify-between gap-3">
                     <p className="font-medium leading-snug">{d.prompt}</p>
                     <span className={cn('shrink-0 text-xs font-semibold', TONE_TEXT[q.tone])}>{q.label}</span>
@@ -191,8 +191,4 @@ export function EndScreen({
       {actions}
     </div>
   )
-}
-
-function scaleClass(v: number) {
-  return v >= 70 ? 'text-ok' : v >= 40 ? 'text-warn-ink' : 'text-bad'
 }

@@ -157,8 +157,8 @@ export default function PlayPage() {
   return (
     <Shell>
       {/* compact top bar */}
-      <header className="night-line-flat sticky top-0 z-20 pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 px-2 pt-1.5">
+      <header className="night-line-flat sticky top-0 z-20 pt-[env(safe-area-inset-top)] shadow-[0_10px_30px_-18px_rgb(10_16_30/.8)] dark:shadow-[0_1px_0_rgb(255_255_255/.06),0_10px_30px_-18px_rgb(0_0_0/.9)]">
+        <div className="mx-auto flex max-w-3xl items-center gap-2 px-2 pt-1.5">
           <button
             onClick={() => navigate(backTo)}
             className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-white hover:bg-white/10"
@@ -178,7 +178,7 @@ export default function PlayPage() {
             <p className="text-xs text-white/60">очков</p>
           </div>
         </div>
-        <div className="mx-auto flex max-w-2xl gap-5 px-4 pb-3 pt-2">
+        <div className="mx-auto flex max-w-3xl gap-5 px-4 pb-3 pt-2">
           <SignalBar label="Пассажир" value={run.loyalty} showDelta dark />
           <SignalBar label="Безопасность" value={run.safety} showDelta dark />
         </div>
@@ -188,7 +188,7 @@ export default function PlayPage() {
         <EndScreen run={run} onRestart={restart} restarting={restarting} backTo={backTo} />
       ) : (
         <>
-          <main className="mx-auto w-full max-w-2xl flex-1 space-y-5 px-4 pb-6 pt-5" aria-live="polite">
+          <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 pb-6 pt-5 sm:pt-7" aria-live="polite">
             {run.history.map((h, i) => (
               <HistoryEntry key={`${h.node_id}-${i}`} item={h} fresh={i === freshIndex} category={run.scenario.category} />
             ))}
@@ -228,7 +228,7 @@ export default function PlayPage() {
 }
 
 function Shell({ children }: { children: ReactNode }) {
-  return <div className="flex min-h-screen flex-col bg-bg">{children}</div>
+  return <div className="flex min-h-screen flex-col">{children}</div>
 }
 
 function CurrentPrompt({
@@ -256,7 +256,7 @@ function CurrentPrompt({
         current
       />
       {node.hint && (
-        <p className="text-muted">
+        <p className="rounded-xl bg-warn-soft/70 px-3.5 py-2.5 text-muted ring-1 ring-inset ring-warn/25">
           <span className="font-medium text-ink">Подсказка: </span>
           {node.hint}
         </p>
@@ -295,9 +295,9 @@ function AnswerPanel({
   const timer = node.timer && remaining !== null ? { remaining, total: node.timer } : null
 
   return (
-    <div className="pb-safe sticky bottom-0 z-20 overflow-hidden rounded-t-sheet border border-b-0 border-line bg-surface shadow-dock">
+    <div className="pb-safe sticky bottom-0 z-20 mx-auto w-full max-w-3xl overflow-hidden rounded-t-sheet border border-b-0 border-line/80 bg-surface/95 shadow-dock backdrop-blur-xl sm:rounded-b-none">
       {timer && <TimerLine remaining={timer.remaining} total={timer.total} />}
-      <div className="mx-auto max-w-2xl px-4 pb-4 pt-3">
+      <div className="px-4 pb-4 pt-3 sm:px-5">
         {error && (
           <p className="mb-3 border-l-2 border-brand pl-3 text-sm" role="alert">
             {error}
@@ -330,8 +330,8 @@ function AnswerPanel({
                   onChoose(c.id)
                 }}
                 className={cn(
-                  'flex min-h-[52px] w-full items-center rounded-xl border px-4 py-3 text-left leading-snug transition-colors',
-                  picked === c.id ? 'border-ink bg-ink text-white' : 'border-line bg-surface text-ink hover:border-ink',
+                  'press flex min-h-[52px] w-full items-center rounded-xl border px-4 py-3 text-left leading-snug transition-[color,background-color,border-color,box-shadow,opacity,transform]',
+                  picked === c.id ? 'btn-ink border-transparent' : 'border-line bg-surface text-ink shadow-card hover:border-ink/40 hover:bg-surface-2',
                   busy && picked !== c.id && 'opacity-40',
                 )}
               >

@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn'
 import { Logo } from './Logo'
 import { Avatar } from './Avatar'
 import { Loading } from './States'
+import { ThemeCycleButton, ThemeSwitch } from './ThemeToggle'
 
 const NAV = [
   { to: '/admin', label: 'Дашборд', icon: Gauge, end: true },
@@ -23,7 +24,7 @@ export function AdminLayout() {
   const { user, logout } = useAuth()
   return (
     <div className="min-h-screen lg:flex">
-      <aside className="night-line-flat sticky top-0 hidden h-screen w-60 shrink-0 flex-col px-3 py-6 lg:flex">
+      <aside className="night-line-flat sticky top-0 hidden h-screen w-64 shrink-0 flex-col px-3 py-6 shadow-[1px_0_0_rgb(255_255_255/.06)] lg:flex">
         <Logo light subtitle="Панель руководителя" className="px-3" />
         <nav className="mt-8 flex flex-col" aria-label="Разделы панели">
           {NAV.map(({ to, label, icon: Icon, end }) => (
@@ -33,14 +34,14 @@ export function AdminLayout() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'relative flex min-h-[44px] items-center gap-3 rounded-lg px-3 transition-colors',
-                  isActive ? 'bg-white/10 font-semibold text-white' : 'text-white/65 hover:bg-white/5 hover:text-white',
+                  'relative flex min-h-[44px] items-center gap-3 rounded-xl px-3 transition-colors',
+                  isActive ? 'bg-white/[.1] font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255/.08)]' : 'text-white/65 hover:bg-white/5 hover:text-white',
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  {isActive && <span className="absolute bottom-2.5 left-0 top-2.5 w-[3px] rounded-full bg-brand" aria-hidden />}
+                  {isActive && <span className="absolute -left-3 bottom-2.5 top-2.5 w-[3px] rounded-r-full bg-gradient-to-b from-[#FF5A3D] to-brand" aria-hidden />}
                   <Icon className="h-5 w-5" aria-hidden />
                   {label}
                 </>
@@ -48,7 +49,10 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto space-y-3 border-t border-white/15 px-3 pt-4">
+        <div className="mt-auto px-1">
+          <ThemeSwitch night />
+        </div>
+        <div className="mt-4 space-y-3 border-t border-white/15 px-3 pt-4">
           <NavLink to="/" className="flex min-h-[44px] items-center text-white/65 hover:text-white">
             Открыть приложение проводника
           </NavLink>
@@ -80,7 +84,8 @@ export function AdminLayout() {
               <NavLink to="/" className="flex min-h-[44px] items-center px-2 text-sm font-medium text-white underline decoration-white/40 underline-offset-4">
                 Приложение
               </NavLink>
-              <button onClick={logout} className="grid h-11 w-11 place-items-center rounded-lg text-white/70" aria-label="Выйти из аккаунта">
+              <ThemeCycleButton night />
+              <button onClick={logout} className="grid h-11 w-11 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white" aria-label="Выйти из аккаунта">
                 <LogOut className="h-4 w-4" />
               </button>
             </div>
@@ -108,7 +113,7 @@ export function AdminLayout() {
             ))}
           </nav>
         </header>
-        <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-5 sm:px-6 lg:px-10 lg:pt-10">
+        <main className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-5 sm:px-6 lg:px-10 lg:pt-9 2xl:px-14">
           <Suspense fallback={<Loading rows={4} />}>
             <Outlet />
           </Suspense>

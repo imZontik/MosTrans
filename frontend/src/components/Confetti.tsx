@@ -1,7 +1,7 @@
 import { useMemo, type CSSProperties } from 'react'
 
 // Only the line's own colours, and few of them: a quiet celebration.
-const COLORS = ['#E21A1A', '#1C2430', '#FFFFFF', '#13854E']
+const COLORS = ['#E21A1A', 'rgb(var(--ink))', '#FFFFFF', 'rgb(var(--ok))']
 
 export function Confetti({ pieces = 28 }: { pieces?: number }) {
   const items = useMemo(
@@ -26,7 +26,7 @@ export function Confetti({ pieces = 28 }: { pieces?: number }) {
             {
               left: `${p.left}%`,
               background: p.color,
-              outline: p.color === '#FFFFFF' ? '1px solid #CDD3D9' : undefined,
+              outline: p.color === '#FFFFFF' ? '1px solid rgb(var(--line))' : undefined,
               transform: `rotate(${p.rotate}deg)`,
               '--delay': `${p.delay}s`,
               '--dur': `${p.dur}s`,

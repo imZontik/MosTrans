@@ -20,7 +20,7 @@ export function Avatar({ name, size = 'md', onDark = false, className }: { name:
         'grid shrink-0 place-items-center rounded-full font-display font-semibold',
         onDark
           ? 'bg-gradient-to-br from-white to-[#C9D1DD] text-night ring-2 ring-brand ring-offset-[3px] ring-offset-night'
-          : 'bg-[#D9DEE3] text-ink',
+          : 'bg-gradient-to-br from-surface-2 to-line text-ink ring-1 ring-inset ring-ink/[.06]',
         BOXES[size],
         INITIALS_TEXT[size],
         className,

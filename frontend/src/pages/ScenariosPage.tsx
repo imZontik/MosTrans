@@ -37,7 +37,7 @@ export default function ScenariosPage() {
       <PageHeader title="Расписание" subtitle="Сценарии рейсов. Каждое решение влияет на пассажира и на безопасность." />
 
       {catalog.data && (
-        <div className="scrollbar-none -mx-4 mb-6 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Направления">
+        <div className="scrollbar-none -mx-4 mb-7 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Направления">
           <Chip active={!category} onClick={() => setCategory(null)}>
             <TrainFront className="h-4 w-4" aria-hidden />
             Все
@@ -51,7 +51,7 @@ export default function ScenariosPage() {
       )}
 
       {error && (
-        <p className="mb-4 border-l-2 border-brand bg-surface px-4 py-3" role="alert">
+        <p className="card mb-4 border-l-4 border-l-brand px-4 py-3" role="alert">
           {error}
         </p>
       )}
@@ -61,21 +61,21 @@ export default function ScenariosPage() {
       ) : catalog.error ? (
         <ErrorState message={catalog.error} onRetry={catalog.reload} />
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-9">
           {groups.map((g) => {
             const PosIcon = POSITION_ICON[g.code] ?? UserRound
             return (
             <section key={g.code} aria-labelledby={`pos-${g.code}`}>
-              <div className="mb-2.5 flex items-center justify-between gap-3">
-                <h2 id={`pos-${g.code}`} className="flex items-center gap-2 text-lg font-semibold">
-                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-ink text-white" aria-hidden>
-                    <PosIcon className="h-4 w-4" />
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 id={`pos-${g.code}`} className="flex items-center gap-2.5 text-xl font-semibold">
+                  <span className="btn-ink grid h-9 w-9 place-items-center rounded-[10px]" aria-hidden>
+                    <PosIcon className="h-[18px] w-[18px]" />
                   </span>
                   {g.title}
                 </h2>
-                <span className="text-xs text-muted">{pluralN(g.items.length, SCENARIOS)}</span>
+                <span className="rounded-full bg-ink/[.05] px-2.5 py-1 text-xs text-muted ring-1 ring-inset ring-line/70">{pluralN(g.items.length, SCENARIOS)}</span>
               </div>
-              <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
+              <ul className="grid gap-2.5 md:grid-cols-2 md:gap-3">
                 {g.items.map((s) => (
                   <ScenarioRow key={s.id} s={s} loading={pending === s.id} onStart={(restart) => start(s.id, restart)} />
                 ))}
@@ -108,9 +108,9 @@ function Chip({ active, onClick, code, children }: { active: boolean; onClick: (
         'chip',
         active
           ? c
-            ? cn(c.soft, c.border, 'text-ink')
-            : 'border-ink bg-ink text-white'
-          : 'border-line bg-surface text-ink hover:border-ink',
+            ? cn(c.soft, c.border, 'tile-sheen text-ink shadow-card')
+            : 'btn-ink border-transparent'
+          : 'border-line bg-surface text-ink shadow-card hover:border-ink/40 hover:bg-surface-2',
       )}
     >
       {Icon && <Icon className={cn('h-4 w-4', c!.text)} aria-hidden />}
@@ -124,9 +124,9 @@ const PILL: Record<Pill, string> = {
   ok: 'bg-ok-soft text-ok',
   warn: 'bg-warn-soft text-warn-ink',
   neutral: 'bg-ink/[.06] text-muted',
-  qual: 'border border-brand/60 text-brand',
+  qual: 'bg-brand-soft/60 text-brand ring-1 ring-inset ring-brand/40',
   locked: 'bg-ink/[.06] text-muted',
-  resume: 'bg-ink text-white',
+  resume: 'btn-ink',
 }
 
 function status(s: CatalogItem): { text: string; pill: Pill } {
@@ -143,15 +143,15 @@ function ScenarioRow({ s, loading, onStart }: { s: CatalogItem; loading: boolean
   const st = status(s)
   const locked = s.locked
   return (
-    <li data-testid="scenario-row" data-slug={s.slug} className="relative">
+    <li data-testid="scenario-row" data-slug={s.slug} className={cn('card relative overflow-hidden', !locked && 'lift hover:border-ink/25', locked && 'bg-none opacity-90 shadow-none')}>
       <button
         type="button"
         disabled={locked || loading}
         onClick={() => onStart(false)}
         aria-describedby={locked ? `lock-${s.id}` : undefined}
         className={cn(
-          'flex min-h-[72px] w-full items-center gap-3 px-3.5 py-3 text-left transition-colors',
-          locked ? 'cursor-not-allowed' : 'hover:bg-bg/60',
+          'flex min-h-[76px] w-full items-center gap-3 px-3.5 py-3 text-left transition-colors',
+          locked ? 'cursor-not-allowed' : 'press',
         )}
       >
         <CoverTile cover={s.cover} category={s.category} muted={locked} />

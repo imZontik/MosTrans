@@ -5,6 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#E9ECEF" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Theme before first paint: saved choice, else the system setting (see src/theme/ThemeContext.tsx)
+      ;(function () {
+        var p = null
+        try {
+          p = localStorage.getItem('m400-theme')
+        } catch (e) {}
+        var dark = p === 'dark' || (p !== 'light' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        var root = document.documentElement
+        if (dark) root.classList.add('dark')
+        root.style.colorScheme = dark ? 'dark' : 'light'
+        var meta = document.querySelector('meta[name="theme-color"]')
+        if (meta) meta.setAttribute('content', dark ? '#0B1220' : '#E9ECEF')
+      })()
+    </script>
     <meta name="description" content="Магистраль 400 — геймифицированное обучение проводников ВСМ" />
     <title>Магистраль 400</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

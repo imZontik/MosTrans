@@ -89,13 +89,13 @@ export default function EmployeeDetailPage() {
       </Card>
 
       {notice && (
-        <p className="flex items-center gap-2 border-l-2 border-ok bg-surface px-4 py-3" role="status">
+        <p className="flex items-center gap-2 card border-l-4 border-l-ok px-4 py-3" role="status">
           <CheckCircle2 className="h-4 w-4" /> {notice}
         </p>
       )}
-      {error && <p className="border-l-2 border-brand bg-surface px-4 py-3" role="alert">{error}</p>}
+      {error && <p className="card border-l-4 border-l-brand px-4 py-3" role="alert">{error}</p>}
 
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-5">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <Mini label="Прохождений" value={String(e.stats.runs_finished)} />
         <Mini label="Успешных" value={fmtPercent(e.stats.success_rate)} />
         <Mini label="Безопасность" value={fmtScore(e.stats.avg_safety)} />
@@ -183,7 +183,7 @@ export default function EmployeeDetailPage() {
 
 function Mini({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface p-4">
+    <div className="card p-4">
       <p className="text-xs text-muted">{label}</p>
       <p className="digits mt-1 text-xl font-semibold">{value}</p>
     </div>

@@ -10,7 +10,7 @@ const TONES: Record<Tone, string> = {
   warn: 'bg-warn-soft text-warn-ink',
   bad: 'bg-brand-soft text-brand',
   info: 'bg-ink/[.06] text-ink',
-  dark: 'bg-ink text-white',
+  dark: 'bg-ink text-inverse',
   violet: 'bg-ink/[.06] text-ink',
 }
 

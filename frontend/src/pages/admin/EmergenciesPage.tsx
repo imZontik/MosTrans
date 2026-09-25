@@ -137,7 +137,7 @@ export default function EmergenciesPage() {
                         e.stopPropagation()
                         listen(s.id)
                       }}
-                      className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink text-white hover:bg-ink/90"
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-full btn-ink"
                       aria-label="Прослушать голосовое"
                       title="Прослушать голосовое"
                     >
@@ -179,7 +179,7 @@ export default function EmergenciesPage() {
                   <ul className="mt-2 max-h-72 space-y-1 overflow-y-auto">
                     {filtered.map((e) => (
                       <li key={e.id}>
-                        <label className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 hover:bg-bg">
+                        <label className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 hover:bg-surface-2">
                           <input type="checkbox" className="h-4 w-4 accent-[#e30b17]" checked={selected.has(e.id)} onChange={() => toggle(e.id)} />
                           <Avatar name={e.full_name} size="xs" />
                           <span className="min-w-0 flex-1 truncate text-sm font-semibold">{e.full_name}</span>

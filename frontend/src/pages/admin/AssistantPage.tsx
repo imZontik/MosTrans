@@ -91,12 +91,12 @@ export default function AssistantPage() {
         {messages.map((m) =>
           m.role === 'user' ? (
             <div key={m.id} className="flex justify-end gap-2">
-              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-ink px-4 py-3 text-[15px] text-white">{m.text}</div>
+              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-ink px-4 py-3 text-[15px] text-inverse shadow-card">{m.text}</div>
               {user && <Avatar name={user.full_name} size="sm" />}
             </div>
           ) : (
             <div key={m.id} className="flex gap-2">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink text-white" aria-hidden>
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink text-inverse" aria-hidden>
                 <Bot className="h-4 w-4" />
               </div>
               <div className={cn('min-w-0 max-w-full flex-1 rounded-2xl rounded-bl-md border bg-surface p-4 sm:max-w-[90%]', m.error ? 'border-bad/30' : 'border-line')}>
@@ -115,7 +115,7 @@ export default function AssistantPage() {
 
         {busy && (
           <div className="flex gap-2">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink text-white" aria-hidden>
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink text-inverse" aria-hidden>
               <Bot className="h-4 w-4" />
             </div>
             <div className="flex items-center gap-1 rounded-2xl border border-line bg-surface px-4 py-3">
@@ -128,14 +128,14 @@ export default function AssistantPage() {
         <div ref={bottom} />
       </div>
 
-      <div className="sticky bottom-0 -mx-4 mt-6 bg-bg px-4 pb-4 pt-2 sm:mx-0 sm:px-0">
+      <div className="sticky bottom-0 -mx-4 mt-6 bg-bg/85 px-4 pb-4 pt-3 backdrop-blur-xl sm:mx-0 sm:px-0">
         <div className="scrollbar-none mb-2 flex gap-2 overflow-x-auto">
           {SUGGESTIONS.map((s) => (
             <button
               key={s}
               onClick={() => ask(s)}
               disabled={busy}
-              className="chip border-line bg-surface text-ink hover:border-ink disabled:opacity-50"
+              className="chip border-line bg-surface text-ink shadow-card hover:border-ink/40 hover:bg-surface-2 disabled:opacity-50"
             >
               {s}
             </button>
@@ -163,7 +163,7 @@ function ResultTable({ table }: { table: AssistantTable }) {
   return (
     <div className="mt-3 overflow-x-auto rounded-xl border border-line">
       <table className="w-full min-w-[480px] text-sm">
-        <thead className="bg-bg">
+        <thead className="bg-ink/[.03]">
           <tr>
             {table.columns.map((c) => (
               <th key={c.key} className="px-3 py-2 text-left text-xs text-muted">
@@ -179,7 +179,7 @@ function ResultTable({ table }: { table: AssistantTable }) {
               <tr
                 key={i}
                 onClick={id ? () => navigate(`/admin/employees/${id}`) : undefined}
-                className={cn(id !== null && 'cursor-pointer hover:bg-bg')}
+                className={cn(id !== null && 'cursor-pointer hover:bg-surface-2')}
               >
                 {table.columns.map((c) => (
                   <td key={c.key} className="px-3 py-2">

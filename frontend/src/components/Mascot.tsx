@@ -90,11 +90,14 @@ export function Mascot({ className, mood = 'happy' }: { className?: string; mood
 export function MascotTip({ title = 'Совет Вовы-механика', text, className }: { title?: string; text: string; className?: string }) {
   return (
     <aside className={cn('flex items-end gap-2', className)}>
-      <Mascot className="h-[72px] w-[72px] shrink-0" mood="wink" />
-      <div className="relative mb-3 min-w-0 flex-1 rounded-2xl rounded-bl-md border border-line bg-surface px-4 py-3">
+      {/* in dark, a soft pool of light keeps Вова's navy uniform from sinking into the page */}
+      <span className="relative shrink-0 dark:before:absolute dark:before:inset-[-6px] dark:before:rounded-full dark:before:bg-[radial-gradient(circle_at_50%_60%,rgb(150_170_210/.22),transparent_68%)]">
+        <Mascot className="relative h-[72px] w-[72px]" mood="wink" />
+      </span>
+      <div className="card relative mb-3 min-w-0 flex-1 rounded-2xl rounded-bl-md px-4 py-3">
         {/* tail pointing at Вова */}
         <span
-          className="absolute -left-[7px] bottom-3 h-3.5 w-3.5 rotate-45 border-b border-l border-line bg-surface"
+          className="absolute -left-[7px] bottom-3 h-3.5 w-3.5 rotate-45 border-b border-l border-line bg-[rgb(var(--surface-bottom))]"
           aria-hidden
         />
         <p className="relative font-semibold">{title}</p>

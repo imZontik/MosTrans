@@ -80,7 +80,7 @@ export default function EmployeesPage() {
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px] text-sm">
-              <thead className="bg-bg">
+              <thead className="bg-ink/[.03]">
                 <tr>
                   {COLUMNS.map((c) => (
                     <th key={c.key} className={cn('whitespace-nowrap px-2.5 py-3 text-xs font-semibold text-muted', c.align === 'right' ? 'text-right' : 'text-left')}>
@@ -98,7 +98,7 @@ export default function EmployeesPage() {
               </thead>
               <tbody className="divide-y divide-line">
                 {rows.map((e) => (
-                  <tr key={e.id} onClick={() => navigate(`/admin/employees/${e.id}`)} className="cursor-pointer transition hover:bg-bg">
+                  <tr key={e.id} onClick={() => navigate(`/admin/employees/${e.id}`)} className="cursor-pointer transition hover:bg-surface-2">
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2.5">
                         <Avatar name={e.full_name} size="sm" />

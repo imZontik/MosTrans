@@ -24,7 +24,12 @@ export function CoverTile({
   const c = categoryStyle(category)
   return (
     <span
-      className={cn('grid shrink-0 place-items-center leading-none', TILE[size], muted ? 'bg-ink/[.06]' : c.soft, className)}
+      className={cn(
+        'tile-sheen grid shrink-0 place-items-center leading-none ring-1 ring-inset',
+        TILE[size],
+        muted ? 'bg-ink/[.06] ring-ink/[.06]' : cn(c.soft, c.ring),
+        className,
+      )}
       aria-hidden
     >
       <span className={cn(muted && 'opacity-40 grayscale')}>{cover || '🚆'}</span>
@@ -38,7 +43,7 @@ export function CategoryTag({ category, title, className }: { category: string; 
   const Icon = c.icon
   return (
     <span
-      className={cn('inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium leading-none text-ink', c.soft, className)}
+      className={cn('inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium leading-none text-ink ring-1 ring-inset', c.soft, c.ring, className)}
       title={title}
     >
       <Icon className={cn('h-3.5 w-3.5 shrink-0', c.text)} aria-hidden />

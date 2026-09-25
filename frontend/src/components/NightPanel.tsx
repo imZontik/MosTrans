@@ -29,7 +29,7 @@ export function NightPanel({
 }: HTMLAttributes<HTMLElement> & { stripe?: boolean; flat?: boolean }) {
   return (
     <section
-      className={cn(flat ? 'night-line-flat' : 'night-line', 'relative isolate overflow-hidden rounded-sheet', stripe && 'running-stripe', className)}
+      className={cn(flat ? 'night-line-flat' : 'night-line', 'night-panel relative isolate overflow-hidden rounded-sheet', stripe && 'running-stripe', className)}
       {...rest}
     >
       {children}

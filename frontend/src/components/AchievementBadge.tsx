@@ -14,9 +14,9 @@ export function Medallion({ achievement, locked, size = 'sm' }: { achievement: A
   return (
     <span
       className={cn(
-        'relative grid shrink-0 place-items-center rounded-full ring-offset-2 ring-offset-transparent',
+        'relative grid shrink-0 place-items-center rounded-full',
         SIZES[size],
-        locked ? 'border border-dashed border-line bg-bg' : cn(meta.plate, meta.ring),
+        locked ? 'border border-dashed border-line bg-ink/[.03]' : cn(meta.plate, meta.ring),
       )}
       aria-hidden
     >

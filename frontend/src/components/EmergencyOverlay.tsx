@@ -84,7 +84,7 @@ export function EmergencyOverlay() {
 
   return (
     <div
-      className="on-red fixed inset-0 z-[100] overflow-y-auto bg-brand text-white"
+      className="on-red fixed inset-0 z-[100] overflow-y-auto bg-[#E21A1A] text-white"
       role="alertdialog"
       aria-modal
       aria-labelledby="emergency-title"
@@ -93,7 +93,7 @@ export function EmergencyOverlay() {
       <div className="mx-auto flex min-h-full w-full max-w-lg flex-col px-4 pb-[calc(24px+env(safe-area-inset-bottom))] pt-[calc(40px+env(safe-area-inset-top))]">
         <div className="relative grid h-16 w-16 place-items-center">
           <span className="absolute inset-0 animate-ring rounded-full bg-white/40" aria-hidden />
-          <span className="relative grid h-16 w-16 place-items-center rounded-full bg-white text-brand">
+          <span className="relative grid h-16 w-16 place-items-center rounded-full bg-white text-[#E21A1A] shadow-[0_8px_24px_-8px_rgb(0_0_0/.45)]">
             <Siren className="h-8 w-8" aria-hidden />
           </span>
         </div>
@@ -130,11 +130,11 @@ export function EmergencyOverlay() {
 
         <div className="mt-auto pt-10">
           {error && (
-            <p className="mb-3 rounded-lg bg-white px-3 py-2 text-brand" role="alert">
+            <p className="mb-3 rounded-lg bg-white px-3 py-2 text-[#B80F1F]" role="alert">
               {error}. Попробуйте принять вызов ещё раз.
             </p>
           )}
-          <Button size="lg" block variant="light" className="text-brand" loading={accepting} onClick={accept}>
+          <Button size="lg" block variant="light" className="text-[#E21A1A]" loading={accepting} onClick={accept}>
             Принять вызов
           </Button>
           <button onClick={dismiss} className="mt-2 min-h-[48px] w-full font-medium underline decoration-white/60 underline-offset-4">

@@ -14,7 +14,7 @@ export function Loading({ rows = 3 }: { rows?: number }) {
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="border-l-2 border-brand bg-surface px-4 py-4" role="alert">
+    <div className="card border-l-4 border-l-brand px-4 py-4" role="alert">
       <p className="font-medium">{message}</p>
       <p className="mt-1 text-muted">Проверьте соединение и загрузите данные снова.</p>
       {onRetry && (

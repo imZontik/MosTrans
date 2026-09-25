@@ -7,12 +7,13 @@ type Variant = 'primary' | 'dark' | 'secondary' | 'ghost' | 'danger' | 'light'
 type Size = 'sm' | 'md' | 'lg'
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-brand text-white hover:bg-brand-dark',
-  dark: 'bg-ink text-white hover:bg-ink/90',
-  secondary: 'bg-surface text-ink border border-line hover:border-ink',
-  ghost: 'text-ink hover:bg-ink/5',
-  danger: 'bg-surface text-brand border border-brand/40 hover:border-brand',
-  light: 'bg-white text-ink hover:bg-white/90',
+  primary: 'btn-brand',
+  dark: 'btn-ink',
+  secondary: 'border border-line bg-surface text-ink shadow-card hover:border-ink/40 hover:bg-surface-2',
+  ghost: 'text-ink hover:bg-ink/[.06]',
+  danger: 'border border-brand/40 bg-surface text-brand hover:border-brand hover:bg-brand-soft/60',
+  // always on a coloured/night background: fixed colours, not theme tokens
+  light: 'bg-white text-[#1C2430] shadow-[0_8px_24px_-10px_rgb(0_0_0/.45)] hover:bg-white/90',
 }
 const SIZES: Record<Size, string> = {
   sm: 'min-h-[40px] px-3.5 text-sm gap-1.5',
@@ -22,7 +23,7 @@ const SIZES: Record<Size, string> = {
 
 export function buttonClass(variant: Variant = 'primary', size: Size = 'md', extra?: string) {
   return cn(
-    'inline-flex select-none items-center justify-center rounded-xl font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50',
+    'press inline-flex select-none items-center justify-center rounded-xl font-semibold transition-[color,background-color,border-color,box-shadow,transform] disabled:pointer-events-none disabled:opacity-50',
     VARIANTS[variant],
     SIZES[size],
     extra,

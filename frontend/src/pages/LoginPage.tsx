@@ -110,7 +110,7 @@ export default function LoginPage() {
         <TrainScene className="mt-6 sm:mt-10 lg:col-start-1 lg:row-start-2 lg:mt-0" trainClassName="w-[94%] sm:w-[80%] lg:w-full" />
 
         {/* Boarding-pass card: bottom sheet on phones, centered ticket on tablets, right column on desktop */}
-        <div className="relative mt-auto w-full rounded-t-[28px] bg-surface text-ink shadow-[0_-24px_60px_rgba(0,0,0,.35)] sm:mx-auto sm:mb-12 sm:mt-10 sm:max-w-[520px] sm:rounded-[28px] sm:shadow-[0_30px_80px_rgba(0,0,0,.45)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:m-0 lg:max-w-none lg:self-center">
+        <div className="relative mt-auto w-full rounded-t-[28px] bg-surface text-ink shadow-[0_-24px_60px_rgba(0,0,0,.35)] sm:mx-auto sm:mb-12 sm:mt-10 sm:max-w-[520px] sm:rounded-[28px] sm:shadow-[0_30px_80px_rgba(0,0,0,.45)] dark:ring-1 dark:ring-white/10 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:m-0 lg:max-w-none lg:self-center">
           <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-line sm:hidden" aria-hidden />
           <div className="px-5 pt-4 sm:px-8 sm:pt-8">
             <div className="flex items-center gap-3 text-sm">
@@ -171,7 +171,7 @@ export default function LoginPage() {
                 </div>
               </div>
               {error && (
-                <p className="rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm text-brand-dark" role="alert">
+                <p className="rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm text-brand-dark dark:text-brand" role="alert">
                   {error}
                 </p>
               )}
@@ -198,11 +198,11 @@ export default function LoginPage() {
                     doLogin(d.email, d.password, d.email)
                   }}
                   className={cn(
-                    'group flex min-h-[56px] items-center gap-2 rounded-2xl border bg-surface px-2.5 py-2 text-left sm:gap-2.5 sm:px-3 transition-colors hover:border-ink disabled:opacity-60',
-                    loading === d.email ? 'border-ink' : 'border-line',
+                    'press group flex min-h-[56px] items-center gap-2 rounded-2xl border bg-surface px-2.5 py-2 text-left shadow-card sm:gap-2.5 sm:px-3 transition-[border-color,background-color,transform] hover:border-ink/40 hover:bg-surface-2 disabled:opacity-60',
+                    loading === d.email ? 'border-ink/60' : 'border-line',
                   )}
                 >
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-bg sm:h-9 sm:w-9 text-ink transition-colors group-hover:bg-ink group-hover:text-white">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-ink/[.06] sm:h-9 sm:w-9 text-ink transition-colors group-hover:bg-ink group-hover:text-inverse">
                     {loading === d.email ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
                   </span>
                   <span className="min-w-0">

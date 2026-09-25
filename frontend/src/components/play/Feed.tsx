@@ -66,8 +66,8 @@ export function PromptBubble({
         </p>
         <div
           className={cn(
-            'rounded-2xl rounded-bl-[4px] border bg-surface px-3.5 py-2.5 leading-relaxed',
-            current ? 'border-line text-base text-ink' : 'border-transparent text-muted',
+            'rounded-2xl rounded-bl-[4px] border px-3.5 py-2.5 leading-relaxed',
+            current ? 'card rounded-bl-[4px] text-base text-ink' : 'border-transparent bg-surface/70 text-muted',
           )}
         >
           {text}
@@ -83,7 +83,7 @@ function ReplayButton({ onClick, speaking, className }: { onClick: () => void; s
     <button
       onClick={onClick}
       className={cn(
-        'flex min-h-[40px] items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors hover:border-ink',
+        'flex min-h-[40px] items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors hover:border-ink/40 hover:bg-surface-2',
         className,
       )}
     >
@@ -99,7 +99,7 @@ export function AnswerBubble({ text, timedOut }: { text: string; timedOut?: bool
       <div
         className={cn(
           'rounded-2xl rounded-br-[4px] px-3.5 py-2.5 leading-relaxed',
-          timedOut ? 'border border-dashed border-muted text-muted' : 'border-r-[3px] border-brand bg-ink text-white',
+          timedOut ? 'border border-dashed border-muted text-muted' : 'border-r-[3px] border-brand bg-ink text-inverse shadow-card',
         )}
       >
         {text}
@@ -111,7 +111,7 @@ export function AnswerBubble({ text, timedOut }: { text: string; timedOut?: bool
 const QUALITY_TEXT: Record<Quality, string> = { best: 'text-ok', ok: 'text-warn-ink', bad: 'text-bad' }
 const QUALITY_ICON: Record<Quality, { icon: typeof Check; className: string }> = {
   best: { icon: Check, className: 'bg-ok text-white' },
-  ok: { icon: Minus, className: 'bg-warn text-ink' },
+  ok: { icon: Minus, className: 'bg-warn text-[#1C2430]' },
   bad: { icon: X, className: 'bg-bad text-white' },
 }
 

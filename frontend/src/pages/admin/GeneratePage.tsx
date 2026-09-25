@@ -130,7 +130,7 @@ export default function GeneratePage() {
         )}
       </Card>
 
-      {error && <p className="border-l-2 border-brand bg-surface px-4 py-3" role="alert">{error}</p>}
+      {error && <p className="card border-l-4 border-l-brand px-4 py-3" role="alert">{error}</p>}
 
       {busy === 'generate' && (
         <Card className="flex items-center gap-4 p-6">

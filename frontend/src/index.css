@@ -6,15 +6,20 @@
  * Магистраль 400 — tokens.
  * ink «графит пути», bg «алюминий», surface «белый борт», brand «красный РЖД»,
  * ok/warn «семафор» (semantic only). Red doubles as danger.
+ * Every colour is an RGB triple so Tailwind can add alpha; `.dark` swaps the whole palette.
  */
 :root {
   --ink: 28 36 48; /* #1C2430 */
+  --inverse: 255 255 255;
   --bg: 233 236 239; /* #E9ECEF */
   --surface: 255 255 255; /* #FFFFFF */
+  --surface-2: 244 246 248; /* #F4F6F8 raised / hover */
+  --surface-top: 255 255 255; /* top of the lit card gradient */
+  --surface-bottom: 250 251 252; /* #FAFBFC */
   --muted: 91 102 115; /* #5B6673 */
-  --line: 205 211 217; /* #CDD3D9 */
+  --line: 214 219 225; /* #D6DBE1 */
   --brand: 226 26 26; /* #E21A1A */
-  --brand-dark: 188 18 18; /* #BC1212 */
+  --brand-dark: 184 15 31; /* #B80F1F */
   --brand-soft: 252 234 234; /* #FCEAEA */
   --ok: 19 133 78; /* #13854E */
   --ok-soft: 229 243 236; /* #E5F3EC */
@@ -36,12 +41,74 @@
   --cat-teamwork: 154 116 64; /* #9A7440 bronze */
   --cat-teamwork-soft: 243 236 226;
 
-  /* achievement rarity rings */
+  /* achievement rarity rings and plates */
   --rarity-common: 167 176 186; /* #A7B0BA */
   --rarity-rare: 59 123 208; /* #3B7BD0 */
   --rarity-epic: 124 77 201; /* #7C4DC9 */
   --rarity-legendary: 212 160 23; /* #D4A017 */
+  --rarity-rare-soft: 238 244 252;
+  --rarity-epic-soft: 243 238 251;
+  --rarity-legendary-soft: 251 244 223;
+  --rarity-legendary-ink: 143 106 0; /* #8F6A00 */
+
+  /* depth: hairline highlight on top, soft layered shade below */
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.9) inset, 0 1px 2px rgb(16 24 40 / 0.05), 0 10px 28px -14px rgb(16 24 40 / 0.16);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.9) inset, 0 2px 4px rgb(16 24 40 / 0.06), 0 18px 36px -16px rgb(16 24 40 / 0.26);
+  --shadow-dock: 0 -10px 30px -14px rgb(16 24 40 / 0.3);
+  /* soft page light: a cool haze on the left, a hint of red dawn on the right */
+  --page-glow-cool: 120 140 170;
+  --page-glow-warm: 226 26 26;
   color-scheme: light;
+}
+
+/* «Ночной рейс»: deep graphite-navy, lines and tints re-mixed for dark */
+.dark {
+  --ink: 230 234 241; /* #E6EAF1 */
+  --inverse: 11 18 32;
+  --bg: 11 18 32; /* #0B1220 */
+  --surface: 18 26 43; /* #121A2B */
+  --surface-2: 23 34 55; /* #172237 */
+  --surface-top: 24 34 55;
+  --surface-bottom: 18 26 43;
+  --muted: 150 162 182; /* #96A2B6 */
+  --line: 39 51 76; /* #27334C */
+  --brand: 255 77 77; /* #FF4D4D — a touch brighter on graphite */
+  --brand-dark: 226 26 26;
+  --brand-soft: 64 22 32; /* #401620 */
+  --ok: 61 204 132; /* #3DCC84 */
+  --ok-soft: 16 50 40;
+  --warn: 242 182 45;
+  --warn-ink: 245 200 90;
+  --warn-soft: 58 44 16;
+
+  --cat-conflict: 218 136 190;
+  --cat-conflict-soft: 52 30 50;
+  --cat-medical: 78 196 200;
+  --cat-medical-soft: 16 48 54;
+  --cat-safety: 116 162 232;
+  --cat-safety-soft: 22 40 68;
+  --cat-technical: 156 172 196;
+  --cat-technical-soft: 33 42 60;
+  --cat-service: 166 146 236;
+  --cat-service-soft: 40 34 70;
+  --cat-teamwork: 218 174 112;
+  --cat-teamwork-soft: 56 43 26;
+
+  --rarity-common: 112 126 148;
+  --rarity-rare: 98 160 240;
+  --rarity-epic: 170 126 244;
+  --rarity-legendary: 238 190 58;
+  --rarity-rare-soft: 22 40 70;
+  --rarity-epic-soft: 40 30 70;
+  --rarity-legendary-soft: 56 44 16;
+  --rarity-legendary-ink: 240 198 84;
+
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.045) inset, 0 1px 2px rgb(0 0 0 / 0.35), 0 14px 32px -18px rgb(0 0 0 / 0.7);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 2px 6px rgb(0 0 0 / 0.4), 0 22px 40px -18px rgb(0 0 0 / 0.85);
+  --shadow-dock: 0 -12px 32px -12px rgb(0 0 0 / 0.65);
+  --page-glow-cool: 60 92 160;
+  --page-glow-warm: 226 26 26;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -52,6 +119,10 @@
   }
   body {
     @apply bg-bg font-sans text-sm text-ink antialiased;
+    background-image:
+      radial-gradient(900px 520px at 100% -160px, rgb(var(--page-glow-warm) / 0.07), transparent 70%),
+      radial-gradient(1100px 620px at -10% -200px, rgb(var(--page-glow-cool) / 0.14), transparent 70%);
+    background-repeat: no-repeat;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
     font-feature-settings: 'tnum' 0;
@@ -63,7 +134,7 @@
     line-height: 1.05;
   }
   ::selection {
-    background: rgb(var(--brand) / 0.18);
+    background: rgb(var(--brand) / 0.22);
   }
   :focus-visible {
     outline: 2px solid rgb(var(--ink));
@@ -77,23 +148,36 @@
 }
 
 @layer components {
-  /* Plain white panel — no shadow; used sparingly, not around every section. */
+  /* Top-lit plate: hairline border, faint vertical gradient, layered shadow. */
   .card {
-    @apply rounded-2xl border border-line bg-surface;
+    @apply rounded-2xl border border-line/80 bg-surface shadow-card;
+    background-image: linear-gradient(180deg, rgb(var(--surface-top)) 0%, rgb(var(--surface-bottom)) 100%);
+  }
+  .dark .card {
+    @apply border-line;
+  }
+  /* Frosted chrome: tab bar, sticky headers */
+  .glass {
+    background-color: rgb(var(--surface) / 0.74);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
   }
   .chip {
-    @apply inline-flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors;
+    @apply inline-flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-[color,background-color,border-color,box-shadow];
   }
   .input {
     /* 17px on phones: iOS web views zoom into inputs smaller than 16px */
-    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base outline-none transition-colors
-      placeholder:text-muted focus:border-ink sm:text-sm;
+    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base outline-none transition-[border-color,box-shadow]
+      placeholder:text-muted focus:border-ink/50 focus:ring-4 focus:ring-ink/[.07] sm:text-sm;
   }
   .label {
     @apply mb-1.5 block text-xs font-medium text-muted;
   }
   .skeleton {
-    @apply rounded-xl bg-line/60;
+    @apply rounded-2xl;
+    background: linear-gradient(90deg, rgb(var(--line) / 0.45) 0%, rgb(var(--line) / 0.8) 50%, rgb(var(--line) / 0.45) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
   }
   .scrollbar-none {
     scrollbar-width: none;
@@ -104,6 +188,54 @@
   .digits {
     @apply font-display tabular-nums;
   }
+
+  /* Primary action: red top-lit gradient, soft glow on hover */
+  .btn-brand {
+    color: #fff;
+    background-image: linear-gradient(180deg, #e8232a 0%, #b80f1f 100%);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.2) inset, 0 1px 2px rgb(120 10 20 / 0.3), 0 6px 16px -8px rgb(226 26 26 / 0.55);
+  }
+  .btn-brand:hover {
+    background-image: linear-gradient(180deg, #f02b31 0%, #c41224 100%);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.22) inset, 0 1px 2px rgb(120 10 20 / 0.3), 0 10px 26px -8px rgb(226 26 26 / 0.7);
+  }
+  /* Ink action: graphite in light, pale steel in dark */
+  .btn-ink {
+    @apply bg-ink text-inverse;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.1), transparent);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 6px 16px -10px rgb(0 0 0 / 0.5);
+  }
+  .btn-ink:hover {
+    @apply bg-ink/90;
+  }
+
+  /* Bars: a gradient inside their own semantic colour */
+  .bar-ok {
+    background-image: linear-gradient(90deg, rgb(var(--ok) / 0.7), rgb(var(--ok)));
+  }
+  .bar-warn {
+    background-image: linear-gradient(90deg, rgb(var(--warn) / 0.7), rgb(var(--warn)));
+  }
+  .bar-bad {
+    background-image: linear-gradient(90deg, rgb(var(--brand) / 0.7), rgb(var(--brand)));
+  }
+  .bar-ink {
+    background-image: linear-gradient(90deg, rgb(var(--ink) / 0.55), rgb(var(--ink)));
+  }
+  .bar-brand {
+    background-image: linear-gradient(90deg, #ff6a3d, #e21a1a 70%, #b80f1f);
+  }
+  /* gentle top-left sheen on tinted tiles */
+  .tile-sheen {
+    background-image: linear-gradient(145deg, rgb(255 255 255 / 0.6), rgb(255 255 255 / 0) 65%);
+  }
+  .dark .tile-sheen {
+    background-image: linear-gradient(145deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0) 65%);
+  }
+  .track {
+    background-color: rgb(var(--ink) / 0.09);
+    box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.06);
+  }
 }
 
 @layer utilities {
@@ -111,7 +243,24 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
   .pb-tabbar {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+  /* Micro-interactions: ≤2% lift/press; switched off with reduced motion below */
+  .lift {
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      border-color 0.18s ease,
+      background-color 0.18s ease;
+  }
+  @media (hover: hover) {
+    .lift:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+  .press:active {
+    transform: scale(0.985);
   }
 }
 
@@ -142,6 +291,15 @@
   animation: confetti-fall var(--dur, 3s) cubic-bezier(0.2, 0.6, 0.4, 1) var(--delay, 0s) forwards;
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 @keyframes typing {
   0%,
   60%,
@@ -159,6 +317,7 @@
 /*
  * «Ночная линия»: the login hero background, shared by every hero panel
  * (home route, tournament, profile, run outcome, play header, admin sidebar).
+ * It stays dark in both themes.
  */
 .night-line,
 .login-hero {
@@ -177,6 +336,23 @@
     linear-gradient(135deg, #0a101e 0%, #1f2b47 100%);
   color: #fff;
 }
+/* Panels float on the page: a soft drop in light, a lit hairline in dark so they don't sink into the graphite */
+.night-panel {
+  box-shadow: 0 1px 2px rgb(10 16 30 / 0.2), 0 24px 48px -24px rgb(10 16 30 / 0.55);
+}
+.dark .night-panel {
+  background-color: #111b30;
+  background-image:
+    repeating-linear-gradient(100deg, transparent 0 22px, rgb(255 255 255 / 0.035) 22px 24px),
+    radial-gradient(120% 90% at 100% 0%, rgb(226 26 26 / 0.32), transparent 55%),
+    linear-gradient(135deg, #111b30 0%, #25355a 100%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 24px 48px -24px rgb(0 0 0 / 0.8);
+}
+.dark .night-panel.night-line-flat {
+  background-image:
+    repeating-linear-gradient(100deg, transparent 0 22px, rgb(255 255 255 / 0.03) 22px 24px),
+    linear-gradient(135deg, #111b30 0%, #25355a 100%);
+}
 .night-line :focus-visible,
 .night-line-flat :focus-visible,
 .login-hero :focus-visible {
@@ -194,16 +370,24 @@
   pointer-events: none;
 }
 @keyframes speed {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(400%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
 }
 .animate-speed {
   animation: speed 2.4s linear infinite;
 }
 /* Oncoming wind: streaks run from the train's nose (right) to its tail (left) */
 @keyframes wind {
-  0% { transform: translateX(400%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(400%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 .animate-wind {
   animation: wind 2.4s linear infinite;
@@ -211,15 +395,24 @@
 
 /* Login: the train pulls in once */
 @keyframes train-arrive {
-  0% { transform: translateX(-115%); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(-115%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 .train-arrive {
   animation: train-arrive 1.8s cubic-bezier(0.16, 0.84, 0.3, 1) both;
 }
 @keyframes headlight {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 .headlight {
   background: radial-gradient(closest-side, rgb(255 236 196 / 0.7), transparent);
@@ -240,8 +433,18 @@
   border-radius: 9999px;
   background: #121b31;
 }
-.ticket-perforation::before { left: -12px; }
-.ticket-perforation::after { right: -12px; }
+.ticket-perforation::before {
+  left: -12px;
+}
+.ticket-perforation::after {
+  right: -12px;
+}
+/* in dark the card itself is graphite: the notches get a hairline so they still read as cut-outs */
+.dark .ticket-perforation::before,
+.dark .ticket-perforation::after {
+  background: #0d1426;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -268,5 +471,12 @@
   .running-stripe::after {
     animation: none !important;
     transform: none;
+  }
+  .lift:hover,
+  .press:active {
+    transform: none !important;
+  }
+  .skeleton {
+    animation: none !important;
   }
 }

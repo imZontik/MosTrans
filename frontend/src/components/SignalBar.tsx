@@ -2,9 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
 import { scaleTone, TONE_TEXT } from '@/lib/format'
 
-const FILL = { ok: 'bg-ok', warn: 'bg-warn', bad: 'bg-bad' } as const
+const FILL = { ok: 'bar-ok', warn: 'bar-warn', bad: 'bar-bad' } as const
 // On the night line the semaphore needs a little more light to read.
-const FILL_DARK = { ok: 'bg-[#2FAE6E]', warn: 'bg-warn', bad: 'bg-[#FF4D4D]' } as const
+const FILL_DARK = {
+  ok: 'bg-gradient-to-r from-[#1F9A5C] to-[#3FD58A]',
+  warn: 'bg-gradient-to-r from-[#D99612] to-[#FFC940]',
+  bad: 'bg-gradient-to-r from-[#D9262B] to-[#FF5A5A]',
+} as const
 const DELTA_DARK = { up: 'text-[#5FD39A]', down: 'text-[#FF7A7A]' } as const
 
 /**
@@ -70,7 +74,7 @@ export function SignalBar({
         </span>
       </div>
       <div
-        className={cn('mt-1 h-1 overflow-hidden rounded-full', dark ? 'bg-white/15' : 'bg-ink/10')}
+        className={cn('mt-1.5 h-1.5 overflow-hidden rounded-full', dark ? 'bg-white/15' : 'track')}
         role="meter"
         aria-label={label}
         aria-valuemin={0}

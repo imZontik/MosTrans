@@ -13,7 +13,7 @@ const TYPE_META: Record<GraphNode['type'], { label: string; tone: Tone; icon: Re
 
 const QUALITY: Record<Quality, { label: string; cls: string }> = {
   best: { label: 'Лучший', cls: 'bg-ok/10 text-ok border-ok/30' },
-  ok: { label: 'Допустимый', cls: 'bg-warn/10 text-[#b86e00] border-warn/30' },
+  ok: { label: 'Допустимый', cls: 'bg-warn/10 text-warn-ink border-warn/30' },
   bad: { label: 'Ошибка', cls: 'bg-bad/10 text-bad border-bad/30' },
 }
 
@@ -351,17 +351,17 @@ function ChoiceRow({
   return (
     <div className={cn('rounded-xl border p-3', q.cls)}>
       <div className="flex items-start gap-2">
-        <code className="mt-2 rounded bg-white/70 px-1.5 text-xs font-semibold text-ink">{choice.id}</code>
+        <code className="mt-2 rounded bg-surface/70 px-1.5 text-xs font-semibold text-ink">{choice.id}</code>
         <div className="min-w-0 flex-1 space-y-2 text-ink">
           {edit ? (
-            <input className="input bg-white py-2" value={choice.text} onChange={(e) => set({ text: e.target.value })} />
+            <input className="input bg-surface py-2" value={choice.text} onChange={(e) => set({ text: e.target.value })} />
           ) : (
             <p className="text-sm font-semibold">{choice.text}</p>
           )}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {edit ? (
               <>
-                <select className="input w-auto bg-white py-1.5 text-xs" value={choice.quality ?? 'ok'} onChange={(e) => set({ quality: e.target.value as Quality })}>
+                <select className="input w-auto bg-surface py-1.5 text-xs" value={choice.quality ?? 'ok'} onChange={(e) => set({ quality: e.target.value as Quality })}>
                   <option value="best">Лучший</option>
                   <option value="ok">Допустимый</option>
                   <option value="bad">Ошибка</option>
@@ -376,16 +376,16 @@ function ChoiceRow({
               </>
             ) : (
               <>
-                <span className="rounded-full bg-white/70 px-2 py-0.5 font-semibold">{q.label}</span>
-                <span className="rounded-full bg-white/70 px-2 py-0.5 font-semibold">+{choice.points ?? 0} очк.</span>
-                {!!choice.effects?.loyalty && <span className="rounded-full bg-white/70 px-2 py-0.5">💙 {fmtSigned(choice.effects.loyalty)}</span>}
-                {!!choice.effects?.safety && <span className="rounded-full bg-white/70 px-2 py-0.5">🛡️ {fmtSigned(choice.effects.safety)}</span>}
+                <span className="rounded-full bg-surface/70 px-2 py-0.5 font-semibold">{q.label}</span>
+                <span className="rounded-full bg-surface/70 px-2 py-0.5 font-semibold">+{choice.points ?? 0} очк.</span>
+                {!!choice.effects?.loyalty && <span className="rounded-full bg-surface/70 px-2 py-0.5">💙 {fmtSigned(choice.effects.loyalty)}</span>}
+                {!!choice.effects?.safety && <span className="rounded-full bg-surface/70 px-2 py-0.5">🛡️ {fmtSigned(choice.effects.safety)}</span>}
                 <span className="text-muted">→ {choice.next}</span>
               </>
             )}
           </div>
           {edit ? (
-            <input className="input bg-white py-1.5 text-xs" placeholder="Обратная связь игроку" value={choice.feedback ?? ''} onChange={(e) => set({ feedback: e.target.value })} />
+            <input className="input bg-surface py-1.5 text-xs" placeholder="Обратная связь игроку" value={choice.feedback ?? ''} onChange={(e) => set({ feedback: e.target.value })} />
           ) : (
             choice.feedback && <p className="text-xs text-muted">{choice.feedback}</p>
           )}
@@ -399,7 +399,7 @@ const fmtSigned = (n: number) => (n > 0 ? `+${n}` : String(n))
 
 function MiniNum({ label, value, onChange }: { label: string; value: number; onChange: (v: string) => void }) {
   return (
-    <label className="flex items-center gap-1 rounded-lg bg-white px-2 py-1 font-semibold text-ink ring-1 ring-line">
+    <label className="flex items-center gap-1 rounded-lg bg-surface px-2 py-1 font-semibold text-ink ring-1 ring-line">
       {label}
       <input type="number" className="w-12 bg-transparent text-right outline-none" value={value} onChange={(e) => onChange(e.target.value)} />
     </label>
@@ -423,7 +423,7 @@ function NextSelect({
 }) {
   if (!edit) return <p className="text-sm text-muted">{label ?? '→'} <code>{value}</code></p>
   return (
-    <label className={cn('flex items-center gap-2 text-sm font-semibold', compact && 'rounded-lg bg-white px-2 py-1 text-xs ring-1 ring-line')}>
+    <label className={cn('flex items-center gap-2 text-sm font-semibold', compact && 'rounded-lg bg-surface px-2 py-1 text-xs ring-1 ring-line')}>
       {label ?? '→'}
       <select className={cn(compact ? 'bg-transparent outline-none' : 'input w-auto py-1.5')} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         {!ids.includes(value ?? '') && <option value={value ?? ''}>{value || '—'}</option>}

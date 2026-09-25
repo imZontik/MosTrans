@@ -15,13 +15,13 @@ export function Progress({
   const pct = Math.max(0, Math.min(1, value)) * 100
   return (
     <div
-      className={cn('w-full overflow-hidden rounded-full bg-ink/10', height, className)}
+      className={cn('track w-full overflow-hidden rounded-full', height, className)}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(pct)}
     >
-      <div className={cn('h-full rounded-full bg-ink', barClassName)} style={{ width: `${pct}%` }} />
+      <div className={cn('bar-ink h-full rounded-full', barClassName)} style={{ width: `${pct}%` }} />
     </div>
   )
 }

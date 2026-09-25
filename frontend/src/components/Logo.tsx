@@ -13,7 +13,7 @@ export function LogoMark({ className }: { className?: string }) {
 export function Logo({ light = false, className, subtitle }: { light?: boolean; className?: string; subtitle?: string }) {
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
-      <LogoMark className={light ? 'rounded-[9px] ring-1 ring-white/25' : undefined} />
+      <LogoMark className={light ? 'rounded-[9px] ring-1 ring-white/25' : 'rounded-[9px] shadow-[0_4px_12px_-4px_rgb(10_16_30/.5)] dark:ring-1 dark:ring-white/15'} />
       <div className="leading-none">
         <div className={cn('whitespace-nowrap font-display text-lg font-semibold leading-none', light ? 'text-white' : 'text-ink')}>
           Магистраль 400

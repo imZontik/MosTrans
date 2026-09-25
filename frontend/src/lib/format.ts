@@ -72,14 +72,29 @@ export const QUALITY_META: Record<Quality, { label: string; tone: 'ok' | 'warn' 
 
 /** Rarity: a word plus a tinted ring (grey, blue, violet, gold) around the medallion. */
 export const RARITY_META: Record<Rarity, { label: string; ring: string; plate: string; text: string }> = {
-  common: { label: 'Обычное', ring: 'ring-2 ring-rarity-common', plate: 'bg-surface', text: 'text-muted' },
-  rare: { label: 'Редкое', ring: 'ring-2 ring-rarity-rare', plate: 'bg-[#EEF4FC]', text: 'text-rarity-rare' },
-  epic: { label: 'Эпическое', ring: 'ring-[3px] ring-rarity-epic', plate: 'bg-[#F3EEFB]', text: 'text-rarity-epic' },
+  common: {
+    label: 'Обычное',
+    ring: 'ring-2 ring-rarity-common/80',
+    plate: 'bg-gradient-to-b from-surface to-surface-2',
+    text: 'text-muted',
+  },
+  rare: {
+    label: 'Редкое',
+    ring: 'ring-2 ring-rarity-rare',
+    plate: 'bg-gradient-to-br from-rarity-rare-soft via-surface to-rarity-rare-soft',
+    text: 'text-rarity-rare',
+  },
+  epic: {
+    label: 'Эпическое',
+    ring: 'ring-[3px] ring-rarity-epic shadow-[0_0_16px_rgb(124_77_201/.35)]',
+    plate: 'bg-gradient-to-br from-rarity-epic-soft via-surface to-rarity-epic-soft',
+    text: 'text-rarity-epic',
+  },
   legendary: {
     label: 'Легендарное',
-    ring: 'ring-[3px] ring-rarity-legendary shadow-[0_0_14px_rgb(212_160_23/.45)]',
-    plate: 'bg-[#FBF4DF]',
-    text: 'text-[#8F6A00]',
+    ring: 'ring-[3px] ring-rarity-legendary shadow-[0_0_18px_rgb(212_160_23/.5)]',
+    plate: 'bg-gradient-to-br from-rarity-legendary-soft via-surface to-rarity-legendary-soft',
+    text: 'text-rarity-legendary-ink',
   },
 }
 

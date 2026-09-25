@@ -135,14 +135,14 @@ export default function AdminScenariosPage() {
           <button
             key={k}
             onClick={() => setFilter(k)}
-            className={cn('chip border', filter === k ? 'border-ink bg-ink text-white' : 'border-line bg-surface text-ink hover:border-ink')}
+            className={cn('chip border', filter === k ? 'btn-ink border-transparent' : 'border-line bg-surface text-ink shadow-card hover:border-ink/40')}
           >
             {label}
           </button>
         ))}
       </div>
 
-      {error && <p className="mb-4 border-l-2 border-brand bg-surface px-4 py-3" role="alert">{error}</p>}
+      {error && <p className="mb-4 card border-l-4 border-l-brand px-4 py-3" role="alert">{error}</p>}
 
       {list.loading && !list.data ? (
         <Loading rows={5} />
