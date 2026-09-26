@@ -443,6 +443,34 @@
   transform-origin: 50% 100%;
   animation: mascot-pop 0.55s cubic-bezier(0.22, 0.8, 0.26, 1) both;
 }
+/* Вова blinks now and then; the sign over his head bobs gently */
+@keyframes mascot-blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.12);
+  }
+}
+.mascot-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mascot-blink 4.8s infinite;
+}
+@keyframes mascot-fx {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+.mascot-fx {
+  animation: mascot-fx 2.6s ease-in-out infinite;
+}
 
 /*
  * Home hero ride (HeroRide): the track streams past at a steady ~400px/s. 3840px per loop =
@@ -539,7 +567,9 @@
   }
   .train-arrive,
   .headlight,
-  .ride-track {
+  .ride-track,
+  .mascot-blink,
+  .mascot-fx {
     animation: none !important;
   }
   .login-hero::after,
