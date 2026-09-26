@@ -20,7 +20,9 @@ async def login(session: AsyncSession, email: str, password: str, client_ip: str
     return {"access_token": create_access_token(user.id, user.role), "token_type": "bearer", "user": user_full(user)}
 
 
-async def register(session: AsyncSession, email: str, password: str, full_name: str, position: str, team: str) -> dict:
+async def register(
+    session: AsyncSession, email: str, password: str, full_name: str, position: str, team: str, depot: str = ""
+) -> dict:
     repo = UserRepository(session)
     if await repo.get_by_email(email.strip()):
         raise Conflict("Пользователь с такой почтой уже зарегистрирован")
@@ -34,6 +36,7 @@ async def register(session: AsyncSession, email: str, password: str, full_name: 
             role="employee",
             position=position,
             team=team.strip(),
+            depot=depot.strip(),
         )
     )
     await session.commit()

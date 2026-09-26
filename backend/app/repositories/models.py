@@ -31,7 +31,8 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(32), default="employee")  # employee | lead | admin
     position: Mapped[str] = mapped_column(String(32), default="conductor")
-    team: Mapped[str] = mapped_column(String(255), default="")
+    team: Mapped[str] = mapped_column(String(255), default="")  # brigade
+    depot: Mapped[str] = mapped_column(String(255), default="", server_default="")
     points: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_active_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

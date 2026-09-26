@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 
 from sqlalchemy import func, or_, select, update
@@ -35,6 +37,21 @@ class UserRepository:
             like = f"%{search.lower()}%"
             query = query.where(or_(func.lower(User.full_name).like(like), func.lower(User.email).like(like)))
         return list(await self.s.scalars(query))
+
+    async def ids_in_unit(self, scope: str, name: str, roles: tuple[str, ...]) -> set[int]:
+        """Members of a brigade (scope="team") or a depot (scope="depot")."""
+        column = User.team if scope == "team" else User.depot
+        return set(await self.s.scalars(select(User.id).where(column == name, User.role.in_(roles))))
+
+    async def units(self, roles: tuple[str, ...]) -> list[tuple[str, str, int]]:
+        """[(depot, team, members)] of everyone with a brigade."""
+        query = (
+            select(User.depot, User.team, func.count(User.id))
+            .where(User.role.in_(roles), User.team != "")
+            .group_by(User.depot, User.team)
+            .order_by(User.depot, User.team)
+        )
+        return [(depot, team, count) for depot, team, count in (await self.s.execute(query)).all()]
 
     async def count(self, roles: tuple[str, ...]) -> int:
         return await self.s.scalar(select(func.count(User.id)).where(User.role.in_(roles))) or 0

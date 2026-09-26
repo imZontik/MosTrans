@@ -48,6 +48,13 @@ LAST_NAMES = ["Иванов", "Смирнов", "Кузнецов", "Попов"
               "Морозов", "Волков", "Алексеев", "Лебедев", "Семёнов", "Егоров", "Павлов", "Козлов", "Степанов", "Николаев"]
 TEAMS = ["Бригада 1, Москва — Санкт-Петербург", "Бригада 2, Москва — Санкт-Петербург",
          "Бригада 3, Москва — Санкт-Петербург", "Бригада 4, Москва — Нижний Новгород"]
+# Brigade -> depot it belongs to (migration 0002 fills the same for existing demo databases)
+TEAM_DEPOTS = {
+    TEAMS[0]: "Депо Санкт-Петербург",
+    TEAMS[1]: "Депо Москва",
+    TEAMS[2]: "Депо Москва",
+    TEAMS[3]: "Депо Нижний Новгород",
+}
 FAKE_EMPLOYEES = 34
 
 
@@ -232,6 +239,7 @@ async def _seed_users_and_history(session: AsyncSession, rng: random.Random) -> 
 
     email, _, name, position, team, skill, runs = DEMO_EMPLOYEE
     demo = User(email=email, password_hash=password_hash, full_name=name, role="employee", position=position, team=team,
+                depot=TEAM_DEPOTS[team],
                 created_at=_now() - timedelta(days=30))
     session.add(demo)
     await session.flush()
@@ -250,13 +258,15 @@ async def _seed_users_and_history(session: AsyncSession, rng: random.Random) -> 
         roll = rng.random()
         position = "conductor" if roll < 0.68 else "senior_conductor" if roll < 0.93 else "train_chief"
         skill = rng.betavariate(5, 3)
+        team = rng.choice(TEAMS)
         user = User(
             email=f"employee{i + 1}@m400.ru",
             password_hash=password_hash,
             full_name=full,
             role="employee",
             position=position,
-            team=rng.choice(TEAMS),
+            team=team,
+            depot=TEAM_DEPOTS[team],
             created_at=_now() - timedelta(days=rng.randint(46, 400)),
         )
         session.add(user)
@@ -302,6 +312,7 @@ async def _fake_entries(session: AsyncSession, rng: random.Random, t: Tournament
     entries = []
     for user in players:
         skill = rng.betavariate(5, 3)
+        team = rng.choice(TEAMS)
         answers, score, correct = [], 0, 0
         for index, q in enumerate(t.questions):
             elapsed = rng.uniform(2, q["timer"])

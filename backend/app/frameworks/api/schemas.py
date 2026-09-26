@@ -15,6 +15,7 @@ class RegisterIn(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
     position: str = "conductor"
     team: str = Field(default="", max_length=255)
+    depot: str = Field(default="", max_length=255)
 
 
 class StartRunIn(BaseModel):
@@ -75,6 +76,7 @@ class EmployeePatch(BaseModel):
     position: str | None = None
     role: str | None = None
     team: str | None = None
+    depot: str | None = None
 
 
 class TournamentCreateIn(BaseModel):

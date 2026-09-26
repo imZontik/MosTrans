@@ -67,6 +67,7 @@ export default function ProfilePage() {
               <p className="mt-1 text-white/70">
                 {profile.position_title}
                 {profile.team ? `, ${profile.team}` : ''}
+                {profile.depot ? `, ${profile.depot}` : ''}
               </p>
               <p className="mt-2 hidden gap-4 text-white/70 sm:flex">
                 <span>

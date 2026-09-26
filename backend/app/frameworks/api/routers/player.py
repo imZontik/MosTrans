@@ -30,7 +30,7 @@ async def login(body: LoginIn, request: Request, session: AsyncSession = Depends
 
 @router.post("/auth/register", tags=["auth"])
 async def register(body: RegisterIn, session: AsyncSession = Depends(get_session)):
-    return await auth.register(session, body.email, body.password, body.full_name, body.position, body.team)
+    return await auth.register(session, body.email, body.password, body.full_name, body.position, body.team, body.depot)
 
 
 # --- profile ----------------------------------------------------------------
@@ -109,12 +109,20 @@ async def abandon(run_id: int, user: User = Depends(current_user), session: Asyn
 @router.get("/leaderboard", tags=["leaderboard"])
 async def get_leaderboard(
     period: Literal["week", "all"] = "week",
+    scope: Literal["company", "depot", "team"] = "company",
+    unit: str | None = Query(default=None, max_length=255, description="Депо или бригада; по умолчанию — своя"),
     limit: int = Query(default=50, ge=1, le=200),
     user: User = Depends(current_user),
     session: AsyncSession = Depends(get_session),
     cache: Cache = Depends(get_cache),
 ):
-    return await leaderboard.leaderboard(session, cache, user, period, limit)
+    return await leaderboard.leaderboard(session, cache, user, period, limit, scope, unit)
+
+
+@router.get("/leaderboard/units", tags=["leaderboard"])
+async def leaderboard_units(_: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
+    """Depots and brigades available for ``scope``/``unit``."""
+    return await leaderboard.units(session)
 
 
 # --- tournaments ------------------------------------------------------------

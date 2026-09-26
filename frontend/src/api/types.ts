@@ -17,6 +17,7 @@ export interface UserBrief {
   position: Position | string
   position_title: string
   team: string
+  depot: string
   level: number
   level_title: string
   points: number
@@ -279,11 +280,21 @@ export interface LeaderEntry extends UserBrief {
   is_me: boolean
 }
 
+export type LeaderboardScope = 'company' | 'depot' | 'team'
+
 export interface Leaderboard {
   period: 'week' | 'all'
+  scope: LeaderboardScope
+  /** depot or brigade name; null for the whole company or when the user has none */
+  unit: string | null
   entries: LeaderEntry[]
   me: LeaderEntry | null
   participants: number
+}
+
+export interface LeaderboardUnits {
+  depots: { name: string; members: number }[]
+  teams: { name: string; depot: string; members: number }[]
 }
 
 // --- tournaments ------------------------------------------------------------

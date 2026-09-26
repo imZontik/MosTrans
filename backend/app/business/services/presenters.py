@@ -13,6 +13,7 @@ def user_brief(user: User) -> dict:
         "position": user.position,
         "position_title": position_title(user.position),
         "team": user.team,
+        "depot": user.depot,
         "level": level.level,
         "level_title": level.title,
         "points": user.points,

@@ -13,6 +13,8 @@ import type {
   GenerateRequest,
   JoinResponse,
   Leaderboard,
+  LeaderboardScope,
+  LeaderboardUnits,
   LoginResponse,
   Me,
   Overview,
@@ -166,7 +168,11 @@ export const api = {
   abandon: (id: number) => post<RunView>(`/runs/${id}/abandon`),
 
   // leaderboard & tournaments
-  leaderboard: (period: 'week' | 'all') => get<Leaderboard>(`/leaderboard?period=${period}&limit=100`),
+  leaderboard: (period: 'week' | 'all', scope: LeaderboardScope = 'company', unit?: string) =>
+    get<Leaderboard>(
+      `/leaderboard?period=${period}&scope=${scope}&limit=100${unit ? `&unit=${encodeURIComponent(unit)}` : ''}`,
+    ),
+  leaderboardUnits: () => get<LeaderboardUnits>('/leaderboard/units'),
   currentTournament: () => get<CurrentTournament>('/tournaments/current'),
   tournaments: () => get<TournamentWithWinners[]>('/tournaments'),
   joinTournament: (id: number) => post<JoinResponse>(`/tournaments/${id}/join`),

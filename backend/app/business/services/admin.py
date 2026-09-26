@@ -105,6 +105,8 @@ async def update_employee(session: AsyncSession, user_id: int, data: dict) -> di
         user.role = data["role"]
     if "team" in data:
         user.team = data["team"]
+    if "depot" in data:
+        user.depot = data["depot"]
     await session.commit()
     return user_full(user)
 

@@ -77,6 +77,7 @@ def training_report_xlsx(report: dict) -> bytes:
             ("full_name", "Сотрудник", 30, None),
             ("position", "Должность", 20, None),
             ("team", "Бригада", 34, None),
+            ("depot", "Депо", 22, None),
             ("level", "Уровень", 9, None),
             ("points_total", "Очки всего", 11, None),
             ("points_period", "Очки за период", 11, None),

@@ -73,6 +73,7 @@ async def training_report(session: AsyncSession, days: int) -> dict:
                 "email": u.email,
                 "position": position_title(u.position),
                 "team": u.team,
+                "depot": u.depot,
                 "level": level_for(u.points).level,
                 "points_total": u.points,
                 "points_period": points.get(u.id, 0),

@@ -45,6 +45,6 @@ def test_training_report_xlsx():
     people = wb["Сотрудники"]
     assert people["A1"].value == "Сотрудник"
     assert people["A2"].value == "Иван Петров"
-    assert people["H2"].number_format == "0%"
+    assert people["I2"].number_format == "0%"
     # Moscow time, no tzinfo: Excel has no time zones
-    assert people["N2"].value == datetime(2026, 9, 26, 15, 0)
+    assert people["O2"].value == datetime(2026, 9, 26, 15, 0)

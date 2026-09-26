@@ -75,7 +75,8 @@ export default function EmployeeDetailPage() {
           <h1 className="font-display text-2xl font-semibold">{e.full_name}</h1>
           <p className="text-muted">
             {e.position_title}
-            {e.team ? `, ${e.team}` : ''}. {e.email}
+            {e.team ? `, ${e.team}` : ''}
+            {e.depot ? `, ${e.depot}` : ''}. {e.email}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge tone="dark">
