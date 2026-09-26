@@ -257,7 +257,7 @@ export default function ScenarioEditorPage() {
       <div className="flex gap-1 rounded-xl bg-ink/5 p-1 sm:w-fit">
         {(
           [
-            ['nodes', 'Узлы сценария'],
+            ['nodes', 'Ветки и узлы'],
             ['json', 'JSON'],
           ] as const
         ).map(([k, label]) => (
@@ -286,8 +286,9 @@ export default function ScenarioEditorPage() {
           />
           {jsonError && <p className="text-sm font-semibold text-bad">{jsonError}</p>}
           <p className="text-xs text-muted">
-            Формат: start, initial {'{loyalty, safety}'}, characters, nodes (scene | choice | input | end). Нажмите «Проверить», чтобы
-            валидировать граф на сервере.
+            Формат: start, initial {'{loyalty, safety}'}, characters, nodes (scene | choice | input | end). Ветки: next у каждого варианта,
+            timeout.next, branches у свободного ответа (min_score), routes — условные переходы{' '}
+            {'{"if": {"loyalty_below": 40} | {"chose": "n2:b"}, "next": "…"}'}. Нажмите «Проверить», чтобы валидировать граф на сервере.
           </p>
         </div>
       )}

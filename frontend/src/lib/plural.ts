@@ -17,6 +17,8 @@ export const PEOPLE: [string, string, string] = ['участник', 'участ
 export const EMPLOYEES: [string, string, string] = ['сотрудник', 'сотрудника', 'сотрудников']
 export const SCENARIOS: [string, string, string] = ['сценарий', 'сценария', 'сценариев']
 export const QUESTIONS: [string, string, string] = ['вопрос', 'вопроса', 'вопросов']
+export const FORKS: [string, string, string] = ['развилка', 'развилки', 'развилок']
+export const ENDINGS: [string, string, string] = ['финал', 'финала', 'финалов']
 
 export const points = (n: number) => pluralN(n, POINTS)
 

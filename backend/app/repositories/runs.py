@@ -37,6 +37,17 @@ class RunRepository:
             query = query.where(Run.id != exclude_run)
         return await self.s.scalar(query) or 0
 
+    async def finished_endings(
+        self, user_id: int, scenario_id: int, exclude_run: int | None = None
+    ) -> list[tuple[str | None, str | None]]:
+        """Final node and outcome of every finished run of a scenario by the user."""
+        query = select(Run.current_node, Run.outcome).where(
+            Run.user_id == user_id, Run.scenario_id == scenario_id, Run.status == "finished"
+        )
+        if exclude_run:
+            query = query.where(Run.id != exclude_run)
+        return [(node, outcome) for node, outcome in (await self.s.execute(query)).all()]
+
     async def finished_with_scenarios(self, user_id: int, limit: int | None = None) -> list[tuple[Run, Scenario]]:
         query = (
             select(Run, Scenario)

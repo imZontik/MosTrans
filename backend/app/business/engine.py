@@ -11,6 +11,17 @@ graph (JSON) of nodes:
   ``"outcome": "auto"`` it is derived from the share of optimal decisions and
   the texts are taken from ``variants``.
 
+Branching: each choice leads to its own ``next``, a timer can have its own
+``timeout`` branch, and a free-text answer can branch by grade (``branches``).
+Any scene / choice / input may also carry conditional ``routes`` checked after
+the answer, in order; the first one whose conditions all hold overrides the
+usual next node. Conditions look at the scales and at earlier answers::
+
+    "routes": [
+      {"if": {"loyalty_below": 40}, "next": "angry"},
+      {"if": {"chose": "n3:c", "safety_at_least": 50}, "next": "police"}
+    ]
+
 Example::
 
     {
@@ -42,6 +53,8 @@ CRITICAL_NODE = "__critical__"
 FAST_ANSWER_SHARE = 0.4
 FAST_ANSWER_BONUS = 5
 DEFAULT_TIMEOUT_EFFECTS = {"loyalty": -10, "safety": -10}
+SCALE_CONDITIONS = ("loyalty_below", "loyalty_at_least", "safety_below", "safety_at_least")
+CONDITIONS = SCALE_CONDITIONS + ("chose",)
 
 CRITICAL_END = {
     "type": "end",
@@ -147,7 +160,12 @@ def validate_graph(graph: Any) -> list[str]:
             check_target(node_id, node.get("next"))
             for branch in node.get("branches") or []:
                 check_target(node_id, branch.get("next"))
-        elif node_type == "end":
+                score = branch.get("min_score")
+                if isinstance(score, bool) or not isinstance(score, (int, float)) or not 0 <= score <= 10:
+                    errors.append(f"Узел «{node_id}»: порог ветки по оценке (min_score) — число от 0 до 10")
+        if node_type != "end":
+            _check_routes(node_id, node, nodes, errors)
+        else:
             has_end = True
             if node.get("outcome") == "auto":
                 missing = [o for o in OUTCOMES if o not in (node.get("variants") or {})]
@@ -166,6 +184,39 @@ def validate_graph(graph: Any) -> list[str]:
     return errors
 
 
+def _check_routes(node_id: str, node: dict, nodes: dict, errors: list[str]) -> None:
+    routes = node.get("routes")
+    if routes is None:
+        return
+    if not isinstance(routes, list):
+        errors.append(f"Узел «{node_id}»: routes должен быть списком условных переходов")
+        return
+    for i, route in enumerate(routes, start=1):
+        where = f"Узел «{node_id}», условный переход {i}"
+        if not isinstance(route, dict):
+            errors.append(f"{where}: должен быть объектом")
+            continue
+        if route.get("next") not in nodes:
+            errors.append(f"{where}: ссылается на несуществующий узел «{route.get('next')}»")
+        cond = route.get("if")
+        if not isinstance(cond, dict) or not cond:
+            errors.append(f"{where}: нет условия (if)")
+            continue
+        for key, value in cond.items():
+            if key not in CONDITIONS:
+                errors.append(f"{where}: неизвестное условие «{key}»")
+            elif key in SCALE_CONDITIONS:
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= 100:
+                    errors.append(f"{where}: порог «{key}» должен быть числом от 0 до 100")
+            else:
+                ref_node, _, ref_choice = str(value).partition(":")
+                ref = nodes.get(ref_node)
+                if not isinstance(ref, dict) or ref.get("type") != "choice":
+                    errors.append(f"{where}: условие chose ссылается на «{ref_node}», это не узел выбора")
+                elif not any(c.get("id") == ref_choice for c in ref.get("choices") or []):
+                    errors.append(f"{where}: в узле «{ref_node}» нет варианта «{ref_choice}»")
+
+
 def _targets(node: dict) -> list[str]:
     node_type = node.get("type")
     if node_type in ("scene", "input"):
@@ -176,7 +227,42 @@ def _targets(node: dict) -> list[str]:
             targets.append(node["timeout"].get("next"))
     else:
         targets = []
+    if node_type != "end" and isinstance(node.get("routes"), list):
+        targets += [r.get("next") for r in node["routes"] if isinstance(r, dict)]
     return [t for t in targets if t]
+
+
+def endings(graph: dict) -> list[str]:
+    """All endings a player can reach: an end node, or each outcome of an ``auto`` end node."""
+    keys = []
+    for node_id in _reachable(graph):
+        node = graph["nodes"][node_id]
+        if node.get("type") != "end":
+            continue
+        if node.get("outcome") == "auto":
+            keys += [f"{node_id}:{o}" for o in OUTCOMES]
+        else:
+            keys.append(node_id)
+    return sorted(keys)
+
+
+def ending_key(graph: dict, node_id: str, outcome: str | None) -> str:
+    if node_id == CRITICAL_NODE:
+        return CRITICAL_NODE
+    return f"{node_id}:{outcome}" if get_node(graph, node_id).get("outcome") == "auto" else node_id
+
+
+def forks(graph: dict) -> int:
+    """How many steps lead to more than one place: the measure of how non-linear a scenario is."""
+    return sum(1 for node in graph.get("nodes", {}).values() if isinstance(node, dict) and len(set(_targets(node))) > 1)
+
+
+def shape(graph: dict) -> dict:
+    """Forks and endings of a stored scenario, for the catalog cards."""
+    try:
+        return {"forks": forks(graph), "endings": len(endings(graph))}
+    except (KeyError, TypeError, AttributeError):
+        return {"forks": 0, "endings": 0}
 
 
 def _reachable(graph: dict) -> set[str]:
@@ -256,6 +342,29 @@ def _timeout_branch(node: dict) -> dict:
         "effects": DEFAULT_TIMEOUT_EFFECTS,
         "feedback": "Время вышло. В нештатной ситуации промедление — тоже решение, и обычно худшее.",
     }
+
+
+def _holds(cond: dict, state: RunState) -> bool:
+    for key, value in cond.items():
+        if key == "chose":
+            ref_node, _, ref_choice = str(value).partition(":")
+            if not any(d["node_id"] == ref_node and d.get("choice_id") == ref_choice for d in state.decisions):
+                return False
+        elif key in SCALE_CONDITIONS:
+            scale, _, op = key.partition("_")
+            current = state.loyalty if scale == "loyalty" else state.safety
+            if (current < value) != (op == "below"):
+                return False
+        else:
+            return False
+    return True
+
+
+def _route(node: dict, state: RunState, default: str) -> str:
+    for route in node.get("routes") or []:
+        if _holds(route.get("if") or {}, state):
+            return route["next"]
+    return default
 
 
 def _input_next(node: dict, score: float) -> str:
@@ -386,6 +495,7 @@ def apply_answer(
         }
     )
 
+    next_id = _route(node, state, next_id)
     if state.safety <= 0:
         next_id = CRITICAL_NODE
     state.node_id = next_id

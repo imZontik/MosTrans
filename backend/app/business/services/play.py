@@ -19,6 +19,8 @@ from app.business.engine import (
     ScenarioError,
     apply_answer,
     end_texts,
+    ending_key,
+    endings,
     get_node,
     initial_state,
     public_node,
@@ -260,6 +262,14 @@ async def _finish(session: AsyncSession, user: User, run: Run, scenario: Scenari
     RUNS_FINISHED.labels(mode=run.mode, category=scenario.category, outcome=run.outcome).inc()
 
     end = end_texts(get_node(scenario.graph, state.node_id), run.outcome)
+    all_endings = endings(scenario.graph)
+    ending = ending_key(scenario.graph, state.node_id, run.outcome)
+    seen: set[str] = set()
+    for node_id, outcome in await runs.finished_endings(user.id, scenario.id, exclude_run=run.id):
+        try:
+            seen.add(ending_key(scenario.graph, node_id or "", outcome))
+        except ScenarioError:  # the scenario was edited since, that node is gone
+            continue
     rated = [d for d in state.decisions if d["type"] in ("choice", "input")]
     run.summary = {
         "outcome": run.outcome,
@@ -282,6 +292,13 @@ async def _finish(session: AsyncSession, user: User, run: Run, scenario: Scenari
             "timeouts": sum(1 for d in rated if d["timed_out"]),
         },
         "debrief": _debrief(scenario.graph, rated),
+        # Which of the scenario's endings this run reached and how many the player has seen so far
+        "ending": {
+            "key": ending,
+            "new": ending in all_endings and ending not in seen,
+            "found": len((seen | {ending}) & set(all_endings)),
+            "total": len(all_endings),
+        },
     }
 
 

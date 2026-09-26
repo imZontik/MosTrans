@@ -3,6 +3,7 @@
 from app.repositories.models import Scenario, User, UserAchievement
 from app.business.catalog import CATEGORIES, position_title
 from app.business.economy import level_for
+from app.business.engine import shape
 
 
 def user_brief(user: User) -> dict:
@@ -55,6 +56,7 @@ def scenario_brief(s: Scenario) -> dict:
         "estimated_minutes": s.estimated_minutes,
         "is_published": s.is_published,
         "tags": list((s.graph or {}).get("tags") or []),
+        **shape(s.graph or {}),
     }
 
 

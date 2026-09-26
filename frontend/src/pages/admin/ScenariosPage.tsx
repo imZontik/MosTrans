@@ -11,6 +11,7 @@ import { DifficultyDots } from '@/components/Progress'
 import { ErrorState, Loading } from '@/components/States'
 import { cn } from '@/lib/cn'
 import { fmtDate } from '@/lib/format'
+import { ENDINGS, FORKS, pluralN } from '@/lib/plural'
 
 const BLANK: ScenarioInput = {
   title: 'Новый сценарий',
@@ -22,6 +23,7 @@ const BLANK: ScenarioInput = {
   cover: '🚄',
   estimated_minutes: 5,
   is_published: false,
+  // the smallest branching scenario: the answer decides which way the story goes
   graph: {
     start: 'n1',
     initial: { loyalty: 60, safety: 70 },
@@ -34,10 +36,12 @@ const BLANK: ScenarioInput = {
         text: 'Реплика пассажира…',
         timer: 20,
         choices: [
-          { id: 'a', text: 'Правильное действие', next: 'end', quality: 'best', points: 20, effects: { loyalty: 10 }, feedback: 'Верно!' },
-          { id: 'b', text: 'Ошибочное действие', next: 'end', quality: 'bad', points: 0, effects: { loyalty: -10 }, feedback: 'Так делать не стоит.' },
+          { id: 'a', text: 'Правильное действие', next: 'n3', quality: 'best', points: 20, effects: { loyalty: 10 }, feedback: 'Верно!' },
+          { id: 'b', text: 'Ошибочное действие', next: 'n3b', quality: 'bad', points: 0, effects: { loyalty: -10 }, feedback: 'Так делать не стоит.' },
         ],
       },
+      n3: { type: 'scene', speaker: 'passenger', text: 'Реакция на верное действие.', next: 'end' },
+      n3b: { type: 'scene', speaker: 'passenger', text: 'Реакция на ошибку: ситуация обостряется.', next: 'end_fail' },
       end: {
         type: 'end',
         outcome: 'auto',
@@ -47,6 +51,7 @@ const BLANK: ScenarioInput = {
           fail: { title: 'Провал', text: 'Разберите ошибки и попробуйте снова.' },
         },
       },
+      end_fail: { type: 'end', outcome: 'fail', title: 'Конфликт разгорелся', text: 'Опишите последствия ошибки.' },
     },
   },
 }
@@ -158,7 +163,8 @@ export default function AdminScenariosPage() {
                   <p className="truncate font-semibold hover:underline">{s.title}</p>
                   <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
                     <span>
-                      {s.category_title}, {s.position_title.toLowerCase()}, {Object.keys(s.graph?.nodes ?? {}).length} узлов
+                      {s.category_title}, {s.position_title.toLowerCase()}, {Object.keys(s.graph?.nodes ?? {}).length} узлов,{' '}
+                      {pluralN(s.forks ?? 0, FORKS)}, {pluralN(s.endings ?? 0, ENDINGS)}
                       {s.updated_at ? `, изменён ${fmtDate(s.updated_at)}` : ''}
                     </span>
                     <DifficultyDots value={s.difficulty} />

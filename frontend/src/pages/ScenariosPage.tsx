@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, Clock, Crown, Loader2, Lock, Play, RotateCcw, TrainFront, UserRound, type LucideIcon } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Clock, Crown, GitBranch, Loader2, Lock, Play, RotateCcw, TrainFront, UserRound, type LucideIcon } from 'lucide-react'
 import { api } from '@/api/client'
 import type { CatalogItem } from '@/api/types'
 import { useAsync } from '@/hooks/useAsync'
@@ -13,6 +13,7 @@ import { ErrorState, Loading } from '@/components/States'
 import { cn } from '@/lib/cn'
 import { categoryStyle } from '@/lib/category'
 import { fmtNumber } from '@/lib/format'
+import { ENDINGS, plural } from '@/lib/plural'
 
 const POSITION_ICON: Record<string, LucideIcon> = {
   conductor: UserRound,
@@ -327,6 +328,12 @@ function ScenarioCard({ s, index, loading, onStart }: { s: CatalogItem; index: n
           <DifficultyDots value={s.difficulty} />
           <span className="sc-difficulty">{DIFFICULTY[s.difficulty]}</span>
         </span>
+        {(s.endings ?? 0) > 1 && (
+          <span className="sc-endings inline-flex items-center gap-1.5 whitespace-nowrap" title="Чем закончится рейс, зависит от ваших решений">
+            <GitBranch className="h-4 w-4" aria-hidden />
+            <span className="digits font-semibold text-ink/80">{s.endings}</span> {plural(s.endings ?? 0, ENDINGS)}
+          </span>
+        )}
         {s.best_points > 0 && (
           <span className="sc-best whitespace-nowrap">
             лучший <span className="digits font-semibold text-ink/80">+{fmtNumber(s.best_points)}</span>

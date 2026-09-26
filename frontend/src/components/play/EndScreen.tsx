@@ -1,4 +1,4 @@
-import { Check, Minus, X } from 'lucide-react'
+import { Check, GitBranch, Minus, X } from 'lucide-react'
 import type { Quality, RunView } from '@/api/types'
 import { cn } from '@/lib/cn'
 import { fmtNumber, OUTCOME_META, QUALITY_META, scaleTone, TONE_TEXT } from '@/lib/format'
@@ -87,6 +87,7 @@ export function EndScreen({
     ...(r.repeat_multiplier !== 1 ? [{ label: 'Повторное прохождение', value: `×${String(r.repeat_multiplier).replace('.', ',')}` }] : []),
   ]
   const st = summary.stats
+  const ending = summary.ending
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 px-4 pb-16 pt-6 sm:pt-8">
@@ -103,6 +104,15 @@ export function EndScreen({
           <Semaphore tone={meta.tone} />
         </div>
         <p className="relative mt-2 max-w-prose text-base leading-relaxed text-white/80">{summary.text}</p>
+        {ending && ending.total > 1 && (
+          <p className="relative mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/75">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-semibold text-white ring-1 ring-inset ring-white/15">
+              <GitBranch className="h-3.5 w-3.5" aria-hidden />
+              {ending.new ? 'Новый финал' : 'Финал'}: открыто <span className="digits">{ending.found}</span> из <span className="digits">{ending.total}</span>
+            </span>
+            {ending.found < ending.total && <span>Другие решения приведут к другой развязке.</span>}
+          </p>
+        )}
         <div className="relative mt-5 flex items-end justify-between gap-4 border-t border-white/15 pt-4">
           <p className="digits text-[56px] font-bold leading-[.9]">
             +<CountUp value={r.total} duration={1400} />

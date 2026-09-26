@@ -111,6 +111,10 @@ export interface ScenarioBrief {
   estimated_minutes: number
   is_published: boolean
   tags: string[]
+  /** steps that lead to more than one place */
+  forks?: number
+  /** endings a player can reach (each outcome of an «auto» ending counts) */
+  endings?: number
 }
 
 export interface CatalogItem extends ScenarioBrief {
@@ -224,6 +228,8 @@ export interface RunSummary {
   points_total: number
   stats: { decisions: number; best: number; fast: number; timeouts: number }
   debrief: DebriefItem[]
+  /** which ending this run reached and how many of the scenario's endings the player has seen */
+  ending?: { key: string; new: boolean; found: number; total: number }
 }
 
 export interface RunView {
@@ -433,6 +439,21 @@ export interface EmployeeRow extends UserBrief {
 export type EmployeeDetail = Me & { history: RunHistoryItem[] }
 
 // Scenario graph (authoring format, see backend/app/business/engine.py)
+export interface RouteCondition {
+  loyalty_below?: number
+  loyalty_at_least?: number
+  safety_below?: number
+  safety_at_least?: number
+  /** «node:choice» picked earlier in the run */
+  chose?: string
+}
+
+/** Conditional jump checked after the answer; the first one that holds replaces the usual next step. */
+export interface GraphRoute {
+  if: RouteCondition
+  next: string
+}
+
 export interface GraphChoice {
   id: string
   text: string
@@ -462,6 +483,8 @@ export interface GraphNode {
   effects_scale?: Effects
   branches?: { min_score: number; next: string }[]
   placeholder?: string
+  // scene | choice | input
+  routes?: GraphRoute[]
   lang?: string
   // end
   outcome?: Outcome | 'auto'

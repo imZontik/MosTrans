@@ -11,6 +11,9 @@ from app.business.engine import (
     Grade,
     ScenarioError,
     apply_answer,
+    ending_key,
+    endings,
+    forks,
     initial_state,
     public_node,
     validate_graph,
@@ -53,6 +56,71 @@ def test_seed_scenarios_finish_for_any_player(scenario):
     for skill in (0.05, 0.5, 0.95):
         state = _simulate(scenario["graph"], skill, random.Random(skill))
         assert state.finished and state.outcome in ("success", "partial", "fail")
+
+
+@pytest.mark.parametrize("scenario", TRAINING_SCENARIOS + EMERGENCY_SCENARIOS, ids=lambda s: s["slug"])
+def test_seed_scenarios_branch(scenario):
+    graph = scenario["graph"]
+    assert forks(graph) >= 1
+    choices = [n for n in graph["nodes"].values() if n["type"] == "choice"]
+    assert any(len({c["next"] for c in n["choices"]}) > 1 for n in choices)
+
+
+ROUTED = {
+    "start": "q1",
+    "initial": {"loyalty": 50, "safety": 80},
+    "nodes": {
+        "q1": {
+            "type": "choice",
+            "text": "?",
+            "choices": [
+                {"id": "calm", "text": "Спокойно", "next": "s", "quality": "best", "effects": {"loyalty": 20}},
+                {"id": "rude", "text": "Грубо", "next": "s", "quality": "bad", "effects": {"loyalty": -20}},
+                {"id": "odd", "text": "Странно", "next": "s", "quality": "ok"},
+            ],
+        },
+        "s": {
+            "type": "scene",
+            "text": "Реакция",
+            "next": "end_ok",
+            "routes": [
+                {"if": {"loyalty_below": 40}, "next": "end_angry"},
+                {"if": {"chose": "q1:odd"}, "next": "end_odd"},
+            ],
+        },
+        "end_ok": {"type": "end", "outcome": "success", "title": "Ок", "text": ""},
+        "end_angry": {"type": "end", "outcome": "fail", "title": "Жалоба", "text": ""},
+        "end_odd": {"type": "end", "outcome": "auto", "variants": {o: {"title": o, "text": ""} for o in ("success", "partial", "fail")}},
+    },
+}
+
+
+@pytest.mark.parametrize(("choice_id", "final"), [("calm", "end_ok"), ("rude", "end_angry"), ("odd", "end_odd")])
+def test_routes_depend_on_scales_and_earlier_answers(choice_id, final):
+    assert validate_graph(ROUTED) == []
+    state = initial_state(ROUTED)
+    apply_answer(ROUTED, state, node_id="q1", action="choose", choice_id=choice_id)
+    apply_answer(ROUTED, state, node_id="s", action="continue")
+    assert state.finished and state.node_id == final
+
+
+def test_endings_count_auto_variants():
+    assert endings(ROUTED) == ["end_angry", "end_odd:fail", "end_odd:partial", "end_odd:success", "end_ok"]
+    assert ending_key(ROUTED, "end_odd", "partial") == "end_odd:partial"
+    assert ending_key(ROUTED, CRITICAL_NODE, "fail") == CRITICAL_NODE
+    assert forks(ROUTED) == 1  # only the scene with routes leads to more than one place
+
+
+def test_validate_catches_broken_routes():
+    graph = {**ROUTED, "nodes": {**ROUTED["nodes"], "s": {**ROUTED["nodes"]["s"], "routes": [
+        {"if": {"loyalty_below": 140}, "next": "end_ok"},
+        {"if": {"chose": "q1:zzz"}, "next": "end_ok"},
+        {"if": {"mood": "bad"}, "next": "nowhere"},
+        {"next": "end_ok"},
+    ]}}}
+    errors = " | ".join(validate_graph(graph))
+    for part in ("от 0 до 100", "нет варианта «zzz»", "неизвестное условие «mood»", "«nowhere»", "нет условия"):
+        assert part in errors
 
 
 def test_public_node_hides_answers():
