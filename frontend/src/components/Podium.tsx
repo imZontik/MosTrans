@@ -109,6 +109,7 @@ const VARIANT = {
     crown: 'h-6 w-6',
     disc: 'ring-surface',
     name: 'text-[13px] sm:text-sm',
+    nameBox: '',
     me: 'text-brand',
     score: 'text-lg',
     empty: 'border-line text-muted',
@@ -124,6 +125,8 @@ const VARIANT = {
     crown: 'h-7 w-7 sm:h-8 sm:w-8',
     disc: 'ring-[#16213a]',
     name: 'text-[13px] text-white sm:text-base',
+    // two lines kept for every name: a stage that changes width doesn't make the people above jump
+    nameBox: 'min-h-[2.5em]',
     me: 'text-[#FF8A7A]',
     score: 'text-xl text-white sm:text-2xl',
     empty: 'border-white/25 text-white/45',
@@ -158,12 +161,11 @@ export function Podium({ entries, variant = 'card', className }: { entries: Podi
                     <MedalDisc place={place} className={cn('absolute -bottom-2 left-1/2 -translate-x-1/2 ring-2', v.disc)} />
                   </span>
                 </div>
-                <Link
-                  to={e.is_me ? '/profile' : `/users/${e.id}`}
-                  className={cn('mt-3.5 line-clamp-2 w-full break-words font-medium leading-tight hover:underline sm:leading-tight', v.name)}
-                >
-                  {e.full_name}
-                </Link>
+                <div className={cn('mt-3.5 flex w-full items-end justify-center', v.name, v.nameBox)}>
+                  <Link to={e.is_me ? '/profile' : `/users/${e.id}`} className="line-clamp-2 break-words font-medium leading-tight hover:underline">
+                    {e.full_name}
+                  </Link>
+                </div>
                 {e.is_me && <span className={cn('text-xs font-semibold', v.me)}>это вы</span>}
                 <CountUp value={e.score} className={cn('digits mt-0.5 font-semibold leading-tight', v.score)} />
               </>
