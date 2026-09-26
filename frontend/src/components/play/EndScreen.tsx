@@ -46,7 +46,13 @@ export function EndScreen({
   const summary = run.summary
   const outcome = summary?.outcome ?? run.outcome ?? 'partial'
   const meta = OUTCOME_META[outcome]
-  const backLabel = backTo.startsWith('/admin') ? 'К редактору сценария' : 'К расписанию'
+  const backLabel = backTo.startsWith('/admin')
+    ? 'К редактору сценария'
+    : backTo === '/profile/history'
+      ? 'К истории рейсов'
+      : backTo === '/profile'
+        ? 'В профиль'
+        : 'К расписанию'
 
   const actions = (
     <div className="flex flex-col gap-2 sm:flex-row">

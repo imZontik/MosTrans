@@ -43,6 +43,9 @@ export function fmtDuration(totalSec: number): string {
   return `${m}:${pad(sec)}`
 }
 
+/** «Бригада 3, Москва — Санкт-Петербург» → «Бригада 3» */
+export const teamName = (team: string) => team.split(',')[0].trim()
+
 export function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -97,6 +100,9 @@ export const RARITY_META: Record<Rarity, { label: string; ring: string; plate: s
     text: 'text-rarity-legendary-ink',
   },
 }
+
+/** Rarest first. */
+export const RARITY_ORDER: Record<string, number> = { legendary: 0, epic: 1, rare: 2, common: 3 }
 
 export const rarityMeta = (r: string) => RARITY_META[(r as Rarity) in RARITY_META ? (r as Rarity) : 'common']
 

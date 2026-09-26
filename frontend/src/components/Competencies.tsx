@@ -32,11 +32,11 @@ export function CompetencyRadar({ items }: { items: Competency[] }) {
   )
 }
 
-/** Mastery per category: icon tile and bar in the category accent, the percentage keeps its signal colour. */
+/** Mastery per category: icon tile and bar in the category accent, the percentage keeps its signal colour. Bars grow in one by one. */
 export function CompetencyBars({ items }: { items: Competency[] }) {
   return (
     <ul className="space-y-3">
-      {items.map((c) => {
+      {items.map((c, i) => {
         const pct = Math.round(c.mastery * 100)
         const tone = c.runs ? scaleTone(pct) : null
         const cat = categoryStyle(c.category)
@@ -56,8 +56,12 @@ export function CompetencyBars({ items }: { items: Competency[] }) {
               <div className="track mt-1.5 h-1.5 overflow-hidden rounded-full">
                 {c.runs > 0 && (
                   <div
-                    className={cn('h-full rounded-full', cat.fill)}
-                    style={{ width: `${Math.max(pct, 3)}%`, backgroundImage: 'linear-gradient(90deg, rgb(255 255 255 / .28), transparent)' }}
+                    className={cn('bar-grow h-full rounded-full', cat.fill)}
+                    style={{
+                      width: `${Math.max(pct, 3)}%`,
+                      backgroundImage: 'linear-gradient(90deg, rgb(255 255 255 / .28), transparent)',
+                      animationDelay: `${i * 70}ms`,
+                    }}
                   />
                 )}
               </div>
