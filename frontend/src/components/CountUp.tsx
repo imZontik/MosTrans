@@ -3,9 +3,12 @@ import { useEffect, useRef, useState } from 'react'
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-/** Animated number counter (jumps straight to the value when reduced motion is on). */
-export function CountUp({ value, duration = 900, className }: { value: number; duration?: number; className?: string }) {
-  const [shown, setShown] = useState(() => (reducedMotion() ? value : 0))
+/**
+ * Animated number counter (jumps straight to the value when reduced motion is on). It starts from
+ * `initial` (0 by default) and later runs from the previous value to the new one.
+ */
+export function CountUp({ value, initial: startAt = 0, duration = 900, className }: { value: number; initial?: number; duration?: number; className?: string }) {
+  const [shown, setShown] = useState(() => (reducedMotion() ? value : startAt))
   const from = useRef(shown)
 
   useEffect(() => {
