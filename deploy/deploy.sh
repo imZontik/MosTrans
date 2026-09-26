@@ -21,16 +21,19 @@ $COMPOSE up -d --no-build --remove-orphans
 $COMPOSE exec -T nginx nginx -s reload
 $COMPOSE exec -T caddy caddy reload --config /etc/caddy/Caddyfile
 
-echo "Waiting for the API…"
+fetch() { $COMPOSE exec -T nginx wget -qO- "http://127.0.0.1$1" 2>/dev/null; }
+
+# Both through nginx: the API alone being up once hid a 502 on the site itself
+echo "Waiting for the API and the web app…"
 for _ in $(seq 1 40); do
-  if $COMPOSE exec -T nginx wget -qO- http://127.0.0.1/api/health 2>/dev/null | grep -q '"ok"'; then
+  if fetch /api/health | grep -q '"ok"' && fetch / | grep -q 'id="root"'; then
     docker image prune -f >/dev/null
-    echo "Deployed: API is healthy"
+    echo "Deployed: API and web app are up"
     exit 0
   fi
   sleep 3
 done
 
-echo "API did not become healthy, recent backend logs:" >&2
-$COMPOSE logs --tail 50 backend >&2
+echo "Stack did not come up, recent logs:" >&2
+$COMPOSE logs --tail 30 backend nginx frontend >&2
 exit 1
