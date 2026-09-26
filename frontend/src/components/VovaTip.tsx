@@ -52,11 +52,17 @@ export function VovaTip({ className }: { className?: string }) {
       </blockquote>
 
       <div className="mt-auto flex items-end justify-between gap-3 pt-3">
-        <p className="pb-5 leading-tight">
-          <span className="block font-semibold">Вова</span>
-          <span className="text-xs text-muted">поездной электромеханик</span>
+        <p className="pb-0.5 leading-tight">
+          <span className="block font-display text-lg font-semibold">Вова</span>
+          <span className="text-sm text-muted">поездной электромеханик</span>
         </p>
-        <Mascot key={index} mood={tip.mood} className="mascot-pop -mb-7 -mr-1 h-28 w-28 shrink-0 sm:-mb-8 sm:h-32 sm:w-32" />
+        <Mascot
+          key={index}
+          mood={tip.mood}
+          holding={tip.holding}
+          effect={tip.effect}
+          className="mascot-pop -mb-4 -mr-1 h-32 w-32 shrink-0 sm:-mb-5 sm:h-36 sm:w-36"
+        />
       </div>
     </section>
   )
