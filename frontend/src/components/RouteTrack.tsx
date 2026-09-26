@@ -1,43 +1,64 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
 import { routePosition, STATIONS } from '@/lib/route'
 
-/** The high-speed train, nose to the right (towards St Petersburg). */
-function TrainMarker({ dark }: { dark?: boolean }) {
+/** The hero train (TrainArt) in miniature, side view, nose to the right; wheels at the bottom edge. */
+function TrainMarker({ className }: { className?: string }) {
+  const uid = useId().replace(/:/g, '')
   return (
-    <svg
-      viewBox="0 0 34 12"
-      className={cn(dark ? 'h-[15px] w-[42px] drop-shadow-[0_0_8px_rgba(226,26,26,.65)]' : 'h-3 w-[34px]')}
-      aria-hidden
-    >
-      <path d="M2 1 H22 C27 1 31 3.5 33.5 7.5 C34 8.6 33.4 11 32 11 H2 C1 11 0.5 10.4 0.5 9.5 V2.5 C0.5 1.6 1 1 2 1 Z" fill="#E21A1A" />
-      <path d="M24 3 C27 3.4 29.6 5 31 7 H24 Z" fill={dark ? '#0A101E' : 'rgb(var(--ink))'} />
-      <path d="M3 5 H21" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" strokeDasharray="3 1.6" />
+    <svg viewBox="0 0 120 26" className={className} aria-hidden>
+      <defs>
+        <linearGradient id={`tm-body-${uid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#d9dee8" />
+        </linearGradient>
+      </defs>
+      {/* bogies and wheels */}
+      {[12, 26, 66, 80].map((x) => (
+        <g key={x}>
+          <rect x={x - 5.2} y="21.4" width="10.4" height="2" rx=".6" fill="#2a3656" />
+          <circle cx={x - 2.8} cy="24.2" r="1.6" fill="#3a4868" />
+          <circle cx={x + 2.8} cy="24.2" r="1.6" fill="#3a4868" />
+        </g>
+      ))}
+      <path d="M0 22 L86 22 C101 22 113 20 119.2 16.4 C113.2 12 101 8.8 88 8.4 L8 8.4 Q0 8.4 0 14 Z" fill={`url(#tm-body-${uid})`} />
+      <path d="M0 19.2 L90.4 19.2 C102.4 19.2 111.2 18 117.6 15.6 L119.2 16.4 C113 20 101 22 86 22 L0 22 Z" fill="#E21A1A" />
+      <path d="M94 10 C104 10.8 112 13.2 117.2 16 L109 16 C104 14 99 12.4 93.6 12 Z" fill="#101a31" />
+      {Array.from({ length: 7 }, (_, i) => (
+        <rect key={i} x={6 + i * 11.4} y="11" width="8.4" height="4.2" rx="1.4" fill="#101a31" />
+      ))}
     </svg>
   )
 }
 
+interface StationLabel {
+  i: number
+  up: boolean
+}
+
 /**
- * «Маршрут»: 8 stations spaced by real distance. Passed stations are filled,
- * the train sits between the current and the next station by level progress.
- * On first render the train slides from Moscow to its place (skipped with reduced motion).
- * `allNames` labels every station from md up (two staggered rows, so close stations don't collide);
- * phones always get just the two termini.
+ * «Маршрут» on the night line, drawn like a metro map: a thick rail, stations as dots sitting on it
+ * (passed — white, ahead — rings punched into the rail), the passed part in brand red and the train
+ * standing on the rail with its nose where you are. Stations are levels, spaced by real distance from Moscow.
+ *
+ * With `allNames`, from md up every station is named, alternating above / below the rail so close ones
+ * don't collide. Otherwise (and always on phones) the current station is named above, the termini below.
+ * `nextHint` goes under the next station's name, e.g. «ещё 262 очка». On first render the train rides
+ * out from Moscow (skipped with reduced motion).
  */
 export function RouteTrack({
   level,
   progress,
   animate = false,
-  dark = false,
   allNames = false,
+  nextHint,
   className,
 }: {
   level: number
   progress: number
   animate?: boolean
-  /** White track for the night-line panels. */
-  dark?: boolean
   allNames?: boolean
+  nextHint?: string
   className?: string
 }) {
   const pos = routePosition(level, progress)
@@ -58,96 +79,118 @@ export function RouteTrack({
     }
   }, [pos.share, animate])
 
+  // Stops the train stands over would peek out under its wheels like giant ones: measure the rail and
+  // the train (its width changes with the breakpoint) and hide the dots it covers.
+  const railRef = useRef<HTMLDivElement>(null)
+  const trainRef = useRef<HTMLSpanElement>(null)
+  const [geo, setGeo] = useState({ rail: 0, train: 0 })
+  useEffect(() => {
+    const rail = railRef.current
+    if (!rail) return
+    const measure = () => setGeo({ rail: rail.clientWidth, train: trainRef.current?.offsetWidth ?? 0 })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(rail)
+    return () => ro.disconnect()
+  }, [])
+  const nose = Math.max(geo.train, pos.share * geo.rail)
+  const underTrain = (t: number) => geo.rail > 0 && t * geo.rail > nose - geo.train - 4 && t * geo.rail < nose + 4
+
   const pct = `${share * 100}%`
-  const label = pos.next
-    ? `На маршруте между станциями ${pos.station.name} и ${pos.next.name}`
-    : 'Вы прибыли в Санкт-Петербург'
+  const last = STATIONS.length - 1
+  const summary = pos.next ? `На маршруте между станциями ${pos.station.name} и ${pos.next.name}` : 'Вы прибыли в Санкт-Петербург'
+
+  const wide: StationLabel[] = STATIONS.map((_, i) => ({ i, up: i % 2 === 1 }))
+  const compact: StationLabel[] = [
+    { i: 0, up: false },
+    { i: last, up: false },
+    ...(pos.index !== 0 && pos.index !== last ? [{ i: pos.index, up: true }] : []),
+  ]
+
+  // one row of names, above or below the rail
+  const row = (labels: StationLabel[], up: boolean, visibility: string) => (
+    <div className={cn('relative h-9 text-xs', visibility)}>
+      {labels
+        .filter((l) => l.up === up)
+        .map(({ i }) => {
+          const current = i === pos.index
+          const next = !!pos.next && i === pos.index + 1
+          return (
+            <span
+              key={STATIONS[i].name}
+              className={cn(
+                'absolute flex whitespace-nowrap leading-tight',
+                up ? 'bottom-0.5 flex-col-reverse' : 'top-0.5 flex-col',
+                i === 0 ? 'items-start' : i === last ? 'items-end' : 'items-center',
+                i === 0 ? '-translate-x-[7px]' : i === last ? '-translate-x-[calc(100%-7px)]' : '-translate-x-1/2',
+              )}
+              style={{ left: `${pos.ticks[i] * 100}%` }}
+            >
+              <span className={current ? 'font-semibold text-white' : next ? 'font-medium text-white/90' : i < pos.index ? 'text-white/60' : 'text-white/45'}>
+                {STATIONS[i].name}
+              </span>
+              {current && <span className="text-[11px] text-white/55">вы здесь</span>}
+              {next && nextHint && <span className="text-[11px] font-medium text-[#FF8F6B]">{nextHint}</span>}
+            </span>
+          )
+        })}
+    </div>
+  )
+
+  const wideOnly = allNames ? 'hidden md:block' : 'hidden'
+  const compactOnly = allNames ? 'md:hidden' : ''
 
   return (
     <div className={className}>
-      <p className="sr-only">{label}</p>
-      <div className={cn('relative mx-[6px]', dark ? 'h-9' : 'h-7')} aria-hidden>
-        {/* the line ahead */}
-        <div className={cn('absolute inset-x-0 top-1/2 h-px -translate-y-1/2', dark ? 'bg-white/30' : 'bg-ink/30')} />
-        {/* the line behind: white fading in from the red of the dawn */}
-        <div
-          className={cn(
-            'absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full',
-            dark ? 'bg-gradient-to-r from-white/50 via-white to-white shadow-[0_0_10px_rgb(255_255_255/.35)]' : 'bar-ink',
-            animate && 'route-passed',
-          )}
-          style={{ width: pct }}
-        />
-        {pos.ticks.map((t, i) => (
-          <span
-            key={STATIONS[i].name}
-            className={cn(
-              'absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full',
-              i === pos.index ? 'h-[13px] w-[13px]' : 'h-[11px] w-[11px]',
-              dark
-                ? i < pos.index
-                  ? 'bg-white'
-                  : i === pos.index
-                    ? 'bg-white ring-4 ring-brand/50'
-                    : 'border-[1.5px] border-white/55 bg-night'
-                : i < pos.index
-                  ? 'bg-ink'
-                  : i === pos.index
-                    ? 'bg-ink ring-4 ring-brand/30'
-                    : 'border-[1.5px] border-ink/60 bg-surface',
-            )}
-            style={{ left: `${t * 100}%` }}
+      <p className="sr-only">{summary}</p>
+      <div className="mx-[7px]" aria-hidden>
+        {row(wide, true, wideOnly)}
+        {row(compact, true, compactOnly)}
+
+        {/* the rail: its centre line sits 26px down, leaving headroom for the train standing on it */}
+        <div ref={railRef} className="relative h-9">
+          <div className="absolute inset-x-0 top-[26px] h-1.5 -translate-y-1/2 rounded-full bg-white/[.14] shadow-[inset_0_1px_1px_rgb(0_0_0/.35)]" />
+          <div
+            className={cn('bar-brand absolute left-0 top-[26px] h-1.5 -translate-y-1/2 rounded-full shadow-[0_0_14px_rgb(255_90_61/.55)]', animate && 'route-passed')}
+            style={{ width: pct }}
           />
-        ))}
-        <span
-          className={cn(
-            'absolute top-1/2 -translate-x-full',
-            dark ? '-translate-y-[calc(50%+11px)]' : '-translate-y-[calc(50%+9px)]',
-            animate && 'route-train',
-          )}
-          style={{ left: `max(${dark ? 42 : 34}px, ${pct})` }}
-        >
-          <TrainMarker dark={dark} />
-        </span>
-      </div>
-
-      <div className={cn('mt-1 flex justify-between text-xs', dark ? 'text-white/60' : 'text-muted', allNames && 'md:hidden')} aria-hidden>
-        <span>{STATIONS[0].name}</span>
-        <span>{STATIONS[STATIONS.length - 1].name}</span>
-      </div>
-
-      {allNames && (
-        <div className="relative mx-[6px] mt-1.5 hidden h-10 text-xs md:block" aria-hidden>
           {pos.ticks.map((t, i) => {
-            const first = i === 0
-            const last = i === STATIONS.length - 1
-            const current = i === pos.index
+            const reached = i <= pos.index
             return (
               <span
                 key={STATIONS[i].name}
+                title={`${STATIONS[i].name} — уровень ${i + 1}`}
                 className={cn(
-                  'absolute whitespace-nowrap leading-none',
-                  i % 2 ? 'top-[22px]' : 'top-0',
-                  first ? '-translate-x-[6px]' : last ? '-translate-x-[calc(100%-6px)]' : '-translate-x-1/2',
-                  current
-                    ? cn('font-semibold', dark ? 'text-white' : 'text-ink')
-                    : i < pos.index
-                      ? dark
-                        ? 'text-white/75'
-                        : 'text-ink/75'
-                      : dark
-                        ? 'text-white/50'
-                        : 'text-muted',
+                  'absolute top-[26px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity',
+                  underTrain(t) && 'opacity-0',
+                  reached
+                    ? // white stops on the red rail, outlined in the night colour so they sit in the line
+                      cn('bg-white shadow-[0_0_0_3px_rgb(12_20_38/.9)]', i === pos.index ? 'h-4 w-4' : 'h-2.5 w-2.5 sm:h-3 sm:w-3')
+                    : // stops ahead: rings punched into the rail
+                      cn('h-3.5 w-3.5 border-[2.5px] bg-[#111b31]', i === pos.index + 1 ? 'border-white/90' : 'border-white/45'),
                 )}
                 style={{ left: `${t * 100}%` }}
-              >
-                {current && <span className="mr-1 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-brand align-middle" />}
-                {STATIONS[i].name}
-              </span>
+              />
             )
           })}
+
+          {/* the train, wheels on the rail, nose at where you are; never further left than its own length */}
+          <span
+            ref={trainRef}
+            className={cn(
+              'absolute top-[24px] z-10 -translate-x-full -translate-y-full [--train-w:60px] sm:[--train-w:84px]',
+              animate && 'route-train',
+            )}
+            style={{ left: `max(var(--train-w), ${pct})` }}
+          >
+            <TrainMarker className="block h-[13px] w-[60px] drop-shadow-[0_3px_8px_rgb(226_26_26/.45)] sm:h-[18px] sm:w-[84px]" />
+            <span className="headlight absolute -right-2.5 top-[40%] h-3 w-4 rounded-full blur-[3px]" aria-hidden />
+          </span>
         </div>
-      )}
+
+        {row(wide, false, wideOnly)}
+        {row(compact, false, compactOnly)}
+      </div>
     </div>
   )
 }

@@ -444,6 +444,29 @@
   animation: mascot-pop 0.55s cubic-bezier(0.22, 0.8, 0.26, 1) both;
 }
 
+/*
+ * Home hero ride (HeroRide): the track streams past at a steady ~400px/s. 3840px per loop =
+ * 24 masts (160px) = 240 sleepers (16px), so it never visibly restarts. The train's occasional
+ * drift back and return is scripted in HeroRide (random 12–30 s), not here.
+ */
+@keyframes ride-track {
+  to {
+    background-position-x: -3840px;
+  }
+}
+.ride {
+  container-type: inline-size;
+}
+.ride-track {
+  animation: ride-track 9.6s linear infinite;
+}
+/* a track too short for the train: keep the rails, let the train step aside */
+@container (max-width: 230px) {
+  .ride-train {
+    display: none;
+  }
+}
+
 /* Login: the train pulls in once */
 @keyframes train-arrive {
   0% {
@@ -515,7 +538,8 @@
     opacity: 0;
   }
   .train-arrive,
-  .headlight {
+  .headlight,
+  .ride-track {
     animation: none !important;
   }
   .login-hero::after,

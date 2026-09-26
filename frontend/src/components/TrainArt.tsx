@@ -1,14 +1,17 @@
 import { useId } from 'react'
 import { cn } from '@/lib/cn'
 
-/** Stylized high-speed train with animated speed lines. */
-export function TrainArt({ className }: { className?: string }) {
+/**
+ * Stylized high-speed train with animated speed lines. `rails={false}` drops its own two rails and crops the
+ * picture at the wheels, for scenes that lay their own track (the home hero).
+ */
+export function TrainArt({ className, rails = true }: { className?: string; rails?: boolean }) {
   const uid = useId().replace(/:/g, '')
   const body = `train-body-${uid}`
   const glass = `train-glass-${uid}`
   return (
     <div className={cn('relative', className)}>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="train-wind pointer-events-none absolute inset-0 overflow-hidden">
         {[18, 34, 52, 70, 84].map((top, i) => (
           <span
             key={top}
@@ -17,7 +20,7 @@ export function TrainArt({ className }: { className?: string }) {
           />
         ))}
       </div>
-      <svg viewBox="0 0 600 170" className="relative w-full drop-shadow-[0_20px_30px_rgba(0,0,0,.45)]">
+      <svg viewBox={rails ? '0 0 600 170' : '0 0 600 130'} className="relative w-full drop-shadow-[0_20px_30px_rgba(0,0,0,.45)]">
         <defs>
           <linearGradient id={body} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#ffffff" />
@@ -43,8 +46,12 @@ export function TrainArt({ className }: { className?: string }) {
             <circle cx={x + 14} cy={122} r={7} fill="#0a101e" />
           </g>
         ))}
-        <rect x="0" y="130" width="600" height="4" rx="2" fill="#ffffff" opacity=".35" />
-        <rect x="0" y="140" width="600" height="2" rx="1" fill="#ffffff" opacity=".15" />
+        {rails && (
+          <>
+            <rect x="0" y="130" width="600" height="4" rx="2" fill="#ffffff" opacity=".35" />
+            <rect x="0" y="140" width="600" height="2" rx="1" fill="#ffffff" opacity=".15" />
+          </>
+        )}
         <text x="300" y="104" textAnchor="middle" fontFamily="'Fira Sans Extra Condensed', sans-serif" fontSize="12" fontWeight="700" fill="#fff" letterSpacing="4">
           МАГИСТРАЛЬ 400
         </text>
