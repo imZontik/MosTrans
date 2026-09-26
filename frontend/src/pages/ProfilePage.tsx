@@ -88,7 +88,7 @@ export default function ProfilePage() {
                 Уровень {profile.level} из {STATIONS.length}
               </p>
             </div>
-            <RouteTrack level={profile.level} progress={levelInfo?.progress ?? 0} dark allNames className="mt-2" />
+            <RouteTrack level={profile.level} progress={levelInfo?.progress ?? 0} allNames className="mt-2" />
             <p className="mt-1 text-white/70">{profile.level_title}</p>
           </div>
         </div>

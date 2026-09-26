@@ -8,12 +8,12 @@ import { useStartRun } from '@/hooks/useStartRun'
 import { Button, ButtonLink } from '@/components/Button'
 import { CategoryTag, CoverTile } from '@/components/Category'
 import { CountUp } from '@/components/CountUp'
+import { HeroRide } from '@/components/HeroRide'
 import { NightPanel, SpeedLines } from '@/components/NightPanel'
 import { DifficultyDots } from '@/components/Progress'
 import { RouteTrack } from '@/components/RouteTrack'
 import { ScoreRing } from '@/components/ScoreRing'
 import { TournamentBanner } from '@/components/TournamentBanner'
-import { TrainArt } from '@/components/TrainArt'
 import { VovaTip } from '@/components/VovaTip'
 import { cn } from '@/lib/cn'
 import { firstName, fmtNumber, scaleTone, TONE_TEXT } from '@/lib/format'
@@ -62,63 +62,72 @@ export default function HomePage() {
   )
 }
 
-/** «Маршрут» on the night line: the station, the points to the next one, the line to St Petersburg. */
+/** «Маршрут» on the night line: the station, a departure board for the next one, the line to St Petersburg. */
 function RouteHero({ user, li }: { user: Me; li: LevelInfo }) {
   const pos = routePosition(li.level, li.progress)
-  const span = li.next_threshold !== null ? li.next_threshold - li.current_threshold : 0
-  const done = li.next_threshold !== null ? li.points - li.current_threshold : 0
   const left = li.next_threshold !== null ? Math.max(0, li.next_threshold - li.points) : 0
+  const onTheWay = !!pos.next && li.next_threshold !== null
 
   return (
     <NightPanel aria-labelledby="route-station" stripe className="-mx-2 px-5 py-5 sm:mx-0 sm:px-7 sm:py-6 lg:px-8">
       <SpeedLines rows={[16, 44]} />
 
-      {/* the train heads for St Petersburg, into the red dawn */}
-      <div className="pointer-events-none absolute -right-[3%] top-5 hidden w-[42%] max-w-[500px] md:block" aria-hidden>
-        <div className="absolute -inset-x-[10%] -inset-y-[40%] -z-10 bg-[radial-gradient(55%_55%_at_65%_50%,rgb(226_26_26/.38),transparent_70%)]" />
-        <TrainArt />
-        <span className="headlight absolute -right-[6%] top-[30%] h-[34%] w-[20%] rounded-full blur-md" />
-      </div>
-
-      <div className="relative md:max-w-[54%]">
+      <div className="relative">
         <p className="text-white/70">
           {greeting()}, {firstName(user.full_name)}
         </p>
-        <h1 id="route-station" className="mt-2 text-[40px] font-bold leading-[.95] tracking-[-0.01em] sm:text-[48px] lg:text-[56px]">
-          {pos.station.name}
-        </h1>
+        {/* the station name, and the track leaving it for St Petersburg with the train on it */}
+        <div className="mt-2 flex items-end gap-4">
+          <h1 id="route-station" className="shrink-0 whitespace-nowrap text-[40px] font-bold leading-[.95] tracking-[-0.01em] sm:text-[48px] lg:text-[56px]">
+            {pos.station.name}
+          </h1>
+          {/* negative bottom margin: the upper rail lands on the name's baseline (measured per font size) */}
+          <HeroRide className="-mb-1 -mr-5 min-w-0 flex-1 sm:-mb-0.5 sm:-mr-7 lg:-mr-8" />
+        </div>
         <p className="mt-2 text-white/75">
           Уровень {pos.index + 1} из {STATIONS.length} · {li.title}
         </p>
       </div>
 
-      {pos.next && li.next_threshold !== null ? (
-        <div className="relative mt-5 max-w-lg">
-          <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-white/75">
-              До {pos.next.to} <span className="font-medium text-white">{fmtNumber(left)} {plural(left, POINTS)}</span>
-            </span>
-            <span className="digits whitespace-nowrap text-white/60">
-              <span className="font-semibold text-white">{fmtNumber(li.points)}</span> / {fmtNumber(li.next_threshold)}
-            </span>
-          </div>
-          <div
-            className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[.12]"
-            role="progressbar"
-            aria-label={`До станции ${pos.next.name} ещё ${left} ${plural(left, POINTS)}`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(li.progress * 100)}
-          >
-            <div className="bar-brand h-full rounded-full" style={{ width: `${Math.max(3, span ? (done / span) * 100 : li.progress * 100)}%` }} />
-          </div>
-        </div>
-      ) : (
-        <p className="relative mt-5 text-white/80">Вы прибыли в Санкт-Петербург: весь маршрут пройден.</p>
-      )}
+      {/* departure board: the next stop, how far to it, the points */}
+      {/* phones: the station gets its own row, the two numbers share the one below */}
+      <dl className="relative mt-5 grid max-w-xl grid-cols-2 rounded-2xl bg-white/[.05] ring-1 ring-inset ring-white/10 sm:grid-cols-[1.4fr_1fr_1fr]">
+        <BoardCell label={onTheWay ? 'Следующая' : 'Маршрут'} className="col-span-2 border-b border-white/10 sm:col-span-1 sm:border-b-0">
+          {onTheWay ? pos.next!.name : 'Пройден'}
+        </BoardCell>
+        <BoardCell label="Осталось" className="sm:border-l sm:border-white/10">
+          {onTheWay ? (
+            <>
+              {fmtNumber(left)} <span className="text-sm font-medium text-white/55">{plural(left, POINTS)}</span>
+            </>
+          ) : (
+            '—'
+          )}
+        </BoardCell>
+        <BoardCell label="Очки" className="border-l border-white/10">
+          {fmtNumber(li.points)}
+          {onTheWay && <span className="text-sm font-medium text-white/45"> / {fmtNumber(li.next_threshold!)}</span>}
+        </BoardCell>
+      </dl>
 
-      <RouteTrack level={li.level} progress={li.progress} animate dark className="relative mt-5" />
+      <RouteTrack
+        level={li.level}
+        progress={li.progress}
+        animate
+        allNames
+        nextHint={onTheWay ? `ещё ${fmtNumber(left)} ${plural(left, POINTS)}` : undefined}
+        className="relative mt-3"
+      />
     </NightPanel>
+  )
+}
+
+function BoardCell({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+  return (
+    <div className={cn('min-w-0 px-4 py-2.5 sm:py-3', className)}>
+      <dt className="text-[11px] font-medium uppercase tracking-[.08em] text-white/50">{label}</dt>
+      <dd className="digits mt-1 whitespace-nowrap text-lg font-semibold leading-tight text-white">{children}</dd>
+    </div>
   )
 }
 
