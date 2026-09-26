@@ -46,7 +46,7 @@ export function Segmented<T extends string>({
           aria-selected={value === v}
           onClick={() => onChange(v)}
           className={cn(
-            'relative min-h-[40px] flex-1 whitespace-nowrap rounded-lg px-2.5 font-medium transition-colors coarse:min-h-[44px] min-[400px]:px-4 sm:flex-none',
+            'relative min-h-[40px] flex-1 whitespace-nowrap rounded-lg px-2 text-[15px] font-medium transition-colors coarse:min-h-[44px] min-[400px]:px-4 min-[400px]:text-base sm:flex-none',
             value === v ? 'text-ink' : 'text-muted hover:text-ink',
           )}
         >

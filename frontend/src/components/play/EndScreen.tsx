@@ -1,6 +1,7 @@
-import type { RunView } from '@/api/types'
+import { Check, Minus, X } from 'lucide-react'
+import type { Quality, RunView } from '@/api/types'
 import { cn } from '@/lib/cn'
-import { fmtNumber, OUTCOME_META, QUALITY_META, TONE_TEXT } from '@/lib/format'
+import { fmtNumber, OUTCOME_META, QUALITY_META, scaleTone, TONE_TEXT } from '@/lib/format'
 import { plural, POINTS } from '@/lib/plural'
 import { stationFor } from '@/lib/route'
 import { AchievementRow } from '../AchievementBadge'
@@ -9,7 +10,7 @@ import { Confetti } from '../Confetti'
 import { CountUp } from '../CountUp'
 import { Mascot } from '../Mascot'
 import { NightPanel, SpeedLines } from '../NightPanel'
-import { SignalBar } from '../SignalBar'
+import { ScoreRing } from '../ScoreRing'
 
 const LAMPS = [
   { tone: 'bad', on: 'bg-[#FF3B3B] shadow-[0_0_18px_4px_rgb(255_59_59/.6)]' },
@@ -113,22 +114,33 @@ export function EndScreen({
         </div>
       </NightPanel>
 
-      {/* scales and points breakdown */}
-      <section className="card p-5">
-        <div className="flex gap-5">
-          <SignalBar label="Пассажир" value={run.loyalty} />
-          <SignalBar label="Безопасность" value={run.safety} />
+      {/* the two scales as rings, and where the points came from */}
+      <section className="card p-5 sm:p-6">
+        <div className="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8">
+          <div className="flex justify-center gap-6 sm:justify-start">
+            <Scale label="Пассажир" value={run.loyalty} />
+            <Scale label="Безопасность" value={run.safety} />
+          </div>
+          <div>
+            <ul className="divide-y divide-line/60">
+              {breakdown.map((b) => (
+                <li key={b.label} className="flex items-center justify-between py-2">
+                  <span className="text-muted">{b.label}</span>
+                  <span className="digits text-base font-semibold">{b.value}</span>
+                </li>
+              ))}
+              <li className="flex items-center justify-between pt-2.5">
+                <span className="font-semibold">Итого</span>
+                <span className="digits text-xl font-bold">+{r.total}</span>
+              </li>
+            </ul>
+          </div>
         </div>
-        <ul className="mt-4 divide-y divide-line/70 border-t border-line/70">
-          {breakdown.map((b) => (
-            <li key={b.label} className="flex items-center justify-between py-2.5">
-              <span className="text-muted">{b.label}</span>
-              <span className="digits text-base font-semibold">{b.value}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-3 text-xs text-muted">
-          Решений {st.decisions}: верных {st.best}, быстрых {st.fast}, не успели ответить {st.timeouts}.
+        <p className="mt-4 flex flex-wrap gap-2 border-t border-line/60 pt-4 text-xs">
+          <Stat label="решений" value={st.decisions} />
+          <Stat label="верных" value={st.best} tone="text-ok" />
+          <Stat label="быстрых" value={st.fast} tone="text-cat-safety" />
+          <Stat label="без ответа" value={st.timeouts} tone={st.timeouts ? 'text-bad' : undefined} />
         </p>
       </section>
 
@@ -154,35 +166,43 @@ export function EndScreen({
         </section>
       )}
 
-      {/* debrief */}
-      <section className="card p-5">
-        <h2 className="text-lg font-semibold">Разбор</h2>
+      {/* debrief: each decision that wasn't the best, with what the regulations recommend */}
+      <section className="card p-5 sm:p-6" aria-labelledby="debrief">
+        <h2 id="debrief" className="text-lg font-semibold">
+          Разбор
+        </h2>
         {summary.debrief.length === 0 ? (
           <p className="mt-2 text-muted">Все решения верные. Разбирать нечего.</p>
         ) : (
-          <ul className="mt-1 divide-y divide-line/70">
+          <ol className="mt-4 space-y-3">
             {summary.debrief.map((d, i) => {
               const q = QUALITY_META[d.quality]
+              const Icon = QUALITY_ICON[d.quality]
               return (
-                <li key={d.node_id + i} className="py-4 last:pb-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="font-medium leading-snug">{d.prompt}</p>
-                    <span className={cn('shrink-0 text-xs font-semibold', TONE_TEXT[q.tone])}>{q.label}</span>
+                <li key={d.node_id + i} className="rounded-2xl bg-ink/[.025] p-4 ring-1 ring-inset ring-line/60">
+                  <div className="flex items-start gap-3">
+                    <span className={cn('mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full', QUALITY_BADGE[d.quality])} aria-hidden>
+                      <Icon className="h-3.5 w-3.5" strokeWidth={3} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className={cn('text-xs font-semibold', TONE_TEXT[q.tone])}>{q.label}</p>
+                      <p className="mt-0.5 font-medium leading-snug">{d.prompt}</p>
+                    </div>
                   </div>
-                  <dl className="mt-2 space-y-1.5">
-                    <div>
+                  <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div className={cn('rounded-xl border-l-[3px] bg-surface px-3 py-2 dark:bg-surface-2/60', QUALITY_LINE[d.quality])}>
                       <dt className="text-xs text-muted">Ваш ответ</dt>
-                      <dd className={cn('border-l-2 pl-2', { best: 'border-ok', ok: 'border-warn', bad: 'border-bad' }[d.quality])}>{d.answer}</dd>
+                      <dd className="mt-0.5 leading-snug">{d.answer}</dd>
                     </div>
                     {d.recommended && (
-                      <div>
+                      <div className="rounded-xl border-l-[3px] border-ok bg-ok-soft/70 px-3 py-2">
                         <dt className="text-xs text-muted">Рекомендуется</dt>
-                        <dd className="border-l-2 border-ok pl-2">{d.recommended}</dd>
+                        <dd className="mt-0.5 leading-snug">{d.recommended}</dd>
                       </div>
                     )}
                   </dl>
                   {(d.feedback || d.explanation) && (
-                    <p className="mt-2 text-muted">
+                    <p className="mt-3 text-sm leading-relaxed text-muted">
                       {d.feedback}
                       {d.explanation ? ` ${d.explanation}` : ''}
                     </p>
@@ -190,11 +210,36 @@ export function EndScreen({
                 </li>
               )
             })}
-          </ul>
+          </ol>
         )}
       </section>
 
       {actions}
     </div>
+  )
+}
+
+const QUALITY_ICON: Record<Quality, typeof Check> = { best: Check, ok: Minus, bad: X }
+const QUALITY_BADGE: Record<Quality, string> = { best: 'bg-ok text-white', ok: 'bg-warn text-[#1C2430]', bad: 'bg-bad text-white' }
+const QUALITY_LINE: Record<Quality, string> = { best: 'border-ok', ok: 'border-warn', bad: 'border-bad' }
+
+/** A 0..100 scale as a ring in its signal colour. */
+function Scale({ label, value }: { label: string; value: number }) {
+  const tone = scaleTone(value)
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <ScoreRing value={value / 100} tone={tone} size={84} stroke={8} label={`${label}: ${value} из 100`}>
+        <span className="digits text-2xl font-bold leading-none">{value}</span>
+      </ScoreRing>
+      <span className="text-sm text-muted">{label}</span>
+    </div>
+  )
+}
+
+function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
+  return (
+    <span className="rounded-full bg-ink/[.04] px-2.5 py-1 text-muted ring-1 ring-inset ring-line/60">
+      <span className={cn('digits text-sm font-semibold text-ink', tone)}>{value}</span> {label}
+    </span>
   )
 }

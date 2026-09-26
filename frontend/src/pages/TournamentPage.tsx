@@ -26,7 +26,7 @@ import { CountUp } from '@/components/CountUp'
 import { NightPanel, SpeedLines } from '@/components/NightPanel'
 import { ScoreRing } from '@/components/ScoreRing'
 import { EmptyState, ErrorState, Loading } from '@/components/States'
-import { TimerLine, timerTone } from '@/components/Timer'
+import { RingTimer, TimerLine } from '@/components/Timer'
 import { FlapClock } from '@/components/tournament/FlapClock'
 import { MEDALS, MedalAvatar, MedalDisc, Podium } from '@/components/Podium'
 import { TrophyArt } from '@/components/tournament/TrophyArt'
@@ -379,8 +379,6 @@ function LiveStrip({ t, remaining }: { t: Tournament; remaining: number }) {
 
 const LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е']
 const ADVANCE_MS = 1800
-const TIMER_TEXT = { ok: 'text-ink', warn: 'text-warn-ink', bad: 'text-bad' } as const
-const TIMER_STROKE = { ok: 'stroke-ok', warn: 'stroke-warn', bad: 'stroke-brand' } as const
 
 function Quiz({
   tournamentId,
@@ -577,35 +575,6 @@ function Steps({ index, total, className }: { index: number; total: number; clas
       {Array.from({ length: total }, (_, i) => (
         <span key={i} className={cn('h-1.5 flex-1 rounded-full', i < index ? 'bg-ink/35' : i === index ? 'bar-brand' : 'bg-ink/10')} />
       ))}
-    </div>
-  )
-}
-
-/** Seconds left inside a ring that runs down with them, green → yellow → red. */
-function RingTimer({ remaining, total }: { remaining: number; total: number }) {
-  const r = 22
-  const c = 2 * Math.PI * r
-  const share = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0
-  const tone = timerTone(remaining, total)
-  return (
-    <div className="relative grid h-14 w-14 shrink-0 place-items-center" role="timer" aria-label={`Осталось ${Math.ceil(remaining)} секунд`}>
-      <svg viewBox="0 0 52 52" className="absolute inset-0 -rotate-90" aria-hidden>
-        <circle cx="26" cy="26" r={r} fill="none" strokeWidth="4" className="stroke-ink/10" />
-        <circle
-          cx="26"
-          cy="26"
-          r={r}
-          fill="none"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - share)}
-          className={cn(TIMER_STROKE[tone], 'transition-[stroke-dashoffset,stroke] duration-100 ease-linear')}
-        />
-      </svg>
-      <span className={cn('digits text-xl font-semibold leading-none', TIMER_TEXT[tone])} aria-hidden>
-        {Math.ceil(remaining)}
-      </span>
     </div>
   )
 }

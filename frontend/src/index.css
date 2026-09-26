@@ -675,7 +675,22 @@
   }
 }
 .row-in {
-  animation: row-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: row-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+/* Play: a new line in the conversation slides up softly */
+@keyframes feed-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.feed-in {
+  transform-origin: 50% 100%;
+  animation: feed-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 @keyframes bar-grow {
   from {
@@ -688,6 +703,25 @@
 .bar-grow {
   transform-origin: 0 50%;
   animation: bar-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/*
+ * Scenario card: it measures its own width, so a narrow card (a phone, two columns beside the
+ * sidebar) drops the extras from its footer before the action could be pushed out.
+ */
+.scenario-card {
+  container-type: inline-size;
+}
+@container (max-width: 470px) {
+  .sc-best {
+    display: none;
+  }
+}
+@container (max-width: 380px) {
+  .sc-difficulty,
+  .sc-arrow {
+    display: none;
+  }
 }
 
 /* «Как устроен турнир»: three tiles side by side when the card is wide, a compact list otherwise */
@@ -740,6 +774,7 @@
   .crown-bob,
   .stage-light,
   .row-in,
+  .feed-in,
   .bar-grow,
   .flap,
   .podium-rise,

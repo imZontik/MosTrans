@@ -1,19 +1,24 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { X } from 'lucide-react'
+import { ArrowRight, Check, Clock, Lightbulb, Minus, SendHorizontal, X } from 'lucide-react'
 import { api, ApiError } from '@/api/client'
-import type { AnswerAction, PublicNode, RunView } from '@/api/types'
+import type { AnswerAction, HistoryItem, PublicNode, Quality, RunView } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { useCountdown } from '@/hooks/useServerClock'
 import { useSpeech } from '@/hooks/useSpeech'
 import { Button } from '@/components/Button'
-import { TimerDigits, TimerLine } from '@/components/Timer'
+import { RingTimer, TimerLine } from '@/components/Timer'
 import { SignalBar } from '@/components/SignalBar'
 import { CountUp } from '@/components/CountUp'
 import { Mascot } from '@/components/Mascot'
+import { CoverTile } from '@/components/Category'
+import { DifficultyDots } from '@/components/Progress'
 import { EndScreen } from '@/components/play/EndScreen'
 import { AnswerBubble, GradingIndicator, HistoryEntry, PromptBubble } from '@/components/play/Feed'
 import { cn } from '@/lib/cn'
+import { categoryStyle } from '@/lib/category'
+import { MODE_LABEL } from '@/lib/format'
+import { plural, POINTS } from '@/lib/plural'
 
 export default function PlayPage() {
   const { runId } = useParams()
@@ -68,10 +73,20 @@ export default function PlayPage() {
 
   // Keep the newest message in view.
   // Scroll to the page end (not just the marker), so the sticky decision dock never covers the newest line.
+  // The dock settles a moment later (its timer appears, fonts load): stay pinned to the end while it does.
   useEffect(() => {
     if (!bottomRef.current) return
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: reduce ? 'auto' : 'smooth' })
+    const toEnd = (smooth: boolean) =>
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: smooth && !reduce ? 'smooth' : 'auto' })
+    toEnd(true)
+    const ro = new ResizeObserver(() => toEnd(false))
+    ro.observe(document.body)
+    const done = window.setTimeout(() => ro.disconnect(), 1200)
+    return () => {
+      ro.disconnect()
+      window.clearTimeout(done)
+    }
   }, [run?.history.length, node?.id, busy])
 
   const send = useCallback(
@@ -159,39 +174,48 @@ export default function PlayPage() {
 
   return (
     <Shell>
-      {/* compact top bar */}
+      {/* compact top bar on the night line */}
       <header className="night-line-flat sticky top-0 z-20 pt-[env(safe-area-inset-top)] shadow-[0_10px_30px_-18px_rgb(10_16_30/.8)] dark:shadow-[0_1px_0_rgb(255_255_255/.06),0_10px_30px_-18px_rgb(0_0_0/.9)]">
-        <div className="mx-auto flex max-w-3xl items-center gap-2 px-2 pt-1.5">
-          <button
-            onClick={() => navigate(backTo)}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-white hover:bg-white/10"
-            aria-label="Закрыть рейс. Прогресс сохранится"
-            title="Закрыть (прогресс сохранится)"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold leading-tight text-white">{run.scenario.title}</p>
-            <p className={cn('truncate text-xs', emergency ? 'font-medium text-[#FF8A8A]' : 'text-white/70')}>{modeNote}</p>
+        {/* the results page has no side rail: the header centres over it */}
+        <Columns rail={!finished}>
+          <div className="flex items-center gap-2 pt-1.5">
+            <button
+              onClick={() => navigate(backTo)}
+              className="-ml-2 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Закрыть рейс. Прогресс сохранится"
+              title="Закрыть (прогресс сохранится)"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold leading-tight text-white">{run.scenario.title}</p>
+              <p className={cn('truncate text-xs', emergency ? 'font-medium text-[#FF8A8A]' : 'text-white/60')}>{modeNote}</p>
+            </div>
+            <div className="shrink-0 rounded-xl bg-white/[.07] px-3 py-1.5 text-right ring-1 ring-inset ring-white/10">
+              <p className="digits text-xl font-semibold leading-none text-white">
+                <CountUp value={run.score} duration={600} />
+              </p>
+              <p className="text-[11px] leading-tight text-white/55">{plural(run.score, POINTS)}</p>
+            </div>
           </div>
-          <div className="shrink-0 pr-2 text-right">
-            <p className="digits text-2xl font-semibold leading-none text-white">
-              <CountUp value={run.score} duration={600} />
-            </p>
-            <p className="text-xs text-white/60">очков</p>
+          <div className="flex gap-5 pb-3 pt-2.5">
+            <SignalBar label="Пассажир" value={run.loyalty} showDelta dark />
+            <SignalBar label="Безопасность" value={run.safety} showDelta dark />
           </div>
-        </div>
-        <div className="mx-auto flex max-w-3xl gap-5 px-4 pb-3 pt-2">
-          <SignalBar label="Пассажир" value={run.loyalty} showDelta dark />
-          <SignalBar label="Безопасность" value={run.safety} showDelta dark />
-        </div>
+        </Columns>
       </header>
 
       {finished ? (
         <EndScreen run={run} onRestart={restart} restarting={restarting} backTo={backTo} />
       ) : (
-        <>
-          <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 pb-6 pt-5 sm:pt-7" aria-live="polite">
+        <Columns
+          className="flex-1"
+          side={<RunSide run={run} />}
+          body="flex flex-col"
+        >
+          {/* the conversation sits on the answer dock, like a messenger: the newest line right above the choices */}
+          <main className="flex flex-1 flex-col justify-end gap-5 pb-3 pt-5 sm:pt-7" aria-live="polite">
+            <RunIntro run={run} />
             {run.history.map((h, i) => (
               <HistoryEntry key={`${h.node_id}-${i}`} item={h} fresh={i === freshIndex} category={run.scenario.category} />
             ))}
@@ -206,7 +230,7 @@ export default function PlayPage() {
             )}
             {busy === 'answer' && (
               <>
-                <AnswerBubble text={text} />
+                <AnswerBubble text={text} fresh />
                 <GradingIndicator />
               </>
             )}
@@ -224,9 +248,37 @@ export default function PlayPage() {
             onChoose={(choice_id) => send('choose', { choice_id })}
             onAnswer={() => send('answer', { text })}
           />
-        </>
+        </Columns>
       )}
     </Shell>
+  )
+}
+
+/**
+ * The page's columns: on xl a side rail with the run on the left and the conversation in the
+ * middle; below xl just the conversation. The header uses the same columns, so its title and
+ * scales line up with the conversation under them.
+ */
+function Columns({
+  side,
+  rail = true,
+  body,
+  className,
+  children,
+}: {
+  side?: ReactNode
+  rail?: boolean
+  body?: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <div className={cn('mx-auto flex w-full max-w-[1180px] gap-10 px-4 xl:px-8 2xl:max-w-[1480px]', className)}>
+      {rail && <div className="hidden w-[280px] shrink-0 xl:block">{side}</div>}
+      <div className={cn('mx-auto w-full min-w-0 max-w-3xl flex-1', body)}>{children}</div>
+      {/* keeps the conversation centred on the page on 2xl */}
+      {rail && <div className="hidden w-[280px] shrink-0 2xl:block" aria-hidden />}
+    </div>
   )
 }
 
@@ -259,14 +311,121 @@ function CurrentPrompt({
         current
       />
       {node.hint && (
-        <p className="rounded-xl bg-warn-soft/70 px-3.5 py-2.5 text-muted ring-1 ring-inset ring-warn/25">
-          <span className="font-medium text-ink">Подсказка: </span>
-          {node.hint}
+        <p
+          className="feed-in flex gap-2.5 rounded-2xl bg-warn-soft/70 px-4 py-3 text-sm leading-relaxed ring-1 ring-inset ring-warn/25"
+          style={{ animationDelay: '120ms' }}
+        >
+          <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-warn-ink" aria-hidden />
+          <span>
+            <span className="font-semibold">Подсказка. </span>
+            <span className="text-muted">{node.hint}</span>
+          </span>
         </p>
       )}
     </div>
   )
 }
+
+/** Below xl, where there's no side rail: the scenario opens the conversation, like a chat's first card. */
+function RunIntro({ run }: { run: RunView }) {
+  const s = run.scenario
+  const c = categoryStyle(s.category)
+  return (
+    <section className="mb-2 flex items-start gap-3.5 border-b border-line/70 pb-5 xl:hidden" aria-label="О рейсе">
+      <CoverTile cover={s.cover} category={s.category} size="md" />
+      <div className="min-w-0 flex-1">
+        <p className={cn('flex items-center gap-1.5 text-xs font-medium', c.text)}>
+          <c.icon className="h-3.5 w-3.5" aria-hidden />
+          {s.category_title}
+        </p>
+        {s.description && <p className="mt-1 text-sm leading-relaxed text-muted">{s.description}</p>}
+        <p className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-muted">
+          <span className="inline-flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" aria-hidden />
+            {s.estimated_minutes} мин
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <DifficultyDots value={s.difficulty} />
+            {DIFFICULTY[s.difficulty]}
+          </span>
+          <span>прогресс сохраняется</span>
+        </p>
+      </div>
+    </section>
+  )
+}
+
+// --- side rail (xl) ------------------------------------------------------------------
+
+const DIFFICULTY = ['', 'Лёгкий', 'Средний', 'Сложный']
+const TRAIL: Record<Quality, { icon: typeof Check; className: string; label: string }> = {
+  best: { icon: Check, className: 'bg-ok text-white', label: 'верно' },
+  ok: { icon: Minus, className: 'bg-warn text-[#1C2430]', label: 'допустимо' },
+  bad: { icon: X, className: 'bg-bad text-white', label: 'ошибка' },
+}
+
+/** What this run is, and the trail of your decisions so far: one mark per answer. */
+function RunSide({ run }: { run: RunView }) {
+  const s = run.scenario
+  const c = categoryStyle(s.category)
+  const decisions = run.history.filter((h): h is HistoryItem & { quality: Quality } => h.type !== 'scene' && !!h.quality)
+  return (
+    <aside className="sticky top-[132px] space-y-4 pt-7" aria-label="О рейсе">
+      <section className="card relative isolate overflow-hidden p-5">
+        <span
+          className="pointer-events-none absolute -right-14 -top-14 -z-10 h-40 w-40 rounded-full opacity-20 blur-2xl"
+          style={{ background: `rgb(var(--cat-${s.category}))` }}
+          aria-hidden
+        />
+        <CoverTile cover={s.cover} category={s.category} size="lg" />
+        <h2 className="mt-4 text-lg font-semibold leading-tight">{s.title}</h2>
+        <p className={cn('mt-1 flex items-center gap-1.5 text-xs font-medium', c.text)}>
+          <c.icon className="h-3.5 w-3.5" aria-hidden />
+          {s.category_title}
+        </p>
+        {s.description && <p className="mt-3 text-sm leading-relaxed text-muted">{s.description}</p>}
+        <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line/70 pt-3 text-sm text-muted">
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="h-4 w-4" aria-hidden />
+            <span className="digits font-semibold text-ink/80">{s.estimated_minutes}</span> мин
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <DifficultyDots value={s.difficulty} />
+            {DIFFICULTY[s.difficulty]}
+          </span>
+          <span>{MODE_LABEL[run.mode] ?? run.mode}</span>
+        </p>
+      </section>
+
+      <section className="card p-5" aria-labelledby="trail">
+        <h2 id="trail" className="text-sm font-semibold">
+          Ваши решения
+        </h2>
+        {decisions.length ? (
+          <ol className="mt-3 flex flex-wrap gap-1.5">
+            {decisions.map((d, i) => {
+              const t = TRAIL[d.quality]
+              return (
+                <li key={i} className={cn('grid h-7 w-7 place-items-center rounded-full', t.className)} title={`Решение ${i + 1}: ${t.label}`}>
+                  <t.icon className="h-3.5 w-3.5" strokeWidth={3} aria-label={t.label} />
+                </li>
+              )
+            })}
+            <li className="grid h-7 w-7 place-items-center rounded-full border-2 border-dashed border-line" title="Текущий шаг" aria-label="текущий шаг" />
+          </ol>
+        ) : (
+          <p className="mt-1.5 text-sm text-muted">Здесь появится след ваших решений.</p>
+        )}
+        <p className="mt-4 text-xs text-muted">Можно закрыть рейс в любой момент: прогресс сохранится.</p>
+      </section>
+    </aside>
+  )
+}
+
+// --- the answer dock -----------------------------------------------------------------
+
+const LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е']
+const FINE_POINTER = '[@media(hover:hover)_and_(pointer:fine)]:block'
 
 function AnswerPanel({
   node,
@@ -297,76 +456,152 @@ function AnswerPanel({
   }, [node.id])
   const timer = node.timer && remaining !== null ? { remaining, total: node.timer } : null
 
+  const choose = useCallback(
+    (id: string) => {
+      if (busy || Date.now() - shownAt.current < 450) return // ignore a double-tap carried over from «Далее»
+      setPicked(id)
+      onChoose(id)
+    },
+    [busy, onChoose],
+  )
+
+  // keys: 1–N pick a choice, Enter goes on through a scene
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return
+      if ((e.target as HTMLElement | null)?.closest('input, textarea, select, button, [contenteditable="true"]') && e.key === 'Enter') return
+      if ((e.target as HTMLElement | null)?.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (node.type === 'scene' && e.key === 'Enter' && !busy) {
+        e.preventDefault()
+        onContinue()
+      }
+      if (node.type === 'choice' && node.choices) {
+        const n = Number(e.key)
+        if (Number.isInteger(n) && n >= 1 && n <= node.choices.length) {
+          e.preventDefault()
+          choose(node.choices[n - 1].id)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [node, busy, onContinue, choose])
+
+  const title = node.type === 'choice' ? 'Ваше решение' : node.type === 'input' ? 'Ваш ответ' : null
+
   return (
-    <div className="pb-safe sticky bottom-0 z-20 mx-auto w-full max-w-3xl overflow-hidden rounded-t-sheet border border-b-0 border-line/80 bg-surface/95 shadow-dock backdrop-blur-xl sm:rounded-b-none">
-      {timer && <TimerLine remaining={timer.remaining} total={timer.total} />}
-      <div className="px-4 pb-4 pt-3 sm:px-5">
+    <div className="pb-safe sticky bottom-0 z-20 -mx-4 overflow-hidden rounded-t-[24px] border border-b-0 border-line/70 bg-surface/90 shadow-dock backdrop-blur-xl dark:bg-surface/85 sm:mx-0">
+      {timer && <TimerLine remaining={timer.remaining} total={timer.total} className="h-[3px]" />}
+      <div key={node.id} className="feed-in px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5">
         {error && (
-          <p className="mb-3 border-l-2 border-brand pl-3 text-sm" role="alert">
+          <p className="mb-3 rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm text-ink ring-1 ring-inset ring-brand/25" role="alert">
             {error}
           </p>
         )}
 
-        {timer && (
-          <div className="mb-2 flex items-baseline justify-between">
-            <span className="text-xs text-muted">{node.type === 'input' ? 'Время на ответ' : 'Время на решение'}</span>
-            <TimerDigits remaining={timer.remaining} total={timer.total} />
+        {(title || timer) && (
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              {title && <p className="font-semibold leading-tight">{title}</p>}
+              {timer && <p className="text-xs text-muted">{node.type === 'input' ? 'Время на ответ идёт' : 'Время на решение идёт'}</p>}
+            </div>
+            {timer && <RingTimer remaining={timer.remaining} total={timer.total} className="h-12 w-12" />}
           </div>
         )}
 
         {node.type === 'scene' && (
-          <Button size="lg" block onClick={onContinue} loading={busy === 'continue'} data-testid="continue">
-            Далее
-          </Button>
+          <>
+            <Button
+              size="lg"
+              block
+              onClick={onContinue}
+              loading={busy === 'continue'}
+              data-testid="continue"
+              icon={busy === 'continue' ? undefined : <ArrowRight className="order-last h-5 w-5" aria-hidden />}
+            >
+              Далее
+            </Button>
+            <p className={cn('mt-2 hidden text-center text-xs text-muted', FINE_POINTER)}>или клавиша Enter</p>
+          </>
         )}
 
         {node.type === 'choice' && (
-          <div className="space-y-2" role="group" aria-label="Ваше решение">
-            {node.choices?.map((c) => (
-              <button
-                key={c.id}
-                data-testid="choice"
-                disabled={!!busy}
-                onClick={() => {
-                  if (Date.now() - shownAt.current < 450) return // ignore a double-tap carried over from «Далее»
-                  setPicked(c.id)
-                  onChoose(c.id)
-                }}
-                className={cn(
-                  'press flex min-h-[52px] w-full items-center rounded-xl border px-4 py-3 text-left leading-snug transition-[color,background-color,border-color,box-shadow,opacity,transform]',
-                  picked === c.id ? 'btn-ink border-transparent' : 'border-line bg-surface text-ink shadow-card hover:border-ink/40 hover:bg-surface-2',
-                  busy && picked !== c.id && 'opacity-40',
-                )}
-              >
-                {c.text}
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="grid gap-2" role="group" aria-label="Ваше решение">
+              {node.choices?.map((c, i) => (
+                <button
+                  key={c.id}
+                  data-testid="choice"
+                  disabled={!!busy}
+                  onClick={() => choose(c.id)}
+                  className={cn(
+                    'press group flex min-h-[56px] w-full items-center gap-3 rounded-2xl border py-2.5 pl-2.5 pr-4 text-left leading-snug transition-[color,background-color,border-color,box-shadow,opacity,transform]',
+                    picked === c.id
+                      ? 'border-brand/40 bg-brand-soft text-ink shadow-[0_0_0_3px_rgb(var(--brand)/.12)]'
+                      : 'border-line/80 bg-surface text-ink hover:border-ink/25 hover:bg-surface-2 dark:bg-surface-2/60 dark:hover:bg-surface-2',
+                    busy && picked !== c.id && 'opacity-40',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'grid h-8 w-8 shrink-0 place-items-center rounded-xl font-display text-base font-semibold transition-colors',
+                      picked === c.id ? 'bg-brand text-white' : 'bg-ink/[.06] text-muted group-hover:bg-ink/10 group-hover:text-ink',
+                    )}
+                    aria-hidden
+                  >
+                    {busy === 'choose' && picked === c.id ? (
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    ) : (
+                      LETTERS[i]
+                    )}
+                  </span>
+                  <span className="flex-1">{c.text}</span>
+                </button>
+              ))}
+            </div>
+            <p className={cn('mt-2.5 hidden text-xs text-muted', FINE_POINTER)}>Можно выбирать клавишами 1–{node.choices?.length}</p>
+          </>
         )}
 
         {node.type === 'input' && (
-          <div className="space-y-2">
+          <div>
             <label htmlFor="answer" className="sr-only">
               Ваш ответ
             </label>
-            <textarea
-              id="answer"
-              data-testid="answer-input"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && text.trim()) onAnswer()
-              }}
-              disabled={!!busy}
-              rows={3}
-              maxLength={2000}
-              placeholder={node.placeholder || 'Что вы скажете или сделаете'}
-              className="input min-h-[92px] resize-none text-base"
-            />
-            <Button size="lg" block onClick={onAnswer} disabled={!text.trim()} loading={busy === 'answer'} data-testid="answer-submit">
-              {busy === 'answer' ? 'ИИ-наставник проверяет ответ' : 'Отправить ответ'}
-            </Button>
-            <p className="text-xs text-muted">Ответ проверит ИИ-наставник по регламенту. Пишите так, как сказали бы в рейсе.</p>
+            <div className="relative">
+              <textarea
+                id="answer"
+                data-testid="answer-input"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && text.trim()) onAnswer()
+                }}
+                disabled={!!busy}
+                rows={3}
+                maxLength={2000}
+                placeholder={node.placeholder || 'Что вы скажете или сделаете'}
+                className="input min-h-[104px] resize-none rounded-2xl pb-8 text-base"
+              />
+              <span className="digits pointer-events-none absolute bottom-2.5 right-3.5 text-xs text-muted/80">{text.length}/2000</span>
+            </div>
+            <div className="mt-2.5 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <p className="flex-1 text-xs leading-snug text-muted">
+                Ответ проверит ИИ-наставник по регламенту. Пишите так, как сказали бы в рейсе.
+                <span className="hidden [@media(hover:hover)_and_(pointer:fine)]:inline"> Ctrl + Enter — отправить.</span>
+              </p>
+              <Button
+                size="lg"
+                onClick={onAnswer}
+                disabled={!text.trim()}
+                loading={busy === 'answer'}
+                data-testid="answer-submit"
+                className="w-full sm:w-auto"
+                icon={busy === 'answer' ? undefined : <SendHorizontal className="order-last h-4 w-4" aria-hidden />}
+              >
+                {busy === 'answer' ? 'Проверяем' : 'Отправить'}
+              </Button>
+            </div>
           </div>
         )}
       </div>
