@@ -25,7 +25,10 @@ export function SpeakerAvatar({ name, avatar, category }: { name: string | null;
   )
 }
 
-/** A line from a character or the narrator. */
+/**
+ * A line from a character or the narrator. What's already happened steps back into muted text;
+ * the current line is a lit card: the scene in the category's tint, a character in a bubble.
+ */
 export function PromptBubble({
   speaker,
   name,
@@ -47,31 +50,33 @@ export function PromptBubble({
   current?: boolean
   category?: string
 }) {
+  const c = categoryStyle(category)
   if (speaker === 'narrator' || !name) {
-    const c = categoryStyle(category)
-    return (
-      <div className={cn('border-l-[3px] pl-3', current ? cn(c.border, 'text-ink') : 'border-line text-muted')}>
-        <p className="text-base leading-relaxed">{text}</p>
-        {onReplay && <ReplayButton onClick={onReplay} speaking={speaking} className="mt-2" />}
+    return current ? (
+      <div className={cn('feed-in rounded-2xl px-4 py-3.5 ring-1 ring-inset sm:px-5 sm:py-4', c.soft, c.ring)}>
+        <p className="text-[17px] leading-relaxed text-ink">{text}</p>
+        {onReplay && <ReplayButton onClick={onReplay} speaking={speaking} className="mt-3" />}
       </div>
+    ) : (
+      <p className="border-l-2 border-line pl-3.5 leading-relaxed text-muted">{text}</p>
     )
   }
   return (
-    <div className="flex max-w-[92%] items-end gap-2 sm:max-w-[80%]">
+    <div className={cn('flex max-w-[92%] items-end gap-2.5 sm:max-w-[82%]', current && 'feed-in')}>
       <SpeakerAvatar name={name} avatar={avatar} category={category} />
       <div className="min-w-0">
         <p className="mb-1 ml-1 text-xs text-muted">
-          <span className="font-medium text-ink">{name}</span>
-          {role && `, ${role}`}
+          <span className="font-semibold text-ink/80">{name}</span>
+          {role && ` · ${role}`}
         </p>
         <div
           className={cn(
-            'rounded-2xl rounded-bl-[4px] border px-3.5 py-2.5 leading-relaxed',
-            current ? 'card rounded-bl-[4px] text-base text-ink' : 'border-transparent bg-surface/70 text-muted',
+            'rounded-[20px] rounded-bl-md px-4 py-2.5 leading-relaxed',
+            current ? 'bg-surface text-[17px] text-ink shadow-card ring-1 ring-inset ring-line/80 dark:bg-surface-2' : 'bg-ink/[.04] text-muted',
           )}
         >
           {text}
-          {onReplay && <ReplayButton onClick={onReplay} speaking={speaking} className="mt-2" />}
+          {onReplay && <ReplayButton onClick={onReplay} speaking={speaking} className="mt-2.5" />}
         </div>
       </div>
     </div>
@@ -83,42 +88,42 @@ function ReplayButton({ onClick, speaking, className }: { onClick: () => void; s
     <button
       onClick={onClick}
       className={cn(
-        'flex min-h-[40px] coarse:min-h-[44px] items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-xs font-medium text-ink transition-colors hover:border-ink/40 hover:bg-surface-2',
+        'flex min-h-[40px] items-center gap-2 rounded-full bg-surface/80 px-3.5 text-sm font-medium text-ink ring-1 ring-inset ring-line transition-colors hover:bg-surface coarse:min-h-[44px]',
         className,
       )}
     >
-      <Volume2 className="h-4 w-4" aria-hidden />
+      <Volume2 className={cn('h-4 w-4', speaking && 'animate-pulse text-brand')} aria-hidden />
       {speaking ? 'Воспроизводится' : 'Прослушать голосовое'}
     </button>
   )
 }
 
-export function AnswerBubble({ text, timedOut }: { text: string; timedOut?: boolean }) {
+/** Your answer, on the right in the «you» tint used across the app. */
+export function AnswerBubble({ text, timedOut, fresh }: { text: string; timedOut?: boolean; fresh?: boolean }) {
   return (
-    <div className="ml-auto flex max-w-[88%] justify-end sm:max-w-[75%]">
+    <div className={cn('ml-auto flex max-w-[88%] justify-end sm:max-w-[75%]', fresh && 'feed-in')}>
       <div
         className={cn(
-          'rounded-2xl rounded-br-[4px] px-3.5 py-2.5 leading-relaxed',
-          timedOut ? 'border border-dashed border-muted text-muted' : 'border-r-[3px] border-brand bg-ink text-inverse shadow-card',
+          'rounded-[20px] rounded-br-md px-4 py-2.5 leading-relaxed',
+          timedOut ? 'border border-dashed border-line text-muted' : 'bg-brand-soft text-ink ring-1 ring-inset ring-brand/20',
         )}
       >
-        {text}
+        {timedOut ? 'Нет ответа' : text}
       </div>
     </div>
   )
 }
 
-const QUALITY_TEXT: Record<Quality, string> = { best: 'text-ok', ok: 'text-warn-ink', bad: 'text-bad' }
-const QUALITY_ICON: Record<Quality, { icon: typeof Check; className: string }> = {
-  best: { icon: Check, className: 'bg-ok text-white' },
-  ok: { icon: Minus, className: 'bg-warn text-[#1C2430]' },
-  bad: { icon: X, className: 'bg-bad text-white' },
+const QUALITY_TONE: Record<Quality, { text: string; badge: string; line: string }> = {
+  best: { text: 'text-ok', badge: 'bg-ok text-white', line: 'border-ok/50' },
+  ok: { text: 'text-warn-ink', badge: 'bg-warn text-[#1C2430]', line: 'border-warn/60' },
+  bad: { text: 'text-bad', badge: 'bg-bad text-white', line: 'border-bad/50' },
 }
+const QUALITY_ICON: Record<Quality, typeof Check> = { best: Check, ok: Minus, bad: X }
 
-function signed(v: number) {
-  return v >= 0 ? `+${v}` : `−${Math.abs(v)}`
-}
+const signed = (v: number) => (v >= 0 ? `+${v}` : `−${Math.abs(v)}`)
 
+/** «Пассажир +10» as soft chips in the signal colour of the change. */
 export function EffectPills({ effects }: { effects: Effects }) {
   const items = (
     [
@@ -131,8 +136,8 @@ export function EffectPills({ effects }: { effects: Effects }) {
       {items.map(([k, label]) => {
         const v = effects[k] ?? 0
         return (
-          <span key={k} className="whitespace-nowrap">
-            {label} <span className={cn('digits text-sm font-semibold', v > 0 ? 'text-ok' : 'text-bad')}>{signed(v)}</span>
+          <span key={k} className={cn('whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium', v > 0 ? 'bg-ok-soft text-ok' : 'bg-brand-soft text-bad')}>
+            {label} <span className="digits font-semibold">{signed(v)}</span>
           </span>
         )
       })}
@@ -140,7 +145,7 @@ export function EffectPills({ effects }: { effects: Effects }) {
   )
 }
 
-/** Compact result line under an answer: quality word, points, effects. */
+/** The verdict under an answer: quality, points, how the scales moved and why. */
 export function FeedbackChip({
   quality,
   points,
@@ -149,6 +154,7 @@ export function FeedbackChip({
   fast,
   timedOut,
   grade,
+  fresh,
 }: {
   quality: Quality
   points: number
@@ -159,39 +165,36 @@ export function FeedbackChip({
   grade: Grade | null
   fresh?: boolean
 }) {
+  const t = QUALITY_TONE[quality]
+  const Icon = QUALITY_ICON[quality]
   return (
-    <div className="ml-auto max-w-[92%] text-right sm:max-w-[75%]">
-      <p className="flex flex-wrap items-baseline justify-end gap-x-3 gap-y-0.5 text-xs text-muted">
-        <span className={cn('flex items-center gap-1.5 text-sm font-semibold', QUALITY_TEXT[quality])}>
-          <QualityIcon quality={quality} />
-          {timedOut ? 'Время вышло' : QUALITY_META[quality].label}
-        </span>
-        <span className="digits text-sm font-semibold text-ink">
-          {signed(points)} {plural(points, POINTS)}
-        </span>
-        {fast && <span>быстро, +5</span>}
-        {grade && <span>ИИ: {String(grade.score).replace('.', ',')} из 10</span>}
-        <EffectPills effects={effects} />
-      </p>
-      {feedback && <p className="mt-1 text-left text-sm text-muted sm:text-right">{feedback}</p>}
+    <div className={cn('ml-auto max-w-[92%] sm:max-w-[75%]', fresh && 'feed-in')} style={fresh ? { animationDelay: '120ms' } : undefined}>
+      <div className={cn('rounded-2xl border-l-[3px] bg-surface/70 px-3.5 py-2.5 ring-1 ring-inset ring-line/60 dark:bg-surface-2/60', t.line)}>
+        <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+          <span className={cn('flex items-center gap-1.5 text-sm font-semibold', t.text)}>
+            <span className={cn('grid h-[18px] w-[18px] place-items-center rounded-full', t.badge)} aria-hidden>
+              <Icon className="h-3 w-3" strokeWidth={3} />
+            </span>
+            {timedOut ? 'Время вышло' : QUALITY_META[quality].label}
+          </span>
+          <span className={cn('digits text-sm font-semibold', fresh && 'points-pop')}>
+            {signed(points)} <span className="font-sans font-normal text-muted">{plural(points, POINTS)}</span>
+          </span>
+          {fast && <span className="rounded-full bg-cat-safety-soft px-2 py-0.5 text-xs font-medium text-cat-safety">быстро +5</span>}
+          {grade && <span className="text-xs text-muted">ИИ: {String(grade.score).replace('.', ',')} из 10</span>}
+          <EffectPills effects={effects} />
+        </p>
+        {feedback && <p className="mt-1.5 text-sm leading-relaxed text-muted">{feedback}</p>}
+      </div>
     </div>
   )
 }
 
-function QualityIcon({ quality }: { quality: Quality }) {
-  const { icon: Icon, className } = QUALITY_ICON[quality]
-  return (
-    <span className={cn('grid h-[18px] w-[18px] place-items-center rounded-full', className)} aria-hidden>
-      <Icon className="h-3 w-3" strokeWidth={3} />
-    </span>
-  )
-}
-
-export function HistoryEntry({ item, category }: { item: HistoryItem; fresh?: boolean; category?: string }) {
+export function HistoryEntry({ item, category, fresh }: { item: HistoryItem; fresh?: boolean; category?: string }) {
   return (
     <div className="space-y-2.5">
       <PromptBubble speaker={item.speaker} name={item.speaker_name} avatar={item.avatar} text={item.text} category={category} />
-      {item.type !== 'scene' && item.answer && <AnswerBubble text={item.answer} timedOut={item.timed_out} />}
+      {item.type !== 'scene' && (item.answer || item.timed_out) && <AnswerBubble text={item.answer} timedOut={item.timed_out} fresh={fresh} />}
       {item.type !== 'scene' && item.quality && (
         <FeedbackChip
           quality={item.quality}
@@ -201,20 +204,24 @@ export function HistoryEntry({ item, category }: { item: HistoryItem; fresh?: bo
           fast={item.fast}
           timedOut={item.timed_out}
           grade={item.grade}
+          fresh={fresh}
         />
       )}
     </div>
   )
 }
 
+/** «ИИ-наставник проверяет ответ» with the typing dots, where his verdict will appear. */
 export function GradingIndicator() {
   return (
-    <div className="ml-auto flex max-w-[88%] items-center justify-end gap-2 text-muted sm:max-w-[75%]" role="status">
-      <span>ИИ-наставник проверяет ответ</span>
-      <span className="flex gap-1" aria-hidden>
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="typing-dot h-1.5 w-1.5 rounded-full bg-ink" style={{ animationDelay: `${i * 0.15}s` }} />
-        ))}
+    <div className="feed-in ml-auto flex max-w-[88%] justify-end sm:max-w-[75%]" role="status">
+      <span className="inline-flex items-center gap-2.5 rounded-2xl bg-ink/[.04] px-3.5 py-2.5 text-sm text-muted ring-1 ring-inset ring-line/60">
+        ИИ-наставник проверяет ответ
+        <span className="flex gap-1" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <span key={i} className="typing-dot h-1.5 w-1.5 rounded-full bg-muted" style={{ animationDelay: `${i * 0.15}s` }} />
+          ))}
+        </span>
       </span>
     </div>
   )
