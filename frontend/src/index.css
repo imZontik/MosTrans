@@ -548,6 +548,122 @@
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
 }
 
+/*
+ * Tournament: the countdown flips like a station split-flap board, the podium rises 3 → 2 → 1
+ * (Kahoot-style), light runs over the cup, and the points for an answer pop.
+ */
+@keyframes flap {
+  from {
+    transform: perspective(160px) rotateX(-90deg);
+    opacity: 0.3;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.flap {
+  transform-origin: 50% 0;
+  animation: flap 0.34s cubic-bezier(0.3, 0.9, 0.3, 1) both;
+}
+@keyframes podium-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+.podium-rise {
+  transform-origin: 50% 100%;
+  animation: podium-rise 0.7s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+@keyframes podium-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.podium-drop {
+  animation: podium-drop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+/* a band of light sweeps over the cup every few seconds; it rests off the cup */
+@keyframes trophy-shine {
+  0%,
+  55% {
+    transform: translateX(-70px) skewX(-18deg);
+  }
+  85%,
+  100% {
+    transform: translateX(150px) skewX(-18deg);
+  }
+}
+.trophy-shine {
+  transform: translateX(-70px) skewX(-18deg);
+  animation: trophy-shine 4.8s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: twinkle 2.8s ease-in-out infinite;
+}
+@keyframes points-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    transform: none;
+  }
+}
+.points-pop {
+  display: inline-block;
+  animation: points-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+/* «Как устроен турнир»: three tiles side by side when the card is wide, a compact list otherwise */
+.rules {
+  container-type: inline-size;
+}
+@container (min-width: 540px) {
+  .rules-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .rules-tile {
+    flex-direction: column;
+  }
+}
+/* «Следующий вопрос» fills up while the quiz moves on by itself */
+@keyframes advance-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.advance-fill {
+  animation: advance-fill 1.8s linear both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -569,8 +685,17 @@
   .headlight,
   .ride-track,
   .mascot-blink,
-  .mascot-fx {
+  .mascot-fx,
+  .flap,
+  .podium-rise,
+  .podium-drop,
+  .trophy-shine,
+  .points-pop {
     animation: none !important;
+  }
+  .twinkle {
+    animation: none !important;
+    opacity: 0.8;
   }
   .login-hero::after,
   .running-stripe::after {
