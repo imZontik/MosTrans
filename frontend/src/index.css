@@ -690,57 +690,6 @@
   animation: bar-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-/*
- * Rating, «Ваше место» next to the stage. Leaving: the card fades off first, then its row (phones)
- * or column (xl) closes and the stage takes the room. Coming back: the room opens first, then the
- * card fades in. The delays sit on the state being entered.
- */
-.place-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 1fr auto;
-  row-gap: 24px;
-  column-gap: 0;
-  transition:
-    grid-template-rows 0.45s cubic-bezier(0.3, 0.8, 0.3, 1),
-    grid-template-columns 0.45s cubic-bezier(0.3, 0.8, 0.3, 1),
-    row-gap 0.45s cubic-bezier(0.3, 0.8, 0.3, 1),
-    column-gap 0.45s cubic-bezier(0.3, 0.8, 0.3, 1);
-}
-.place-row[data-me='off'] {
-  grid-template-rows: 0fr auto;
-  row-gap: 0;
-  transition-delay: 0.2s;
-}
-.place-card {
-  transition:
-    opacity 0.35s ease 0.3s,
-    transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s;
-}
-.place-row[data-me='off'] .place-card {
-  opacity: 0;
-  transform: translateY(-12px) scale(0.97);
-  transition:
-    opacity 0.2s ease,
-    transform 0.25s ease;
-}
-@media (min-width: 1280px) {
-  .place-row {
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    grid-template-rows: auto;
-    row-gap: 0;
-    column-gap: 24px;
-  }
-  .place-row[data-me='off'] {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0fr);
-    grid-template-rows: auto;
-    column-gap: 0;
-  }
-  .place-row[data-me='off'] .place-card {
-    transform: translateX(32px) scale(0.97);
-  }
-}
-
 /* «Как устроен турнир»: three tiles side by side when the card is wide, a compact list otherwise */
 .rules {
   container-type: inline-size;
@@ -811,10 +760,6 @@
   .lift:hover,
   .press:active {
     transform: none !important;
-  }
-  .place-row,
-  .place-card {
-    transition: none !important;
   }
   .skeleton {
     animation: none !important;

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown, TriangleAlert } from 'lucide-react'
 import { api } from '@/api/client'
@@ -6,7 +6,6 @@ import type { LeaderboardScope, LeaderEntry } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { useAsync } from '@/hooks/useAsync'
 import { useFlip } from '@/hooks/useFlip'
-import { usePresence } from '@/hooks/usePresence'
 import { Avatar } from '@/components/Avatar'
 import { ButtonLink } from '@/components/Button'
 import { PageHeader } from '@/components/Card'
@@ -61,7 +60,6 @@ export default function LeaderboardPage() {
   const card = me && board.data ? { me, entries, participants: board.data.participants, caption } : null
   const lastCard = useRef(card)
   if (card) lastCard.current = card
-  const place = usePresence(!!card, { enterMs: 850, exitMs: 700 })
 
   const changeScope = (s: LeaderboardScope) => {
     setScope(s)
@@ -132,14 +130,11 @@ export default function LeaderboardPage() {
       ) : (
         // while another board loads, the current one dims instead of blinking away
         <div className={cn('space-y-6 transition-opacity duration-200', board.loading && 'opacity-60')}>
-          {/* phones: your place above the stage, the row folds away; xl: beside it, the stage widens into its column */}
-          <div className="place-row" data-me={place.on ? 'on' : 'off'}>
-            <Stage entries={entries.slice(0, 3)} caption={caption} className="row-start-2 xl:col-start-1 xl:row-start-1" />
-            {place.mounted && lastCard.current && (
-              <div className={cn('row-start-1 min-h-0 min-w-0 xl:col-start-2', !place.settled && 'overflow-hidden')}>
-                <MyPlace {...lastCard.current} className="place-card h-full" />
-              </div>
-            )}
+          {/* phones: your place above the stage; xl: beside it. `cqw` below is this row's width */}
+          <div className="flex flex-col [container-type:inline-size] xl:flex-row">
+            <PlaceSlot show={!!card}>{lastCard.current && <MyPlace {...lastCard.current} className="h-full" />}</PlaceSlot>
+            {/* on xl the stage alone sets the row's height, tall enough for the card beside it */}
+            <Stage entries={entries.slice(0, 3)} caption={caption} className="min-w-0 xl:order-1 xl:min-h-[480px] xl:flex-1" />
           </div>
 
           {rest.length > 0 && (
@@ -163,6 +158,111 @@ export default function LeaderboardPage() {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// --- your place coming and going ------------------------------------------------------
+
+const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+const SLOT_GAP = 24
+const SLOT_EASE = 'cubic-bezier(.3,.8,.3,1)'
+
+/**
+ * «Ваше место» comes and goes without shaking the page. Leaving: the card fades off, then its slot
+ * closes: the column on xl (the stage widens into it) or the row on phones (the stage rises).
+ * Coming back: the slot opens, then the card fades in. The card keeps its full size all along and
+ * the slot only clips it, so nothing inside reflows; on xl it doesn't touch the row's height.
+ * Switching back mid-way continues from where things are.
+ */
+function PlaceSlot({ show, children }: { show: boolean; children: ReactNode }) {
+  const [mounted, setMounted] = useState(show)
+  const slotRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const running = useRef<Animation[]>([])
+  const first = useRef(true)
+  const fresh = useRef(false)
+
+  useLayoutEffect(() => {
+    // there from the start: no entrance
+    if (first.current) {
+      first.current = false
+      return
+    }
+    if (show && !mounted) {
+      fresh.current = true
+      setMounted(true)
+      return
+    }
+    const slot = slotRef.current
+    const card = cardRef.current
+    if (!slot || !card) return
+
+    const wide = window.matchMedia('(min-width: 1280px)').matches
+    const size = wide ? 'width' : 'height'
+    const gap = wide ? 'marginLeft' : 'marginBottom'
+    const away = wide ? 'translateX(32px) scale(.97)' : 'translateY(-12px) scale(.97)'
+    const measure = () => slot.getBoundingClientRect()[size]
+    // where things stand right now, possibly half-way through the other direction
+    const from = fresh.current ? 0 : measure()
+    const fromGap = fresh.current ? 0 : parseFloat(getComputedStyle(slot)[gap])
+    const fromOpacity = fresh.current ? 0 : Number(getComputedStyle(card).opacity)
+    fresh.current = false
+    running.current.forEach((a) => a.cancel())
+    running.current = []
+
+    if (reducedMotion()) {
+      if (!show) setMounted(false)
+      return
+    }
+    slot.style.overflow = 'hidden'
+    if (show) {
+      const to = measure()
+      const open = slot.animate(
+        [
+          { [size]: `${from}px`, [gap]: `${fromGap}px` },
+          { [size]: `${to}px`, [gap]: `${SLOT_GAP}px` },
+        ],
+        { duration: 450, easing: SLOT_EASE },
+      )
+      const fade = card.animate([{ opacity: fromOpacity, transform: fromOpacity > 0.5 ? 'none' : away }, { opacity: 1, transform: 'none' }], {
+        duration: 420,
+        delay: fromOpacity > 0.5 ? 0 : 260,
+        easing: SLOT_EASE,
+        fill: 'backwards',
+      })
+      running.current = [open, fade]
+      Promise.all([open.finished, fade.finished])
+        .then(() => (slot.style.overflow = ''))
+        .catch(() => {})
+    } else {
+      const fade = card.animate([{ opacity: fromOpacity, transform: 'none' }, { opacity: 0, transform: away }], {
+        duration: 220,
+        easing: 'ease',
+        fill: 'forwards',
+      })
+      const close = slot.animate(
+        [
+          { [size]: `${from}px`, [gap]: `${fromGap}px` },
+          { [size]: '0px', [gap]: '0px' },
+        ],
+        { duration: 450, delay: fromOpacity > 0.05 ? 160 : 0, easing: SLOT_EASE, fill: 'forwards' },
+      )
+      running.current = [fade, close]
+      // cancelled (and so rejected) when you come back half-way
+      close.finished.then(() => setMounted(false)).catch(() => {})
+    }
+  }, [show, mounted])
+
+  useEffect(() => () => running.current.forEach((a) => a.cancel()), [])
+
+  if (!mounted) return null
+  return (
+    <div ref={slotRef} className="relative mb-6 shrink-0 xl:order-2 xl:mb-0 xl:ml-6 xl:w-[calc((100cqw-24px)*.4)]" aria-hidden={!show || undefined}>
+      {/* xl: pinned to the slot's right edge at the column's full width, so a closing slot covers it instead of squeezing it */}
+      <div ref={cardRef} className="xl:absolute xl:inset-y-0 xl:right-0 xl:w-[calc((100cqw-24px)*.4)]">
+        {children}
+      </div>
     </div>
   )
 }
