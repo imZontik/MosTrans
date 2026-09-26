@@ -17,6 +17,9 @@ rm -f images.tar.gz
 
 echo "Starting the stack…"
 $COMPOSE up -d --no-build --remove-orphans
+# Configs are bind-mounted: containers that were not recreated keep the old ones until a reload
+$COMPOSE exec -T nginx nginx -s reload
+$COMPOSE exec -T caddy caddy reload --config /etc/caddy/Caddyfile
 
 echo "Waiting for the API…"
 for _ in $(seq 1 40); do
