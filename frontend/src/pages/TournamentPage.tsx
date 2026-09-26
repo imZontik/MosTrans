@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowDown, ArrowUp, CalendarClock, Check, Clock, Crown, Flag, History, ListChecks, Timer, Trophy, X, type LucideIcon } from 'lucide-react'
 import { api, ApiError } from '@/api/client'
@@ -15,6 +15,7 @@ import type {
 import { useAuth } from '@/auth/AuthContext'
 import { useAsync } from '@/hooks/useAsync'
 import { usePolling } from '@/hooks/usePolling'
+import { useFlip } from '@/hooks/useFlip'
 import { useCountdown } from '@/hooks/useServerClock'
 import { Avatar } from '@/components/Avatar'
 import { Button, ButtonLink } from '@/components/Button'
@@ -27,7 +28,7 @@ import { ScoreRing } from '@/components/ScoreRing'
 import { EmptyState, ErrorState, Loading } from '@/components/States'
 import { TimerLine, timerTone } from '@/components/Timer'
 import { FlapClock } from '@/components/tournament/FlapClock'
-import { MEDALS, MedalAvatar, MedalDisc, Podium } from '@/components/tournament/Podium'
+import { MEDALS, MedalAvatar, MedalDisc, Podium } from '@/components/Podium'
 import { TrophyArt } from '@/components/tournament/TrophyArt'
 import { cn } from '@/lib/cn'
 import { CATEGORY_TITLES, fmtDate, fmtDuration, fmtNumber, initials } from '@/lib/format'
@@ -35,7 +36,6 @@ import { plural, pluralN, PEOPLE, POINTS, points, QUESTIONS } from '@/lib/plural
 
 const DEFAULT_REWARDS: Tournament['rewards'] = { top_n: 10, top_bonus: 100, winner_extra: 50 }
 
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 const dayMonth = (iso: string) => new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 
@@ -725,29 +725,16 @@ function MyResult({
  * show ▲/▼ for a few seconds. Your own row is left out of the slide: it is sticky.
  */
 function useRankMotion(entries: TournamentLeaderEntry[]) {
-  const nodes = useRef(new Map<number, HTMLElement>())
-  const tops = useRef(new Map<number, number>())
+  const register = useFlip<number>(entries, (id) => !!entries.find((e) => e.id === id)?.is_me)
   const ranks = useRef(new Map<number, number>())
   const [moves, setMoves] = useState<Record<number, number>>({})
 
-  useLayoutEffect(() => {
-    const smooth = !reducedMotion()
+  useEffect(() => {
     const moved: Record<number, number> = {}
     for (const e of entries) {
       const was = ranks.current.get(e.id)
       if (was !== undefined && was !== e.rank) moved[e.id] = was - e.rank
       ranks.current.set(e.id, e.rank)
-      const el = nodes.current.get(e.id)
-      if (!el || e.is_me) {
-        tops.current.delete(e.id)
-        continue
-      }
-      const top = el.offsetTop
-      const before = tops.current.get(e.id)
-      if (smooth && before !== undefined && before !== top) {
-        el.animate([{ transform: `translateY(${before - top}px)` }, { transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.2,.8,.2,1)' })
-      }
-      tops.current.set(e.id, top)
     }
     if (Object.keys(moved).length) setMoves(moved)
   }, [entries])
@@ -758,13 +745,6 @@ function useRankMotion(entries: TournamentLeaderEntry[]) {
     return () => window.clearTimeout(id)
   }, [moves])
 
-  const register = useCallback(
-    (id: number) => (el: HTMLElement | null) => {
-      if (el) nodes.current.set(id, el)
-      else nodes.current.delete(id)
-    },
-    [],
-  )
   return { register, moves }
 }
 
