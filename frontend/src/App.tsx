@@ -12,6 +12,8 @@ import PlayPage from '@/pages/PlayPage'
 import TournamentPage from '@/pages/TournamentPage'
 import LeaderboardPage from '@/pages/LeaderboardPage'
 import ProfilePage from '@/pages/ProfilePage'
+import AchievementsPage from '@/pages/AchievementsPage'
+import RunHistoryPage from '@/pages/RunHistoryPage'
 const DashboardPage = lazy(() => import('@/pages/admin/DashboardPage'))
 const EmployeesPage = lazy(() => import('@/pages/admin/EmployeesPage'))
 const EmployeeDetailPage = lazy(() => import('@/pages/admin/EmployeeDetailPage'))
@@ -59,7 +61,10 @@ export default function App() {
           <Route path="tournament" element={<TournamentPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/achievements" element={<AchievementsPage />} />
+          <Route path="profile/history" element={<RunHistoryPage />} />
           <Route path="users/:userId" element={<ProfilePage />} />
+          <Route path="users/:userId/achievements" element={<AchievementsPage />} />
         </Route>
         <Route path="play/:runId" element={<PlayPage />} />
         <Route path="admin" element={<RequireStaff />}>

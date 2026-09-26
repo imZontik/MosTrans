@@ -52,6 +52,7 @@ export function RouteTrack({
   animate = false,
   allNames = false,
   nextHint,
+  hereLabel = 'вы здесь',
   className,
 }: {
   level: number
@@ -59,6 +60,8 @@ export function RouteTrack({
   animate?: boolean
   allNames?: boolean
   nextHint?: string
+  /** over the current station; someone else's profile says «сейчас здесь» */
+  hereLabel?: string
   className?: string
 }) {
   const pos = routePosition(level, progress)
@@ -129,7 +132,7 @@ export function RouteTrack({
               <span className={current ? 'font-semibold text-white' : next ? 'font-medium text-white/90' : i < pos.index ? 'text-white/60' : 'text-white/45'}>
                 {STATIONS[i].name}
               </span>
-              {current && <span className="text-[11px] text-white/55">вы здесь</span>}
+              {current && <span className="text-[11px] text-white/55">{hereLabel}</span>}
               {next && nextHint && <span className="text-[11px] font-medium text-[#FF8F6B]">{nextHint}</span>}
             </span>
           )

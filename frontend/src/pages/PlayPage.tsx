@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { api, ApiError } from '@/api/client'
 import type { AnswerAction, PublicNode, RunView } from '@/api/types'
@@ -19,6 +19,7 @@ export default function PlayPage() {
   const { runId } = useParams()
   const id = Number(runId)
   const navigate = useNavigate()
+  const location = useLocation()
   const { isStaff, refresh } = useAuth()
   const [run, setRun] = useState<RunView | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -123,7 +124,9 @@ export default function PlayPage() {
     }
   }
 
-  const backTo = isStaff && run && !run.scenario.is_published ? `/admin/scenarios/${run.scenario.id}` : '/scenarios'
+  // a debrief opened from the profile or the run history goes back there
+  const from = (location.state as { from?: string } | null)?.from
+  const backTo = from ?? (isStaff && run && !run.scenario.is_published ? `/admin/scenarios/${run.scenario.id}` : '/scenarios')
 
   if (loadError) {
     return (

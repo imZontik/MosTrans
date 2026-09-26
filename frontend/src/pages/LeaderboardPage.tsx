@@ -9,12 +9,13 @@ import { useFlip } from '@/hooks/useFlip'
 import { Avatar } from '@/components/Avatar'
 import { ButtonLink } from '@/components/Button'
 import { PageHeader } from '@/components/Card'
+import { Segmented } from '@/components/Segmented'
 import { CountUp } from '@/components/CountUp'
 import { NightPanel } from '@/components/NightPanel'
 import { Podium } from '@/components/Podium'
 import { EmptyState, ErrorState, Loading } from '@/components/States'
 import { cn } from '@/lib/cn'
-import { fmtNumber } from '@/lib/format'
+import { fmtNumber, teamName } from '@/lib/format'
 import { plural, pluralN, PEOPLE, POINTS, points } from '@/lib/plural'
 
 type Period = 'week' | 'all'
@@ -23,7 +24,6 @@ const PERIOD_TEXT: Record<Period, string> = { week: 'эта неделя', all: 
 const FOLD = 20
 
 // «Бригада 3, Москва — Санкт-Петербург» → «Бригада 3», «Москва — Санкт-Петербург», «бр. 3»
-const teamName = (team: string) => team.split(',')[0].trim()
 const teamRoute = (team: string) => team.split(',').slice(1).join(',').trim()
 const shortTeam = (team: string) => teamName(team).replace(/^Бригада\s*/i, 'бр. ')
 
@@ -561,63 +561,5 @@ function Row({
         </span>
       </button>
     </li>
-  )
-}
-
-// --- controls --------------------------------------------------------------------
-
-/** Tabs in a tray; the white pill slides to the picked one. Full width on phones. */
-function Segmented<T extends string>({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string
-  value: T
-  onChange: (v: T) => void
-  options: [T, string][]
-}) {
-  const tabs = useRef<(HTMLButtonElement | null)[]>([])
-  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
-  const index = options.findIndex(([v]) => v === value)
-
-  useLayoutEffect(() => {
-    const measure = () => {
-      const el = tabs.current[index]
-      if (!el) return
-      setPill((p) => (p && p.left === el.offsetLeft && p.width === el.offsetWidth ? p : { left: el.offsetLeft, width: el.offsetWidth }))
-    }
-    measure()
-    const ro = new ResizeObserver(measure)
-    tabs.current.forEach((el) => el && ro.observe(el))
-    return () => ro.disconnect()
-  }, [index])
-
-  return (
-    <div className="relative flex w-full rounded-xl bg-ink/[.05] p-1 ring-1 ring-inset ring-line/70 sm:inline-flex sm:w-auto" role="tablist" aria-label={label}>
-      {pill && (
-        <span
-          className="absolute inset-y-1 rounded-lg bg-surface shadow-card ring-1 ring-inset ring-line/60 transition-[left,width] duration-300 ease-[cubic-bezier(.3,.9,.3,1)] dark:bg-surface-2"
-          style={pill}
-          aria-hidden
-        />
-      )}
-      {options.map(([v, text], i) => (
-        <button
-          key={v}
-          ref={(el) => (tabs.current[i] = el)}
-          role="tab"
-          aria-selected={value === v}
-          onClick={() => onChange(v)}
-          className={cn(
-            'relative min-h-[40px] flex-1 rounded-lg px-4 font-medium transition-colors coarse:min-h-[44px] sm:flex-none',
-            value === v ? 'text-ink' : 'text-muted hover:text-ink',
-          )}
-        >
-          {text}
-        </button>
-      ))}
-    </div>
   )
 }

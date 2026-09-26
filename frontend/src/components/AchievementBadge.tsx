@@ -6,6 +6,7 @@ import { rarityMeta } from '@/lib/format'
 const SIZES = {
   sm: 'h-12 w-12 text-2xl',
   md: 'h-14 w-14 text-[28px]',
+  lg: 'h-16 w-16 text-[32px]',
 }
 
 /** Round badge: emoji on a tinted plate with a rarity-coloured ring. */

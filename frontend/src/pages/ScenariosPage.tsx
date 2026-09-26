@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { BadgeCheck, Crown, Loader2, Lock, RotateCcw, TrainFront, UserRound, type LucideIcon } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '@/api/client'
 import type { CatalogItem } from '@/api/types'
 import { useAsync } from '@/hooks/useAsync'
@@ -20,7 +21,9 @@ const POSITION_ICON: Record<string, LucideIcon> = {
 
 export default function ScenariosPage() {
   const catalog = useAsync(() => api.scenarios(), [])
-  const [category, setCategory] = useState<string | null>(null)
+  // «Подтянуть» in the profile links here with ?category=…
+  const [params] = useSearchParams()
+  const [category, setCategory] = useState<string | null>(() => params.get('category'))
   const { start, pending, error } = useStartRun()
 
   const groups = useMemo(() => {
