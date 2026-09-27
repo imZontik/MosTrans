@@ -10,6 +10,7 @@ from app.business.catalog import CATEGORIES, POSITIONS, ROLES
 from app.business.engine import validate_graph
 from app.business.errors import AppError, Conflict, NotFound
 from app.business.services import analytics
+from app.business.services import notifications
 from app.business.services.presenters import scenario_brief, user_full
 from app.repositories.cache import Cache
 from app.repositories.ml_gateway import MLGateway
@@ -61,6 +62,8 @@ async def create_scenario(session: AsyncSession, author: User, data: dict) -> di
     if await repo.get_by_slug(slug):
         slug = f"{slug}-{len(await repo.list(published_only=False)) + 1}"
     s = await repo.add(Scenario(**{**data, "slug": slug}, created_by=author.id))
+    if s.is_published:
+        await notifications.scenario_published(session, s)
     await session.commit()
     return scenario_full(s)
 
@@ -72,9 +75,12 @@ async def update_scenario(session: AsyncSession, scenario_id: int, data: dict) -
         raise NotFound("Сценарий не найден")
     merged = {**scenario_full(s), **data}
     _check(merged)
+    was_published = s.is_published
     for field in ("title", "description", "category", "position", "kind", "difficulty", "cover", "estimated_minutes", "graph", "is_published"):
         if field in data:
             setattr(s, field, data[field])
+    if s.is_published and not was_published:
+        await notifications.scenario_published(session, s)
     await session.commit()
     return scenario_full(s)
 
@@ -95,6 +101,7 @@ async def update_employee(session: AsyncSession, user_id: int, data: dict) -> di
     user = await UserRepository(session).get(user_id)
     if user is None:
         raise NotFound("Сотрудник не найден")
+    old_position, old_unit = user.position, (user.team, user.depot)
     if "position" in data:
         if data["position"] not in POSITIONS:
             raise AppError("Неизвестная должность")
@@ -107,6 +114,10 @@ async def update_employee(session: AsyncSession, user_id: int, data: dict) -> di
         user.team = data["team"]
     if "depot" in data:
         user.depot = data["depot"]
+    if user.position != old_position:
+        await notifications.position_changed(session, user, old_position)
+    if (user.team, user.depot) != old_unit:
+        await notifications.unit_changed(session, user)
     await session.commit()
     return user_full(user)
 

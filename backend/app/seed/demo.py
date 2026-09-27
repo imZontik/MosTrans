@@ -15,12 +15,15 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.business import achievements as ach
+from app.business import notifications as msg
 from app.business.economy import level_for, run_reward, tournament_answer_points, tournament_reward
 from app.business.engine import Grade, apply_answer, get_node, initial_state, validate_graph
 from app.business.tournament import MSK, iso_week, pick_questions
 from app.frameworks.config import get_settings
 from app.frameworks.security import hash_password
 from app.repositories.models import (
+    Broadcast,
+    Notification,
     PointsLedger,
     Run,
     Scenario,
@@ -65,15 +68,67 @@ def _now() -> datetime:
 async def seed(session: AsyncSession) -> None:
     await _seed_scenarios(session)
     has_users = await session.scalar(select(func.count(User.id)))
-    if has_users:
-        await session.commit()
-        return
-    log.info("Seeding demo data…")
-    rng = random.Random(400)
-    await _seed_users_and_history(session, rng)
-    await _seed_tournaments(session, rng)
+    if not has_users:
+        log.info("Seeding demo data…")
+        rng = random.Random(400)
+        await _seed_users_and_history(session, rng)
+        await _seed_tournaments(session, rng)
+        log.info("Demo data ready")
+    # Databases seeded before notifications existed get them too, once
+    if not await session.scalar(select(func.count(Notification.id))):
+        await _seed_notifications(session)
     await session.commit()
-    log.info("Demo data ready")
+
+
+def _note(user_id: int, m: msg.Message, at: datetime, read: bool = False, broadcast_id: int | None = None) -> Notification:
+    return Notification(
+        user_id=user_id, kind=m.kind, priority=m.priority, title=m.title, body=m.body, link=m.link, icon=m.icon,
+        dedupe_key=m.dedupe, broadcast_id=broadcast_id, created_at=at, read_at=at if read else None,
+    )
+
+
+async def _seed_notifications(session: AsyncSession) -> None:
+    """A welcome for everyone and a lived-in inbox for the demo employee.
+
+    The inbox is ordered by id, so the notes are inserted oldest first, like real ones arrive.
+    """
+    now = _now()
+    users = list(await session.scalars(select(User)))
+    notes = [_note(u.id, msg.welcome(), now - timedelta(days=3), read=u.email != DEMO_EMPLOYEE[0]) for u in users]
+    demo = next((u for u in users if u.email == DEMO_EMPLOYEE[0]), None)
+    lead = next((u for u in users if u.email == "lead@m400.ru"), None)
+    if demo is not None:
+        level = level_for(demo.points)
+        if level.level > 1:
+            notes.append(_note(demo.id, msg.level_up(level.level, level.title), now - timedelta(days=2, hours=3), read=True))
+        recent = list(
+            await session.scalars(
+                select(UserAchievement).where(UserAchievement.user_id == demo.id).order_by(UserAchievement.awarded_at.desc()).limit(2)
+            )
+        )
+        for i, a in enumerate(recent):
+            m = msg.achievement(a.code, a.title, a.description, a.icon, a.rarity)
+            notes.append(_note(demo.id, m, now - timedelta(days=1, hours=i * 5), read=i > 0))
+    if lead is not None:
+        employees = [u for u in users if u.role == "employee"]
+        text = (
+            "Коллеги, до пятницы пройдите, пожалуйста, сценарий «Запах гари в тамбуре». На следующей неделе — плановые "
+            "учения по эвакуации, разберём типичные ошибки."
+        )
+        b = Broadcast(
+            sender_id=lead.id, title="Учения по эвакуации на следующей неделе", body=text, priority="high", link="/scenarios",
+            audience={"mode": "all"}, audience_label=msg.audience_label("all"), recipients=len(employees),
+            created_at=now - timedelta(hours=5),
+        )
+        session.add(b)
+        await session.flush()
+        m = msg.broadcast(b.title, b.body, b.priority, b.link, lead.full_name)
+        for u in employees:
+            read = demo is not None and u.id != demo.id and random.Random(u.id).random() < 0.6
+            notes.append(_note(u.id, m, b.created_at, read=read, broadcast_id=b.id))
+    notes.sort(key=lambda n: n.created_at)
+    session.add_all(notes)
+    await session.flush()
 
 
 async def _seed_scenarios(session: AsyncSession) -> None:

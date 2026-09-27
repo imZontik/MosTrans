@@ -12,3 +12,4 @@ TOURNAMENT_ANSWERS = Counter("m400_tournament_answers_total", "Tournament answer
 EMERGENCIES = Counter("m400_emergencies_total", "Emergency events delivered", ["source"])
 ML_CALLS = Counter("m400_ml_calls_total", "Calls to the ML service", ["operation", "status"])
 ACTIVE_TOURNAMENT_PLAYERS = Gauge("m400_tournament_players", "Players in the live tournament")
+NOTIFICATIONS = Counter("m400_notifications_total", "Notifications delivered", ["kind", "priority"])

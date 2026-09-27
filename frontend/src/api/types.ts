@@ -556,3 +556,83 @@ export interface AssistantResponse {
   provider: string
   intent?: string
 }
+
+// --- notifications ------------------------------------------------------------
+
+/** Importance tag: «Важное», «Обычное», «Инфо» */
+export type NotificationPriority = 'high' | 'normal' | 'low'
+
+export interface AppNotification {
+  id: number
+  kind: string
+  priority: NotificationPriority
+  title: string
+  body: string
+  link: string | null
+  icon: string
+  /** who sent a broadcast */
+  sender: string | null
+  created_at: string
+  read: boolean
+}
+
+export interface UnreadCounts {
+  total: number
+  high: number
+  normal: number
+  low: number
+}
+
+export interface NotificationPage {
+  items: AppNotification[]
+  next_before: number | null
+  unread: UnreadCounts
+}
+
+export interface NotificationSummary {
+  unread: UnreadCounts
+  latest: AppNotification | null
+}
+
+export interface Audience {
+  mode: 'all' | 'segment' | 'users'
+  positions?: string[]
+  depots?: string[]
+  teams?: string[]
+  inactive_days?: number | null
+  user_ids?: number[]
+}
+
+export interface AudienceOptions {
+  positions: { code: string; title: string }[]
+  depots: string[]
+  teams: { team: string; depot: string }[]
+  priorities: { code: NotificationPriority; title: string }[]
+}
+
+export interface AudiencePreview {
+  count: number
+  label: string
+  sample: string[]
+}
+
+export interface BroadcastInput {
+  title: string
+  body: string
+  priority: NotificationPriority
+  link: string
+  audience: Audience
+}
+
+export interface Broadcast {
+  id: number
+  title: string
+  body: string
+  priority: NotificationPriority
+  link: string | null
+  audience_label: string
+  recipients: number
+  read: number
+  sender: string | null
+  created_at: string
+}

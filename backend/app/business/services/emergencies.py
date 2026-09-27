@@ -13,7 +13,9 @@ import time
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.business.economy import level_for
+from app.business import notifications as msg
 from app.business.errors import NotFound
+from app.business.services import notifications
 from app.business.services.presenters import scenario_brief
 from app.frameworks.config import get_settings
 from app.frameworks.metrics import EMERGENCIES
@@ -96,6 +98,8 @@ async def dispatch(
         targets = await users.list(roles=("employee",))
     for target in targets:
         await queue.push(target.id, {"scenario_id": scenario.id, "message": message})
+    await notifications.notify(session, [t.id for t in targets], msg.emergency_dispatched(scenario.title, message))
+    await session.commit()
     return {"dispatched": len(targets), "scenario": scenario_brief(scenario)}
 
 

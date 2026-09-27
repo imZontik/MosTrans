@@ -14,6 +14,8 @@ import LeaderboardPage from '@/pages/LeaderboardPage'
 import ProfilePage from '@/pages/ProfilePage'
 import AchievementsPage from '@/pages/AchievementsPage'
 import RunHistoryPage from '@/pages/RunHistoryPage'
+import NotificationsPage from '@/pages/NotificationsPage'
+import { NotificationsProvider } from '@/notifications/NotificationsContext'
 const DashboardPage = lazy(() => import('@/pages/admin/DashboardPage'))
 const EmployeesPage = lazy(() => import('@/pages/admin/EmployeesPage'))
 const EmployeeDetailPage = lazy(() => import('@/pages/admin/EmployeeDetailPage'))
@@ -23,6 +25,7 @@ const GeneratePage = lazy(() => import('@/pages/admin/GeneratePage'))
 const AdminTournamentsPage = lazy(() => import('@/pages/admin/TournamentsPage'))
 const EmergenciesPage = lazy(() => import('@/pages/admin/EmergenciesPage'))
 const AssistantPage = lazy(() => import('@/pages/admin/AssistantPage'))
+const BroadcastsPage = lazy(() => import('@/pages/admin/BroadcastsPage'))
 
 function Splash() {
   return (
@@ -38,10 +41,10 @@ function RequireAuth() {
   if (!ready) return <Splash />
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
   return (
-    <>
+    <NotificationsProvider>
       <Outlet />
       <EmergencyOverlay />
-    </>
+    </NotificationsProvider>
   )
 }
 
@@ -63,6 +66,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/achievements" element={<AchievementsPage />} />
           <Route path="profile/history" element={<RunHistoryPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="users/:userId" element={<ProfilePage />} />
           <Route path="users/:userId/achievements" element={<AchievementsPage />} />
         </Route>
@@ -78,6 +82,7 @@ export default function App() {
             <Route path="tournaments" element={<AdminTournamentsPage />} />
             <Route path="emergencies" element={<EmergenciesPage />} />
             <Route path="assistant" element={<AssistantPage />} />
+            <Route path="broadcasts" element={<BroadcastsPage />} />
           </Route>
         </Route>
       </Route>

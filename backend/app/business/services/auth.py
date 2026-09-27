@@ -8,6 +8,8 @@ from app.repositories.cache import RateLimiter
 from app.frameworks.valkey import get_valkey
 from app.repositories.users import UserRepository
 from app.business.services.presenters import user_full
+from app.business import notifications as msg
+from app.business.services import notifications
 
 
 async def login(session: AsyncSession, email: str, password: str, client_ip: str) -> dict:
@@ -39,5 +41,6 @@ async def register(
             depot=depot.strip(),
         )
     )
+    await notifications.notify(session, [user.id], msg.welcome())
     await session.commit()
     return {"access_token": create_access_token(user.id, user.role), "token_type": "bearer", "user": user_full(user)}

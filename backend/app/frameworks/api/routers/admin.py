@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.business.services import admin, analytics, emergencies, reports, tournaments
+from app.business.services import admin, analytics, emergencies, notifications, reports, tournaments
 from app.business.tournament import MSK
 from app.frameworks.api.deps import get_board, get_cache, get_emergency_queue, get_ml, get_session, staff_user
 from app.frameworks.api.schemas import (
     AssistantIn,
+    AudienceIn,
+    BroadcastIn,
     DispatchIn,
     EmployeePatch,
     GenerateIn,
@@ -127,6 +129,28 @@ async def dispatch(
     return await emergencies.dispatch(
         session, queue, scenario_id=body.scenario_id, user_ids=body.user_ids, message=body.message
     )
+
+
+@router.get("/broadcasts", tags=["notifications"])
+async def broadcasts(session: AsyncSession = Depends(get_session)):
+    """Sent broadcasts with how many recipients have read them."""
+    return await notifications.broadcasts(session)
+
+
+@router.get("/broadcasts/options", tags=["notifications"])
+async def broadcast_options(session: AsyncSession = Depends(get_session)):
+    """Positions, depots and brigades to build a slice of employees."""
+    return await notifications.audience_options(session)
+
+
+@router.post("/broadcasts/preview", tags=["notifications"])
+async def broadcast_preview(body: AudienceIn, session: AsyncSession = Depends(get_session)):
+    return await notifications.preview(session, body.model_dump())
+
+
+@router.post("/broadcasts", tags=["notifications"])
+async def send_broadcast(body: BroadcastIn, user: User = Depends(staff_user), session: AsyncSession = Depends(get_session)):
+    return await notifications.send_broadcast(session, user, body.model_dump())
 
 
 @router.post("/assistant")

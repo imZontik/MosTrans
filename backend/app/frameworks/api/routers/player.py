@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.business.services import auth, catalog, emergencies, leaderboard, play, profile, tournaments
+from app.business.services import auth, catalog, emergencies, leaderboard, notifications, play, profile, tournaments
 from app.frameworks.api.deps import (
     current_user,
     get_board,
@@ -12,7 +12,7 @@ from app.frameworks.api.deps import (
     get_ml,
     get_session,
 )
-from app.frameworks.api.schemas import AnswerIn, LoginIn, RegisterIn, StartRunIn, TournamentAnswerIn
+from app.frameworks.api.schemas import AnswerIn, LoginIn, Priority, ReadAllIn, RegisterIn, StartRunIn, TournamentAnswerIn
 from app.repositories.cache import Cache, EmergencyQueue, TournamentBoard
 from app.repositories.ml_gateway import MLGateway
 from app.repositories.models import User
@@ -182,3 +182,37 @@ async def pending_emergency(
     queue: EmergencyQueue = Depends(get_emergency_queue),
 ):
     return await emergencies.pending(session, queue, user)
+
+
+# --- notifications ----------------------------------------------------------
+
+@router.get("/notifications", tags=["notifications"])
+async def notification_list(
+    unread: bool = False,
+    priority: Priority | None = None,
+    before: int | None = Query(None, description="id последнего уведомления предыдущей страницы"),
+    limit: int = Query(30, ge=1, le=100),
+    user: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    return await notifications.inbox(session, user, unread=unread, priority=priority, before=before, limit=limit)
+
+
+@router.get("/notifications/summary", tags=["notifications"])
+async def notification_summary(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
+    """Unread counters and the newest unread notification: what the bell polls."""
+    return await notifications.summary(session, user)
+
+
+@router.post("/notifications/read-all", tags=["notifications"])
+async def notification_read_all(
+    body: ReadAllIn, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+):
+    return await notifications.read_all(session, user, body.priority)
+
+
+@router.post("/notifications/{notification_id}/read", tags=["notifications"])
+async def notification_read(
+    notification_id: int, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+):
+    return await notifications.read(session, user, notification_id)

@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.business import economy
 from app.business.achievements import tournament_achievements, week_number
+from app.business import notifications as msg
 from app.business.errors import AppError, Conflict, NotFound
+from app.business.services import notifications
 from app.business.services.presenters import user_brief
 from app.business.tournament import iso_week, pick_questions, public_question, status_of, weekly_window
 from app.frameworks.config import get_settings
@@ -230,9 +232,12 @@ async def finalize(session: AsyncSession, t: Tournament) -> list[dict]:
     points = PointsRepository(session)
     achievements = AchievementRepository(session)
     awarded = []
-    for place, entry in enumerate(await repo.entries(t.id), start=1):
+    entries = await repo.entries(t.id)
+    for place, entry in enumerate(entries, start=1):
         entry.place = place
         bonus = economy.tournament_reward(place)
+        result = msg.tournament_result(t.id, t.title, place, len(entries), entry.score, bonus)
+        await notifications.notify(session, [entry.user_id], result)
         if bonus:
             await points.award(entry.user_id, bonus, "tournament", f"tournament:{t.id}", at=t.ends_at)
             POINTS_AWARDED.labels(reason="tournament").inc(bonus)

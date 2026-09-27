@@ -38,6 +38,16 @@ class TournamentRepository:
     async def by_week(self, week: str) -> Tournament | None:
         return await self.s.scalar(select(Tournament).where(Tournament.week == week).limit(1))
 
+    async def starting_between(self, start: datetime, end: datetime) -> list[Tournament]:
+        """Not finished tournaments whose start falls into [start, end)."""
+        return list(
+            await self.s.scalars(
+                select(Tournament).where(
+                    Tournament.starts_at >= start, Tournament.starts_at < end, Tournament.finalized.is_(False)
+                )
+            )
+        )
+
     async def to_finalize(self, now: datetime) -> list[Tournament]:
         return list(
             await self.s.scalars(select(Tournament).where(Tournament.ends_at <= now, Tournament.finalized.is_(False)))

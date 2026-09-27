@@ -1,5 +1,10 @@
 import type {
   AchievementCatalogItem,
+  Audience,
+  AudienceOptions,
+  AudiencePreview,
+  Broadcast,
+  BroadcastInput,
   AnswerAction,
   AnswerResponse,
   AssistantResponse,
@@ -17,8 +22,12 @@ import type {
   LeaderboardUnits,
   LoginResponse,
   Me,
+  NotificationPage,
+  NotificationPriority,
+  NotificationSummary,
   Overview,
   PublicProfile,
+  UnreadCounts,
   Recommended,
   RunHistoryItem,
   RunView,
@@ -183,6 +192,21 @@ export const api = {
   // emergencies
   pendingEmergency: () => get<{ event: EmergencyEvent | null }>('/emergencies/pending'),
 
+  // notifications
+  notifications: (opts: { unread?: boolean; priority?: NotificationPriority | null; before?: number | null; limit?: number } = {}) => {
+    const q = new URLSearchParams()
+    if (opts.unread) q.set('unread', 'true')
+    if (opts.priority) q.set('priority', opts.priority)
+    if (opts.before) q.set('before', String(opts.before))
+    if (opts.limit) q.set('limit', String(opts.limit))
+    const qs = q.toString()
+    return get<NotificationPage>(`/notifications${qs ? `?${qs}` : ''}`)
+  },
+  notificationSummary: () => get<NotificationSummary>('/notifications/summary'),
+  readNotification: (id: number) => post<{ unread: UnreadCounts }>(`/notifications/${id}/read`),
+  readAllNotifications: (priority?: NotificationPriority | null) =>
+    post<{ marked: number; unread: UnreadCounts }>('/notifications/read-all', { priority: priority ?? null }),
+
   admin: {
     overview: () => get<Overview>('/admin/analytics/overview'),
     employees: (search?: string) =>
@@ -208,6 +232,10 @@ export const api = {
     dispatch: (body: { scenario_id: number; user_ids?: number[] | null; message?: string | null }) =>
       post<DispatchResponse>('/admin/emergencies/dispatch', body),
     assistant: (message: string) => post<AssistantResponse>('/admin/assistant', { message }),
+    broadcasts: () => get<Broadcast[]>('/admin/broadcasts'),
+    broadcastOptions: () => get<AudienceOptions>('/admin/broadcasts/options'),
+    previewAudience: (audience: Audience) => post<AudiencePreview>('/admin/broadcasts/preview', audience),
+    sendBroadcast: (body: BroadcastInput) => post<Broadcast>('/admin/broadcasts', body),
     downloadReport: (days: number) => download(`/admin/reports/training.xlsx?days=${days}`, `m400-training-${days}d.xlsx`),
   },
 }

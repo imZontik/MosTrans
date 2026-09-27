@@ -828,3 +828,19 @@
     animation: none !important;
   }
 }
+
+/* notification toast: slides up from the tab bar */
+.toast-in {
+  animation: toast-in 0.35s cubic-bezier(0.3, 0.9, 0.3, 1) both;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-in {
+    animation: none;
+  }
+}

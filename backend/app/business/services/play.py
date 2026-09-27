@@ -30,6 +30,8 @@ from app.repositories.achievements import AchievementRepository
 from app.repositories.points import PointsRepository
 from app.repositories.runs import RunRepository
 from app.repositories.scenarios import ScenarioRepository
+from app.business import notifications as msg
+from app.business.services import notifications
 from app.business.services.presenters import scenario_brief
 
 HISTORY_TYPES = ("scene", "choice", "input")
@@ -259,6 +261,10 @@ async def _finish(session: AsyncSession, user: User, run: Run, scenario: Scenari
     await session.flush()
 
     unlocked = await _unlock_achievements(session, user, run, scenario, level_after.level)
+    if level_after.level > level_before.level:
+        await notifications.notify(session, [user.id], msg.level_up(level_after.level, level_after.title))
+    for a in unlocked:
+        await notifications.notify(session, [user.id], msg.achievement(a.code, a.title, a.description, a.icon, a.rarity))
     RUNS_FINISHED.labels(mode=run.mode, category=scenario.category, outcome=run.outcome).inc()
 
     end = end_texts(get_node(scenario.graph, state.node_id), run.outcome)

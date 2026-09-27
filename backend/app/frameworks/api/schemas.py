@@ -97,3 +97,29 @@ class DispatchIn(BaseModel):
 
 class AssistantIn(BaseModel):
     message: str = Field(min_length=2, max_length=1000)
+
+
+Priority = Literal["high", "normal", "low"]
+
+
+class ReadAllIn(BaseModel):
+    priority: Priority | None = None
+
+
+class AudienceIn(BaseModel):
+    """Who gets a broadcast: everyone, a slice of employees (fields combine with AND) or chosen people."""
+
+    mode: Literal["all", "segment", "users"] = "all"
+    positions: list[str] = Field(default_factory=list, max_length=10)
+    depots: list[str] = Field(default_factory=list, max_length=100)
+    teams: list[str] = Field(default_factory=list, max_length=200)
+    inactive_days: int | None = Field(default=None, ge=1, le=365)
+    user_ids: list[int] = Field(default_factory=list, max_length=1000)
+
+
+class BroadcastIn(BaseModel):
+    title: str = Field(min_length=2, max_length=120)
+    body: str = Field(default="", max_length=2000)
+    priority: Priority = "normal"
+    link: str = Field(default="", max_length=255)
+    audience: AudienceIn = Field(default_factory=AudienceIn)

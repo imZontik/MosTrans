@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Bot, FileText, Gauge, LogOut, Siren, Smartphone, Sparkles, Trophy, Users } from 'lucide-react'
+import { Bot, FileText, Gauge, LogOut, Megaphone, Siren, Smartphone, Sparkles, Trophy, Users } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { cn } from '@/lib/cn'
 import { Logo } from './Logo'
@@ -15,6 +15,7 @@ const NAV = [
   { to: '/admin/scenarios/generate', label: 'Генератор ИИ', icon: Sparkles },
   { to: '/admin/tournaments', label: 'Турниры', icon: Trophy },
   { to: '/admin/emergencies', label: 'Специвенты', icon: Siren },
+  { to: '/admin/broadcasts', label: 'Рассылки', icon: Megaphone },
   { to: '/admin/assistant', label: 'ИИ-ассистент', icon: Bot },
 ]
 

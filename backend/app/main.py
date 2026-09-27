@@ -9,7 +9,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
 
 from app.business.errors import AppError
-from app.business.services import tournaments
+from app.business.services import notifications, tournaments
 from app.frameworks.api.routers import admin, player
 from app.frameworks.config import get_settings
 from app.frameworks.database import SessionLocal, engine
@@ -31,7 +31,7 @@ async def prepare_database() -> None:
 
 
 async def scheduler() -> None:
-    """Weekly tournaments: create the next one, finalize finished ones."""
+    """Weekly tournaments (create the next one, finalize finished ones) and scheduled notifications."""
     interval = get_settings().scheduler_interval_sec
     valkey = get_valkey()
     while True:
@@ -39,6 +39,8 @@ async def scheduler() -> None:
             if await valkey.set("scheduler:lock", "1", ex=interval - 1, nx=True):
                 async with SessionLocal() as session:
                     await tournaments.scheduler_tick(session)
+                async with SessionLocal() as session:
+                    await notifications.scheduler_tick(session)
         except Exception:  # keep the loop alive
             log.exception("Scheduler tick failed")
         await asyncio.sleep(interval)

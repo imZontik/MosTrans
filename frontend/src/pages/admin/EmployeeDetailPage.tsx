@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowUpCircle, CheckCircle2, Siren } from 'lucide-react'
+import { ArrowLeft, ArrowUpCircle, CheckCircle2, MessageSquare, Siren } from 'lucide-react'
 import { api } from '@/api/client'
 import { useAsync } from '@/hooks/useAsync'
 import { AchievementBadge } from '@/components/AchievementBadge'
 import { Avatar } from '@/components/Avatar'
 import { Badge } from '@/components/Badge'
-import { Button } from '@/components/Button'
+import { Button, ButtonLink } from '@/components/Button'
 import { Card, SectionTitle } from '@/components/Card'
 import { CompetencyBars, CompetencyRadar } from '@/components/Competencies'
 import { Progress } from '@/components/Progress'
@@ -87,6 +87,9 @@ export default function EmployeeDetailPage() {
             <Badge>Активность: {fmtRelative(e.last_active_at)}</Badge>
           </div>
         </div>
+        <ButtonLink to={`/admin/broadcasts?user=${e.id}`} variant="secondary" icon={<MessageSquare className="h-4 w-4" />} className="shrink-0">
+          Написать
+        </ButtonLink>
       </Card>
 
       {notice && (

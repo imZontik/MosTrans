@@ -5,10 +5,12 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -132,3 +134,43 @@ class TournamentEntry(Base):
     place: Mapped[int | None] = mapped_column(Integer, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Broadcast(Base):
+    """A message from a lead to many employees; each recipient gets a Notification."""
+
+    __tablename__ = "broadcasts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sender_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    title: Mapped[str] = mapped_column(String(255))
+    body: Mapped[str] = mapped_column(Text, default="")
+    priority: Mapped[str] = mapped_column(String(16), default="normal")
+    link: Mapped[str] = mapped_column(String(255), default="")
+    audience: Mapped[dict] = mapped_column(JsonType, default=dict)
+    audience_label: Mapped[str] = mapped_column(String(255), default="")
+    recipients: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    __table_args__ = (
+        UniqueConstraint("user_id", "dedupe_key"),
+        Index("ix_notifications_user_id_id", "user_id", "id"),
+        Index("ix_notifications_unread", "user_id", "priority", postgresql_where=text("read_at IS NULL")),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(32))  # level_up | achievement | promotion | tournament | broadcast | …
+    priority: Mapped[str] = mapped_column(String(16), default="normal")  # high | normal | low
+    title: Mapped[str] = mapped_column(String(255))
+    body: Mapped[str] = mapped_column(Text, default="")
+    link: Mapped[str] = mapped_column(String(255), default="")
+    icon: Mapped[str] = mapped_column(String(16), default="🔔")
+    broadcast_id: Mapped[int | None] = mapped_column(ForeignKey("broadcasts.id", ondelete="SET NULL"), nullable=True, index=True)
+    # Same key for the same user is stored once: a level, a trophy or a weekly reminder never arrives twice
+    dedupe_key: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

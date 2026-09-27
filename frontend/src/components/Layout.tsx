@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, CalendarClock, Home, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Trophy, User, type LucideIcon } from 'lucide-react'
+import { BarChart3, Bell, CalendarClock, Home, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Trophy, User, type LucideIcon } from 'lucide-react'
 import { api } from '@/api/client'
 import type { Me } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { useAsync } from '@/hooks/useAsync'
 import { cn } from '@/lib/cn'
 import { routePosition } from '@/lib/route'
+import { useNotifications } from '@/notifications/NotificationsContext'
 import { Logo, LogoMark } from './Logo'
 import { Avatar } from './Avatar'
 import { Progress } from './Progress'
@@ -46,6 +47,7 @@ export function Layout() {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const tournament = useAsync(() => api.currentTournament(), [])
   const tournamentLive = tournament.data?.tournament?.status === 'live'
+  const { unread } = useNotifications()
 
   const toggle = () =>
     setCollapsed((c) => {
@@ -82,6 +84,7 @@ export function Layout() {
           {NAV.map((item) => (
             <SideLink key={item.to} {...item} collapsed={collapsed} live={item.to === '/tournament' && tournamentLive} />
           ))}
+          <SideLink to="/notifications" label="Уведомления" icon={Bell} collapsed={collapsed} count={unread.total} urgent={unread.high > 0} />
           {isStaff && (
             <>
               <span className="mx-3 my-2 h-px bg-line/70" aria-hidden />
@@ -113,6 +116,7 @@ export function Layout() {
         <header className="flex h-14 items-center justify-between gap-2 pl-4 pr-2 pt-[env(safe-area-inset-top)] box-content sm:pl-6 sm:pr-4 lg:hidden">
           <Logo />
           <div className="flex items-center gap-1">
+            <BellLink count={unread.total} urgent={unread.high > 0} />
             {isStaff && (
               <NavLink to="/admin" className="flex min-h-[44px] items-center px-2 text-sm font-medium text-ink underline decoration-line underline-offset-4">
                 Панель руководителя
@@ -182,6 +186,8 @@ function SideLink({
   end,
   collapsed,
   live = false,
+  count = 0,
+  urgent = false,
 }: {
   to: string
   label: string
@@ -190,6 +196,9 @@ function SideLink({
   collapsed: boolean
   /** A red dot: something is happening there right now (the weekly tournament is live). */
   live?: boolean
+  /** Unread notifications; red when some are important. */
+  count?: number
+  urgent?: boolean
 }) {
   return (
     <NavLink
@@ -213,8 +222,49 @@ function SideLink({
           <span className={collapsed ? 'sr-only' : 'min-w-0 flex-1'}>{label}</span>
           {live && !collapsed && <span className="h-2 w-2 shrink-0 rounded-full bg-brand ring-4 ring-brand/15" aria-hidden />}
           {live && <span className="sr-only">, идёт сейчас</span>}
-          {collapsed && <RailTip>{live ? `${label} · идёт сейчас` : label}</RailTip>}
+          {count > 0 && <CountBadge count={count} urgent={urgent} floating={collapsed} />}
+          {count > 0 && <span className="sr-only">, непрочитанных: {count}</span>}
+          {collapsed && <RailTip>{live ? `${label} · идёт сейчас` : count ? `${label} · ${count}` : label}</RailTip>}
         </>
+      )}
+    </NavLink>
+  )
+}
+
+function CountBadge({ count, urgent, floating }: { count: number; urgent: boolean; floating?: boolean }) {
+  return (
+    <span
+      className={cn(
+        'digits grid h-5 min-w-[20px] shrink-0 place-items-center rounded-full px-1.5 text-[11px] font-semibold leading-none',
+        urgent ? 'bg-brand text-white' : 'bg-ink text-inverse',
+        floating && 'absolute right-2 top-1 ring-2 ring-bg',
+      )}
+      aria-hidden
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  )
+}
+
+/** The phone header bell: the inbox is one tap away, the tab bar keeps its five sections. */
+function BellLink({ count, urgent }: { count: number; urgent: boolean }) {
+  return (
+    <NavLink
+      to="/notifications"
+      className={({ isActive }) => cn('relative grid h-11 w-11 place-items-center rounded-xl hover:bg-ink/[.06]', isActive ? 'text-brand' : 'text-ink')}
+      aria-label={count ? `Уведомления, непрочитанных: ${count}` : 'Уведомления'}
+    >
+      <Bell className="h-[22px] w-[22px]" aria-hidden />
+      {count > 0 && (
+        <span
+          className={cn(
+            'digits absolute right-1 top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-semibold leading-none ring-2 ring-bg',
+            urgent ? 'bg-brand text-white' : 'bg-ink text-inverse',
+          )}
+          aria-hidden
+        >
+          {count > 99 ? '99+' : count}
+        </span>
       )}
     </NavLink>
   )
