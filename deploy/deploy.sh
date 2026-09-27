@@ -102,6 +102,42 @@ case "${1:-load}" in
     ;;
 esac
 
+# pgAdmin: the login password equals .env, and it knows the database password itself (a pgpass file in
+# its storage, taken from POSTGRES_PASSWORD), so nobody has to look it up on the server
+pgadmin_cli() { $COMPOSE exec -T -w /pgadmin4 pgadmin /venv/bin/python3 setup.py "$@" 2>&1; }
+sync_pgadmin() {
+  local email out storage
+  email=$(env_value PGADMIN_EMAIL)
+  email=${email:-admin@m400.ru}
+  for _ in $(seq 1 40); do
+    $COMPOSE exec -T pgadmin wget -qO /dev/null http://127.0.0.1/misc/ping >/dev/null 2>&1 && break
+    sleep 3
+  done
+  out=$(pgadmin_cli update-user "$email" --password "$(env_value PGADMIN_PASSWORD)" --admin || true)
+  if echo "$out" | grep -qF "$email"; then
+    echo "pgAdmin password matches .env ($email)"
+  else
+    echo "pgAdmin password not synced: $(echo "$out" | tail -2 | tr '\n' ' ')"
+  fi
+  # pgAdmin looks for the PassFile of servers.json in the user's storage: <storage>/<email with @ → _>
+  storage="/var/lib/pgadmin/storage/$(echo "$email" | sed 's#@#_#g; s#/#slash#g')"
+  local db_password
+  db_password=$(env_value POSTGRES_PASSWORD)
+  db_password=${db_password:-magistral}
+  # pgpass escapes backslashes and colons (quoted replacements: literal in every bash version)
+  local bs='\'
+  db_password=${db_password//"$bs"/"$bs$bs"}
+  db_password=${db_password//:/"$bs:"}
+  printf 'postgres:5432:*:*:%s\n' "$db_password" \
+    | $COMPOSE exec -T pgadmin sh -c "mkdir -p '$storage' && umask 077 && cat > '$storage/pgpass'"
+  # Servers loaded before the PassFile existed get it once; later deploys leave the server list alone
+  if ! $COMPOSE exec -T pgadmin test -f /var/lib/pgadmin/.servers-passfile; then
+    out=$(pgadmin_cli load-servers /pgadmin4/servers.json --user "$email" --replace || true)
+    echo "pgAdmin servers reloaded: $(echo "$out" | tail -1)"
+    $COMPOSE exec -T pgadmin touch /var/lib/pgadmin/.servers-passfile
+  fi
+}
+
 echo "Starting the stack…"
 $COMPOSE up -d --no-build --remove-orphans
 # Configs are bind-mounted: containers that were not recreated keep the old ones until a reload
@@ -123,27 +159,7 @@ for _ in $(seq 1 40); do
       else
         echo "Grafana is still starting: its password will be synced on the next deploy"
       fi
-      # pgAdmin too, once it answers (its first start creates its own database)
-      pgadmin_email=$(env_value PGADMIN_EMAIL)
-      pgadmin_email=${pgadmin_email:-admin@m400.ru}
-      synced=""
-      for _ in $(seq 1 30); do
-        if $COMPOSE exec -T pgadmin wget -qO- http://127.0.0.1/misc/ping >/dev/null 2>&1; then
-          if $COMPOSE exec -T -w /pgadmin4 pgadmin /venv/bin/python3 setup.py update-user "$pgadmin_email" \
-            --password "$(env_value PGADMIN_PASSWORD)" --admin 2>/dev/null | grep -qF "$pgadmin_email"; then
-            synced=yes
-          fi
-          break
-        fi
-        sleep 3
-      done
-      if [ -n "$synced" ]; then echo "pgAdmin password matches .env ($pgadmin_email)"; else echo "pgAdmin password not synced this time"; fi
-      db_password=$(env_value POSTGRES_PASSWORD)
-      if [ -z "$db_password" ] || [ "$db_password" = "magistral" ]; then
-        echo "Database password for pgAdmin: the default one from .env.example"
-      else
-        echo "Database password for pgAdmin: POSTGRES_PASSWORD in the server's .env"
-      fi
+      sync_pgadmin || echo "pgAdmin sync failed, the site is up anyway"
     fi
     # The VPS is small: every deploy log shows how much memory is left
     free -m
