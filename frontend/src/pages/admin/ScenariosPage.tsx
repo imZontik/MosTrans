@@ -150,7 +150,7 @@ export default function AdminScenariosPage() {
       {error && <p className="mb-4 card border-l-4 border-l-brand px-4 py-3" role="alert">{error}</p>}
 
       {list.loading && !list.data ? (
-        <Loading rows={5} />
+        <Loading rows={6} avatar="tile" />
       ) : list.error ? (
         <ErrorState message={list.error} onRetry={list.reload} />
       ) : (

@@ -121,7 +121,7 @@ export default function NotificationsPage() {
       </div>
 
       {error && <ErrorState message={error} onRetry={() => load()} />}
-      {!items && !error && <Loading rows={5} />}
+      {!items && !error && <Loading rows={5} avatar="tile" />}
       {items && items.length === 0 && !error && (
         <div className="card px-5 py-4">
           <EmptyState

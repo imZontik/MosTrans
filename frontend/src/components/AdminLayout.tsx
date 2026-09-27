@@ -1,11 +1,11 @@
-import { Suspense } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Suspense, useEffect, useRef } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bot, FileText, Gauge, LogOut, Megaphone, Siren, Smartphone, Sparkles, Trophy, Users } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { cn } from '@/lib/cn'
 import { Logo } from './Logo'
 import { Avatar } from './Avatar'
-import { Loading } from './States'
+import { PageSkeleton } from './Skeleton'
 import { ThemeCycleButton, ThemeSwitch } from './ThemeToggle'
 
 const NAV = [
@@ -23,6 +23,12 @@ const ROLE_TITLE: Record<string, string> = { lead: 'Руководитель', a
 
 export function AdminLayout() {
   const { user, logout } = useAuth()
+  const { pathname } = useLocation()
+  const navRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const active = navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')
+    active?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+  }, [pathname])
   return (
     <div className="min-h-screen lg:flex">
       <aside className="night-line-flat sticky top-0 hidden h-screen w-64 shrink-0 flex-col px-3 py-6 shadow-[1px_0_0_rgb(255_255_255/.06)] lg:flex">
@@ -98,7 +104,12 @@ export function AdminLayout() {
               </button>
             </div>
           </div>
-          <nav className="scrollbar-none flex gap-1 overflow-x-auto px-2" aria-label="Разделы панели">
+          {/* more tabs than fit: the edge fades to say «scroll», and the open one scrolls into view */}
+          <nav
+            ref={navRef}
+            className="scrollbar-none flex gap-1 overflow-x-auto px-2 [mask-image:linear-gradient(90deg,black_calc(100%-40px),transparent)]"
+            aria-label="Разделы панели"
+          >
             {NAV.map(({ to, label, end }) => (
               <NavLink
                 key={to}
@@ -122,7 +133,7 @@ export function AdminLayout() {
           </nav>
         </header>
         <main className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-5 sm:px-6 lg:px-10 lg:pt-9 2xl:px-14">
-          <Suspense fallback={<Loading rows={4} />}>
+          <Suspense fallback={<PageSkeleton />}>
             <Outlet />
           </Suspense>
         </main>

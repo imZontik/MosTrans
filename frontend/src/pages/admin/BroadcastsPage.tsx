@@ -9,6 +9,7 @@ import { Card, PageHeader, SectionTitle } from '@/components/Card'
 import { Progress } from '@/components/Progress'
 import { Segmented } from '@/components/Segmented'
 import { EmptyState, ErrorState, Loading } from '@/components/States'
+import { ChipsSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
 import { fmtDate, fmtPercent, teamName } from '@/lib/format'
 import { PRIORITIES, PRIORITY_META } from '@/lib/notifications'
@@ -137,7 +138,7 @@ export default function BroadcastsPage() {
         </p>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <Card className="space-y-6 p-5 sm:p-6">
           <div>
             <p className="label">Кому</p>
@@ -157,7 +158,7 @@ export default function BroadcastsPage() {
             (options.error ? (
               <ErrorState message={options.error} onRetry={options.reload} />
             ) : !options.data ? (
-              <Loading rows={2} />
+              <ChipsSkeleton />
             ) : (
               <div className="space-y-4">
                 <ChipGroup label="Должность">
@@ -289,7 +290,7 @@ export default function BroadcastsPage() {
         {history.error ? (
           <ErrorState message={history.error} onRetry={history.reload} />
         ) : !history.data ? (
-          <Loading rows={3} />
+          <Loading rows={3} avatar="tile" />
         ) : history.data.length === 0 ? (
           <Card className="px-5 py-4">
             <EmptyState title="Рассылок пока не было" text="Отправленные сообщения и то, сколько сотрудников их прочитали, появятся здесь." />

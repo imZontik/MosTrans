@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react'
 import { Mascot } from './Mascot'
 import { Button } from './Button'
+import { SkRows } from './Skeleton'
 
-export function Loading({ rows = 3 }: { rows?: number }) {
+/** Generic loading: shimmer rows in a card. Pages with a shape of their own use the skeletons in Skeleton.tsx. */
+export function Loading({ rows = 3, avatar = 'round', bare = false }: { rows?: number; avatar?: 'round' | 'tile' | false; bare?: boolean }) {
+  const list = <SkRows rows={rows} avatar={avatar} />
   return (
-    <div className="space-y-2" aria-busy aria-label="Загрузка">
-      {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="skeleton h-16" />
-      ))}
+    <div role="status" aria-busy aria-label="Загрузка">
+      {bare ? list : <div className="card px-4 py-1 sm:px-5">{list}</div>}
     </div>
   )
 }

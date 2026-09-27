@@ -58,6 +58,7 @@
   /* soft page light: a cool haze on the left, a hint of red dawn on the right */
   --page-glow-cool: 120 140 170;
   --page-glow-warm: 226 26 26;
+  --shimmer: 255 255 255 / 0.75; /* the light band sweeping over skeletons */
   color-scheme: light;
 }
 
@@ -108,6 +109,7 @@
   --shadow-dock: 0 -12px 32px -12px rgb(0 0 0 / 0.65);
   --page-glow-cool: 60 92 160;
   --page-glow-warm: 226 26 26;
+  --shimmer: 255 255 255 / 0.06;
   color-scheme: dark;
 }
 
@@ -180,11 +182,24 @@
   .label {
     @apply mb-1.5 block text-xs font-medium text-muted;
   }
+  /*
+   * Shimmer placeholder: a quiet plate with a band of light sweeping across it. Every skeleton on
+   * the page sweeps in step (the band is fixed to the viewport), so a page reads as one surface
+   * loading rather than a dozen blinking boxes.
+   */
   .skeleton {
-    @apply rounded-2xl;
-    background: linear-gradient(90deg, rgb(var(--line) / 0.45) 0%, rgb(var(--line) / 0.8) 50%, rgb(var(--line) / 0.45) 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.6s linear infinite;
+    @apply rounded-xl;
+    background-color: rgb(var(--ink) / 0.07);
+    background-image: linear-gradient(100deg, transparent 20%, rgb(var(--shimmer)) 50%, transparent 80%);
+    background-size: 200vw 100%;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    animation: shimmer-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  /* on the night-line panels */
+  .skeleton-night {
+    background-color: rgb(255 255 255 / 0.08);
+    background-image: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.1) 50%, transparent 80%);
   }
   .scrollbar-none {
     scrollbar-width: none;
@@ -312,6 +327,14 @@
   animation: confetti-fall var(--dur, 3s) cubic-bezier(0.2, 0.6, 0.4, 1) var(--delay, 0s) forwards;
 }
 
+@keyframes shimmer-sweep {
+  from {
+    background-position: -200vw 0;
+  }
+  to {
+    background-position: 200vw 0;
+  }
+}
 @keyframes shimmer {
   0% {
     background-position: 200% 0;

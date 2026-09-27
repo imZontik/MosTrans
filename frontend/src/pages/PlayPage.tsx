@@ -14,7 +14,9 @@ import { Mascot } from '@/components/Mascot'
 import { CoverTile } from '@/components/Category'
 import { DifficultyDots } from '@/components/Progress'
 import { EndScreen } from '@/components/play/EndScreen'
+import { TabBar } from '@/components/TabBar'
 import { AnswerBubble, GradingIndicator, HistoryEntry, PromptBubble } from '@/components/play/Feed'
+import { PlaySkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
 import { categoryStyle } from '@/lib/category'
 import { MODE_LABEL } from '@/lib/format'
@@ -161,9 +163,7 @@ export default function PlayPage() {
   if (!run || !node) {
     return (
       <Shell>
-        <div className="grid min-h-screen place-items-center" role="status">
-          <p className="text-muted">Загружаем рейс</p>
-        </div>
+        <PlaySkeleton />
       </Shell>
     )
   }
@@ -282,8 +282,14 @@ function Columns({
   )
 }
 
+/** The run's page: the bottom bar stays (below lg), and the page leaves room for it. */
 function Shell({ children }: { children: ReactNode }) {
-  return <div className="flex min-h-screen flex-col">{children}</div>
+  return (
+    <div className="flex min-h-screen flex-col max-lg:pb-[calc(58px+env(safe-area-inset-bottom))]">
+      {children}
+      <TabBar />
+    </div>
+  )
 }
 
 function CurrentPrompt({
@@ -488,7 +494,7 @@ function AnswerPanel({
   const title = node.type === 'choice' ? 'Ваше решение' : node.type === 'input' ? 'Ваш ответ' : null
 
   return (
-    <div className="pb-safe sticky bottom-0 z-20 -mx-4 overflow-hidden rounded-t-[24px] border border-b-0 border-line/70 bg-surface/90 shadow-dock backdrop-blur-xl dark:bg-surface/85 sm:mx-0">
+    <div className="sticky bottom-[calc(58px+env(safe-area-inset-bottom))] z-20 -mx-4 overflow-hidden rounded-t-[24px] lg:bottom-0 lg:pb-safe border border-b-0 border-line/70 bg-surface/90 shadow-dock backdrop-blur-xl dark:bg-surface/85 sm:mx-0">
       {timer && <TimerLine remaining={timer.remaining} total={timer.total} className="h-[3px]" />}
       <div key={node.id} className="feed-in px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5">
         {error && (

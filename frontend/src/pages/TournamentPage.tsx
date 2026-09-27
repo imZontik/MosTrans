@@ -26,6 +26,7 @@ import { CountUp } from '@/components/CountUp'
 import { NightPanel, SpeedLines } from '@/components/NightPanel'
 import { ScoreRing } from '@/components/ScoreRing'
 import { EmptyState, ErrorState, Loading } from '@/components/States'
+import { TournamentSkeleton } from '@/components/Skeleton'
 import { RingTimer, TimerLine } from '@/components/Timer'
 import { FlapClock } from '@/components/tournament/FlapClock'
 import { MEDALS, MedalAvatar, MedalDisc, Podium } from '@/components/Podium'
@@ -67,7 +68,7 @@ export default function TournamentPage() {
       <PageHeader title="Турнир недели" subtitle="Все проводники отвечают на одни и те же вопросы. Решают точность и скорость." />
 
       {current.loading && !state ? (
-        <Loading rows={2} />
+        <TournamentSkeleton />
       ) : current.error ? (
         <ErrorState message={current.error} onRetry={current.reload} />
       ) : !t ? (
@@ -761,7 +762,7 @@ function LiveBoard({
       </div>
 
       {!board ? (
-        <Loading rows={3} />
+        <Loading rows={4} bare />
       ) : entries.length === 0 ? (
         <>
           <Podium entries={[]} />
@@ -783,13 +784,16 @@ function LiveBoard({
                         'flex min-h-[52px] items-center gap-3 rounded-xl px-2.5 py-1.5',
                         e.is_me
                           ? 'sticky bottom-[calc(66px+env(safe-area-inset-bottom))] top-2 z-10 bg-brand-soft shadow-lift ring-1 ring-inset ring-brand/30 lg:bottom-4'
-                          : 'transition-colors hover:bg-ink/[.03]',
+                          : 'relative transition-colors hover:bg-ink/[.03]',
                       )}
                     >
                       <span className={cn('digits w-7 shrink-0 text-center text-lg font-semibold', e.is_me ? 'text-brand' : 'text-muted')}>{e.rank}</span>
                       <Avatar name={e.full_name} size="xs" className="hidden min-[360px]:grid" />
                       <div className="min-w-0 flex-1">
-                        <Link to={e.is_me ? '/profile' : `/users/${e.id}`} className={cn('block truncate hover:underline', e.is_me ? 'font-semibold' : 'font-medium')}>
+                        <Link
+                          to={e.is_me ? '/profile' : `/users/${e.id}`}
+                          className={cn('block truncate after:absolute after:inset-0 after:rounded-xl hover:underline', e.is_me ? 'font-semibold' : 'font-medium')}
+                        >
                           {e.full_name}
                           {e.is_me && <span className="font-normal text-muted">, вы</span>}
                         </Link>
@@ -925,7 +929,7 @@ function HallOfFame({ items, loading, meId, hideEmpty = false }: { items: Tourna
         Прошлые турниры
       </SectionTitle>
       {loading ? (
-        <Loading rows={2} />
+        <Loading rows={2} bare avatar="tile" />
       ) : !items.length ? (
         <p className="text-muted">Итоги прошедших турниров появятся здесь после первого турнира.</p>
       ) : (
