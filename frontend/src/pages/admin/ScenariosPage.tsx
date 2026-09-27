@@ -132,7 +132,7 @@ export default function AdminScenariosPage() {
         }
       />
 
-      <div className="scrollbar-none -mx-4 mb-4 overflow-x-auto px-4 [mask-image:linear-gradient(90deg,black_calc(100%-24px),transparent)] sm:mx-0 sm:px-0 sm:[mask-image:none]">
+      <div className="mb-4">
         <Segmented
           label="Показать"
           value={filter}
