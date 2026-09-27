@@ -237,7 +237,7 @@ function CharactersEditor({
             <button
               onClick={() => remove(key)}
               disabled={used.has(key)}
-              className="rounded-lg p-1.5 text-muted hover:bg-bad/10 hover:text-bad disabled:opacity-30 disabled:hover:bg-transparent coarse:p-3"
+              className="rounded-lg p-1.5 text-muted hover:bg-bad/10 hover:text-bad disabled:opacity-30 disabled:hover:bg-transparent coarse:p-3.5"
               title={used.has(key) ? `Персонаж ${key} говорит в сценарии` : `Удалить ${key}`}
             >
               <Trash2 className="h-4 w-4" />
@@ -333,7 +333,7 @@ function NodeCard({
             <p className="flex flex-wrap items-center gap-1 text-xs text-muted">
               Сюда ведут:
               {from.map((f) => (
-                <button key={f} onClick={() => onSelect(f)} className="rounded-md bg-bg px-1.5 py-0.5 font-mono font-semibold text-ink hover:bg-ink/10">
+                <button key={f} onClick={() => onSelect(f)} className="rounded-md bg-bg px-1.5 py-0.5 font-mono font-semibold text-ink hover:bg-ink/10 coarse:min-h-[44px] coarse:min-w-[44px] coarse:px-2.5">
                   {f}
                 </button>
               ))}
@@ -468,7 +468,7 @@ function ChoiceSection({ id, node, ctx, set, onCreate }: { id: string; node: Gra
                 {ctx.edit ? (
                   <>
                     <EffectNums effects={timeout.effects ?? {}} onChange={(effects) => setTimeout({ effects })} />
-                    <button onClick={() => set({ timeout: undefined })} className="ml-auto rounded-lg p-1.5 text-muted hover:text-bad coarse:p-3" title="Убрать свою ветку таймаута">
+                    <button onClick={() => set({ timeout: undefined })} className="ml-auto rounded-lg p-1.5 text-muted hover:text-bad coarse:p-4" title="Убрать свою ветку таймаута">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </>
@@ -536,7 +536,7 @@ function InputSection({ node, ctx, set, onCreate }: { node: GraphNode; ctx: Ctx;
               onCreate={(t) => onCreate(t, b.next, (nid) => ({ ...node, branches: branches.map((x, j) => (j === i ? { ...x, next: nid } : x)) }))}
             />
             {ctx.edit && (
-              <button onClick={() => set({ branches: branches.filter((_, j) => j !== i) })} className="rounded-lg p-1.5 text-muted hover:text-bad coarse:p-3" title="Убрать ветку">
+              <button onClick={() => set({ branches: branches.filter((_, j) => j !== i) })} className="rounded-lg p-1.5 text-muted hover:text-bad coarse:p-3.5" title="Убрать ветку">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
@@ -659,7 +659,7 @@ function RoutesEditor({
             {extra > 0 && <span className="text-xs text-muted">и ещё {extra} (в JSON)</span>}
             <NextSelect value={r.next} ctx={ctx} compact onChange={(next) => setRoute(i, { ...r, next })} onCreate={(t) => onCreate(i, t)} />
             {ctx.edit && (
-              <button onClick={() => onChange(routes.filter((_, j) => j !== i))} className="rounded-lg p-1.5 text-muted hover:text-bad coarse:p-3" title="Убрать условие">
+              <button onClick={() => onChange(routes.filter((_, j) => j !== i))} className="rounded-lg p-1.5 text-muted hover:text-bad coarse:p-3.5" title="Убрать условие">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
@@ -871,7 +871,7 @@ function NextSelect({
       </p>
     )
   return (
-    <label className={cn('flex max-w-full items-center gap-2 text-sm font-semibold', compact && 'rounded-lg bg-surface px-2 py-1 text-xs ring-1 ring-line coarse:py-2.5')}>
+    <label className={cn('flex max-w-full items-center gap-2 text-sm font-semibold', compact && 'rounded-lg bg-surface px-2 py-1 text-xs ring-1 ring-line coarse:py-3')}>
       <span className="shrink-0">{label ?? '→'}</span>
       <select
         className={cn('min-w-0 max-w-[16rem]', compact ? 'bg-transparent outline-none' : 'input w-auto py-1.5')}

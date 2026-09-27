@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowUpCircle, CheckCircle2, MessageSquare, Siren } from 'lucide-react'
+import { ArrowLeft, ArrowUpCircle, CheckCircle2, MessageSquare, Siren, History } from 'lucide-react'
 import { api } from '@/api/client'
 import { useAsync } from '@/hooks/useAsync'
 import { AchievementBadge } from '@/components/AchievementBadge'
@@ -10,8 +10,10 @@ import { Button, ButtonLink } from '@/components/Button'
 import { Card, SectionTitle } from '@/components/Card'
 import { CompetencyBars, CompetencyRadar } from '@/components/Competencies'
 import { Progress } from '@/components/Progress'
+import { Disclosure } from '@/components/Disclosure'
 import { RunHistory } from '@/components/RunHistory'
-import { ErrorState, Loading } from '@/components/States'
+import { ErrorState } from '@/components/States'
+import { EmployeeSkeleton } from '@/components/Skeleton'
 import { fmtNumber, fmtPercent, fmtRelative, fmtScore, nextPosition, POSITION_TITLES } from '@/lib/format'
 
 export default function EmployeeDetailPage() {
@@ -26,7 +28,7 @@ export default function EmployeeDetailPage() {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
 
-  if (emp.loading && !emp.data) return <Loading rows={4} />
+  if (emp.loading && !emp.data) return <EmployeeSkeleton />
   if (emp.error || !emp.data) return <ErrorState message={emp.error ?? 'Не найдено'} onRetry={emp.reload} />
   const e = emp.data
   const next = nextPosition(e.position)
@@ -177,10 +179,19 @@ export default function EmployeeDetailPage() {
         </section>
       )}
 
-      <Card className="p-5">
-        <SectionTitle>История прохождений</SectionTitle>
+      {/* long on a phone: folded, with how many and how they went */}
+      <Disclosure
+        icon={History}
+        title="История прохождений"
+        disabled={!e.history.length}
+        summary={
+          e.history.length
+            ? `${e.history.length} · успешных ${e.history.filter((r) => r.outcome === 'success').length}`
+            : 'Завершённых прохождений пока нет'
+        }
+      >
         <RunHistory items={e.history} />
-      </Card>
+      </Disclosure>
     </div>
   )
 }

@@ -149,7 +149,7 @@ export function Podium({ entries, variant = 'card', className }: { entries: Podi
       {[1, 2, 3].map((place) => {
         const e = entries[place - 1]
         return (
-          <li key={place} className={cn('flex min-w-0 flex-col items-center text-center', ORDER[place])}>
+          <li key={place} className={cn('relative flex min-w-0 flex-col items-center text-center', ORDER[place])}>
             {e ? (
               <>
                 <div key={e.id} className="podium-drop flex flex-col items-center" style={{ animationDelay: `${DELAY[place] + 0.4}s` }}>
@@ -162,7 +162,7 @@ export function Podium({ entries, variant = 'card', className }: { entries: Podi
                   </span>
                 </div>
                 <div className={cn('mt-3.5 flex w-full items-end justify-center', v.name, v.nameBox)}>
-                  <Link to={e.is_me ? '/profile' : `/users/${e.id}`} className="line-clamp-2 break-words font-medium leading-tight hover:underline">
+                  <Link to={e.is_me ? '/profile' : `/users/${e.id}`} className="line-clamp-2 break-words font-medium leading-tight after:absolute after:inset-0 after:rounded-t-xl hover:underline">
                     {e.full_name}
                   </Link>
                 </div>

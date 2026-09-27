@@ -6,7 +6,8 @@ import type { ScenarioFull, ScenarioGraph, ScenarioInput } from '@/api/types'
 import { useAsync } from '@/hooks/useAsync'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
-import { ErrorState, Loading } from '@/components/States'
+import { ErrorState } from '@/components/States'
+import { EditorSkeleton } from '@/components/Skeleton'
 import { GraphEditor } from '@/components/admin/GraphEditor'
 import { cn } from '@/lib/cn'
 import { CATEGORY_TITLES, POSITION_TITLES } from '@/lib/format'
@@ -48,9 +49,9 @@ export default function ScenarioEditorPage() {
     }
   }, [loaded.data])
 
-  if (loaded.loading && !loaded.data) return <Loading rows={4} />
+  if (loaded.loading && !loaded.data) return <EditorSkeleton />
   if (loaded.error || !loaded.data) return <ErrorState message={loaded.error ?? 'Не найдено'} onRetry={loaded.reload} />
-  if (!meta || !graph) return <Loading rows={4} />
+  if (!meta || !graph) return <EditorSkeleton />
 
   /** Current graph, parsing the JSON tab if it is open. */
   const currentGraph = (): ScenarioGraph | null => {
@@ -134,7 +135,7 @@ export default function ScenarioEditorPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 max-md:pb-24">
       <Link to="/admin/scenarios" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink coarse:min-h-[44px]">
         <ArrowLeft className="h-4 w-4" /> Все сценарии
       </Link>
@@ -150,15 +151,17 @@ export default function ScenarioEditorPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={validate} loading={busy === 'validate'} icon={<ShieldCheck className="h-4 w-4" />}>
-            Проверить
+        {/* phones: an action bar pinned to the bottom, so «Сохранить» is always under the thumb */}
+        <div className="flex flex-wrap gap-2 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-30 max-md:flex-nowrap max-md:border-t max-md:border-line/70 max-md:bg-surface/90 max-md:px-4 max-md:pb-[calc(12px+env(safe-area-inset-bottom))] max-md:pt-3 max-md:shadow-dock max-md:backdrop-blur-xl">
+          <Button variant="secondary" onClick={validate} loading={busy === 'validate'} icon={<ShieldCheck className="h-4 w-4" />} aria-label="Проверить граф" className="max-sm:px-3.5">
+            <span className="max-sm:sr-only">Проверить</span>
           </Button>
-          <Button variant="secondary" onClick={preview} loading={busy === 'preview'} icon={<Eye className="h-4 w-4" />}>
-            Предпросмотр
+          <Button variant="secondary" onClick={preview} loading={busy === 'preview'} icon={<Eye className="h-4 w-4" />} aria-label="Предпросмотр" className="max-sm:px-3.5">
+            <span className="max-sm:sr-only">Предпросмотр</span>
           </Button>
-          <Button onClick={save} loading={busy === 'save'} icon={<Save className="h-4 w-4" />}>
+          <Button onClick={save} loading={busy === 'save'} icon={<Save className="h-4 w-4" />} className="max-md:flex-1">
             Сохранить
+            {dirty && <span className="h-2 w-2 rounded-full bg-white/90" aria-label="есть изменения" />}
           </Button>
         </div>
       </div>

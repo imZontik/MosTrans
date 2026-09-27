@@ -15,6 +15,7 @@ import { RouteTrack } from '@/components/RouteTrack'
 import { ScoreRing } from '@/components/ScoreRing'
 import { TournamentBanner } from '@/components/TournamentBanner'
 import { VovaTip } from '@/components/VovaTip'
+import { NextRunSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
 import { firstName, fmtNumber, scaleTone, TONE_TEXT } from '@/lib/format'
 import { plural, pluralN, POINTS, SCENARIOS } from '@/lib/plural'
@@ -135,7 +136,7 @@ function BoardCell({ label, className, children }: { label: string; className?: 
 function NextRun({ loading, rec }: { loading: boolean; rec: Recommended | null | undefined }) {
   const { start, pending, error } = useStartRun()
 
-  if (loading) return <div className="skeleton h-64" />
+  if (loading) return <NextRunSkeleton />
 
   if (!rec) {
     return (

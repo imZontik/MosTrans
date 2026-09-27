@@ -13,7 +13,8 @@ import { Segmented } from '@/components/Segmented'
 import { CountUp } from '@/components/CountUp'
 import { NightPanel } from '@/components/NightPanel'
 import { Podium } from '@/components/Podium'
-import { EmptyState, ErrorState, Loading } from '@/components/States'
+import { EmptyState, ErrorState } from '@/components/States'
+import { LeaderboardSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
 import { fmtNumber, teamName } from '@/lib/format'
 import { plural, pluralN, PEOPLE, POINTS, points } from '@/lib/plural'
@@ -114,7 +115,7 @@ export default function LeaderboardPage() {
       </div>
 
       {board.loading && !board.data ? (
-        <Loading rows={5} />
+        <LeaderboardSkeleton />
       ) : board.error ? (
         <ErrorState message={board.error} onRetry={board.reload} />
       ) : scope !== 'company' && !unit ? (

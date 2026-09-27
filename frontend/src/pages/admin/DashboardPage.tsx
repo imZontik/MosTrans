@@ -28,6 +28,7 @@ import { IconPlate } from '@/components/Card'
 import { CountUp } from '@/components/CountUp'
 import { NightPanel, SpeedLines } from '@/components/NightPanel'
 import { ErrorState, Loading } from '@/components/States'
+import { DashboardSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
 import { categoryStyle } from '@/lib/category'
 import { fmtDate, fmtNumber, scaleTone } from '@/lib/format'
@@ -53,7 +54,7 @@ export default function DashboardPage() {
   const employees = useAsync(() => api.admin.employees(), [])
   const data = overview.data
 
-  if (overview.loading && !data) return <Loading rows={4} />
+  if (overview.loading && !data) return <DashboardSkeleton />
   if (overview.error || !data) return <ErrorState message={overview.error ?? 'Нет данных'} onRetry={overview.reload} />
 
   return (
@@ -332,7 +333,7 @@ function Attention({ rows, loading, style }: { rows: EmployeeRow[] | undefined; 
       />
 
       {loading ? (
-        <Loading rows={3} />
+        <Loading rows={4} bare />
       ) : flags.length === 0 ? (
         <div className="flex items-center gap-3 rounded-2xl bg-ok-soft/70 px-4 py-4 ring-1 ring-inset ring-ok/20">
           <CheckCircle2 className="h-6 w-6 shrink-0 text-ok" aria-hidden />
@@ -365,7 +366,7 @@ function Attention({ rows, loading, style }: { rows: EmployeeRow[] | undefined; 
           {flags.length > ATTENTION_SHOWN && (
             <Link
               to="/admin/employees"
-              className="group mt-auto inline-flex items-center gap-1 self-start pt-3 text-sm text-muted transition-colors hover:text-ink"
+              className="group mt-auto inline-flex min-h-[44px] items-center gap-1 self-start pt-3 text-sm text-muted transition-colors hover:text-ink"
             >
               Ещё {flags.length - ATTENTION_SHOWN} — в списке сотрудников
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />

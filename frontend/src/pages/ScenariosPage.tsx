@@ -9,7 +9,8 @@ import { PageHeader } from '@/components/Card'
 import { CoverTile } from '@/components/Category'
 import { DifficultyDots } from '@/components/Progress'
 import { Segmented } from '@/components/Segmented'
-import { ErrorState, Loading } from '@/components/States'
+import { ErrorState } from '@/components/States'
+import { ScenariosSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
 import { categoryStyle } from '@/lib/category'
 import { fmtNumber } from '@/lib/format'
@@ -120,7 +121,7 @@ export default function ScenariosPage() {
       )}
 
       {catalog.loading && !catalog.data ? (
-        <Loading rows={5} />
+        <ScenariosSkeleton />
       ) : catalog.error ? (
         <ErrorState message={catalog.error} onRetry={catalog.reload} />
       ) : (

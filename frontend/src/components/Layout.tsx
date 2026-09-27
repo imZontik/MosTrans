@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BarChart3, Bell, CalendarClock, Home, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Trophy, User, type LucideIcon } from 'lucide-react'
+import { Bell, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
 import { api } from '@/api/client'
 import type { Me } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
@@ -12,14 +12,8 @@ import { Logo, LogoMark } from './Logo'
 import { Avatar } from './Avatar'
 import { Progress } from './Progress'
 import { ThemeCycleButton, ThemeSwitch } from './ThemeToggle'
+import { NAV, TabBar } from './TabBar'
 
-const NAV = [
-  { to: '/', label: 'Главная', icon: Home, end: true },
-  { to: '/scenarios', label: 'Сценарии', icon: CalendarClock },
-  { to: '/tournament', label: 'Турнир', icon: Trophy },
-  { to: '/leaderboard', label: 'Рейтинг', icon: BarChart3 },
-  { to: '/profile', label: 'Профиль', icon: User },
-]
 
 // Desktop sidebar: full (icons + words) or a 76px rail of icons; the choice is remembered per browser.
 const COLLAPSED_KEY = 'm400-sidebar-collapsed'
@@ -131,38 +125,8 @@ export function Layout() {
         </main>
       </div>
 
-      {/* mobile tab bar: frosted glass */}
-      <nav
-        className="glass pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line/60 shadow-dock lg:hidden"
-        aria-label="Разделы"
-      >
-        <div className="mx-auto grid max-w-md grid-cols-5">
-          {NAV.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                cn(
-                  'relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 pt-1 text-xs transition-colors',
-                  isActive ? 'font-semibold text-ink' : 'text-muted hover:text-ink',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <span
-                    className={cn('mb-0.5 h-1 w-6 rounded-full transition-colors', isActive ? 'bg-gradient-to-r from-[#FF5A3D] to-brand shadow-[0_2px_8px_rgb(226_26_26/.5)]' : 'bg-transparent')}
-                    aria-hidden
-                  />
-                  <Icon className={cn('h-[22px] w-[22px]', isActive && 'text-brand')} strokeWidth={isActive ? 2.3 : 1.8} aria-hidden />
-                  {label}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      {/* phones and tablets: the bottom bar */}
+      <TabBar />
     </div>
   )
 }

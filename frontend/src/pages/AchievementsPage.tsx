@@ -9,7 +9,8 @@ import { BackLink } from '@/components/BackLink'
 import { PageHeader } from '@/components/Card'
 import { ScoreRing } from '@/components/ScoreRing'
 import { Counted, Segmented } from '@/components/Segmented'
-import { EmptyState, ErrorState, Loading } from '@/components/States'
+import { EmptyState, ErrorState } from '@/components/States'
+import { BadgesSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
 import { fmtDate, RARITY_ORDER, rarityMeta } from '@/lib/format'
 
@@ -64,7 +65,7 @@ export default function AchievementsPage() {
       />
 
       {data.loading && !data.data ? (
-        <Loading rows={3} />
+        <BadgesSkeleton count={8} cards />
       ) : data.error ? (
         <ErrorState message={data.error} onRetry={data.reload} />
       ) : !items.length ? (

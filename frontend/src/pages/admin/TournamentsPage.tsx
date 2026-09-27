@@ -124,7 +124,7 @@ export default function AdminTournamentsPage() {
           Все турниры
         </SectionTitle>
         {list.loading && !list.data ? (
-          <Loading rows={3} />
+          <Loading rows={3} avatar="tile" />
         ) : list.error ? (
           <ErrorState message={list.error} onRetry={list.reload} />
         ) : (

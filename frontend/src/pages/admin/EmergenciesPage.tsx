@@ -99,7 +99,7 @@ export default function EmergenciesPage() {
         <section>
           <SectionTitle>1. Ситуация</SectionTitle>
           {scenarios.loading ? (
-            <Loading rows={3} />
+            <Loading rows={3} avatar="tile" />
           ) : (
             <div className="space-y-2">
               {(scenarios.data ?? []).map((s) => {

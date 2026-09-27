@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, Award, ChevronDown, ChevronRight, Compass, GraduationCap, History, Target } from 'lucide-react'
+import { ArrowRight, Award, ChevronRight, Compass, GraduationCap, History, Target } from 'lucide-react'
 import { api } from '@/api/client'
 import type { AchievementCatalogItem, Competency, LevelInfo, Me, PublicProfile, Qualification } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
@@ -14,9 +14,11 @@ import { CountUp } from '@/components/CountUp'
 import { NightPanel, SpeedLines } from '@/components/NightPanel'
 import { Progress } from '@/components/Progress'
 import { RouteTrack } from '@/components/RouteTrack'
+import { Disclosure } from '@/components/Disclosure'
 import { RunHistory } from '@/components/RunHistory'
 import { ThemeSwitch } from '@/components/ThemeToggle'
-import { ErrorState, Loading } from '@/components/States'
+import { ErrorState } from '@/components/States'
+import { BadgesSkeleton, ProfileSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
 import { fmtNumber, RARITY_ORDER, teamName } from '@/lib/format'
 import { plural, POINTS, SCENARIOS } from '@/lib/plural'
@@ -57,7 +59,7 @@ export default function ProfilePage() {
   }, [isMe, catalog.data, profile])
 
   if (!isMe && other.error) return <ErrorState message={other.error} onRetry={other.reload} />
-  if (!profile) return <Loading rows={3} />
+  if (!profile) return <ProfileSkeleton />
 
   const base = isMe ? '/profile' : `/users/${userId}`
   const q = profile.qualification
@@ -260,7 +262,7 @@ function Showcase({ items, loading, total, to }: { items: AchievementCatalogItem
         <AllLink to={to}>Все</AllLink>
       </div>
       {loading ? (
-        <Loading rows={1} />
+        <BadgesSkeleton count={4} />
       ) : (
         <>
           {total !== null && total > 0 && (
@@ -300,53 +302,16 @@ function Showcase({ items, loading, total, to }: { items: AchievementCatalogItem
  * list right here (no separate page). A run opens its debrief.
  */
 function RecentRuns({ runs, loading }: { runs: Parameters<typeof RunHistory>[0]['items']; loading: boolean }) {
-  const [open, setOpen] = useState(false)
   const success = runs.filter((r) => r.outcome === 'success').length
   return (
-    <section className="card overflow-hidden" aria-labelledby="recent">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        disabled={loading || !runs.length}
-        aria-expanded={open}
-        aria-controls="recent-list"
-        className="flex w-full items-center gap-3 p-5 text-left transition-colors hover:bg-ink/[.02] disabled:cursor-default sm:p-6"
-      >
-        <IconPlate icon={History} tint="bg-ink/[.06]" tone="text-ink" />
-        <span className="min-w-0 flex-1">
-          <span id="recent" className="block text-lg font-semibold leading-tight">
-            История рейсов
-          </span>
-          <span className="block text-sm text-muted">
-            {loading
-              ? 'Загружаем'
-              : runs.length
-                ? `${runs.length} ${plural(runs.length, TRIPS)} · ${success} успешных`
-                : 'Завершённых рейсов пока нет'}
-          </span>
-        </span>
-        {runs.length > 0 && (
-          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-muted">
-            <span className="hidden min-[400px]:inline">{open ? 'Свернуть' : 'Показать'}</span>
-            <ChevronDown className={cn('h-5 w-5 transition-transform duration-300', open && 'rotate-180')} aria-hidden />
-          </span>
-        )}
-      </button>
-      {/* 0fr → 1fr: the list unfolds to its own height; hidden from focus while folded */}
-      <div
-        id="recent-list"
-        className={cn(
-          'grid transition-[grid-template-rows,visibility] duration-300 ease-[cubic-bezier(.3,.8,.3,1)]',
-          open ? 'visible grid-rows-[1fr]' : 'invisible grid-rows-[0fr]',
-        )}
-      >
-        <div className="min-h-0 overflow-hidden">
-          <div className="border-t border-line/70 px-5 pb-2 sm:px-6">
-            <RunHistory items={runs} linked />
-          </div>
-        </div>
-      </div>
-    </section>
+    <Disclosure
+      icon={History}
+      title="История рейсов"
+      disabled={loading || !runs.length}
+      summary={loading ? 'Загружаем' : runs.length ? `${runs.length} ${plural(runs.length, TRIPS)} · ${success} успешных` : 'Завершённых рейсов пока нет'}
+    >
+      <RunHistory items={runs} linked />
+    </Disclosure>
   )
 }
 
