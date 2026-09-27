@@ -105,6 +105,14 @@ async def read(session: AsyncSession, user: User, notification_id: int) -> dict:
     return {"unread": _counts(await repo.unread_counts(user.id))}
 
 
+async def read_many(session: AsyncSession, user: User, ids: list[int]) -> dict:
+    """What the employee has seen on screen; only their own notifications are touched."""
+    repo = NotificationRepository(session)
+    marked = await repo.mark_read(user.id, ids=list(dict.fromkeys(ids)))
+    await session.commit()
+    return {"marked": marked, "unread": _counts(await repo.unread_counts(user.id))}
+
+
 async def read_all(session: AsyncSession, user: User, priority: str | None) -> dict:
     if priority and priority not in msg.PRIORITIES:
         raise AppError("Неизвестная важность")

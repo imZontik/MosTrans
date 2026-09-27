@@ -104,6 +104,10 @@ class AssistantIn(BaseModel):
 Priority = Literal["high", "normal", "low"]
 
 
+class ReadManyIn(BaseModel):
+    ids: list[int] = Field(min_length=1, max_length=200, description="Уведомления, которые сотрудник увидел на экране")
+
+
 class ReadAllIn(BaseModel):
     priority: Priority | None = Field(default=None, description="Отметить прочитанными только уведомления этого приоритета")
 

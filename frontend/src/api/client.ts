@@ -204,6 +204,8 @@ export const api = {
   },
   notificationSummary: () => get<NotificationSummary>('/notifications/summary'),
   readNotification: (id: number) => post<{ unread: UnreadCounts }>(`/notifications/${id}/read`),
+  /** What the employee has seen on screen, in one request */
+  readNotifications: (ids: number[]) => post<{ marked: number; unread: UnreadCounts }>('/notifications/read', { ids }),
   readAllNotifications: (priority?: NotificationPriority | null) =>
     post<{ marked: number; unread: UnreadCounts }>('/notifications/read-all', { priority: priority ?? null }),
 

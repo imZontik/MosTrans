@@ -12,7 +12,7 @@ from app.frameworks.api.deps import (
     get_ml,
     get_session,
 )
-from app.frameworks.api.schemas import AnswerIn, LoginIn, Priority, ReadAllIn, RegisterIn, StartRunIn, TournamentAnswerIn
+from app.frameworks.api.schemas import AnswerIn, LoginIn, Priority, ReadAllIn, ReadManyIn, RegisterIn, StartRunIn, TournamentAnswerIn
 from app.repositories.cache import Cache, EmergencyQueue, TournamentBoard
 from app.repositories.ml_gateway import MLGateway
 from app.repositories.models import User
@@ -203,6 +203,14 @@ async def notification_list(
 async def notification_summary(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     """Счётчики непрочитанных и самое свежее непрочитанное уведомление — то, что опрашивает «колокольчик»."""
     return await notifications.summary(session, user)
+
+
+@router.post("/notifications/read", tags=["notifications"], summary="Отметить увиденные прочитанными")
+async def notification_read_many(
+    body: ReadManyIn, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)
+):
+    """Уведомления, которые показались сотруднику на экране, — одним запросом. Чужие id молча пропускаются."""
+    return await notifications.read_many(session, user, body.ids)
 
 
 @router.post("/notifications/read-all", tags=["notifications"], summary="Отметить всё прочитанным")
