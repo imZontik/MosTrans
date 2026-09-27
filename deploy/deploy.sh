@@ -1,19 +1,46 @@
 #!/usr/bin/env bash
-# Runs on the VPS in /opt/magistral: loads images built in CI and restarts the stack.
-# Expects images.tar.gz next to it; .env with secrets lives only on the server.
+# Runs on the VPS in /opt/magistral: gets the images built in CI and restarts the stack.
+#   deploy.sh pull <registry prefix> <tag>  — pull from the registry (only changed layers travel)
+#   deploy.sh load                          — load images/*.tar.gz uploaded by CI (fallback)
+# Either way the images end up as magistral-400-<service>:latest, the names docker-compose.yml uses,
+# so a manual `docker compose up` on the server keeps working. .env with secrets lives only here.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+SERVICES="backend ml-service frontend"
 
 if [ ! -f .env ]; then
   echo "No .env on the server — create it from .env.example first" >&2
   exit 1
 fi
 
-echo "Loading images…"
-gunzip -c images.tar.gz | docker load
-rm -f images.tar.gz
+case "${1:-load}" in
+  pull)
+    prefix="$2"
+    tag="$3"
+    for svc in $SERVICES; do
+      echo "Pulling $svc…"
+      start=$SECONDS
+      docker pull -q "$prefix-$svc:$tag"
+      docker tag "$prefix-$svc:$tag" "magistral-400-$svc:latest"
+      # Only the local name stays: old versions become dangling and `image prune` below clears them
+      docker rmi "$prefix-$svc:$tag" >/dev/null
+      echo "  $svc: $((SECONDS - start)) s"
+    done
+    ;;
+  load)
+    echo "Loading images…"
+    for archive in images/*.tar.gz; do
+      gunzip -c "$archive" | docker load
+      rm -f "$archive"
+    done
+    ;;
+  *)
+    echo "Usage: deploy.sh pull <prefix> <tag> | deploy.sh load" >&2
+    exit 2
+    ;;
+esac
 
 echo "Starting the stack…"
 $COMPOSE up -d --no-build --remove-orphans
