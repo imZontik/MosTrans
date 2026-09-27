@@ -42,6 +42,18 @@ case "${1:-load}" in
     ;;
 esac
 
+# Grafana, Loki and Alloy need ~400 MB: only on a server that has the memory, so the site never pays for them
+MONITORING_MIN_MB=1500
+mem_mb=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo)
+if [ "$mem_mb" -ge "$MONITORING_MIN_MB" ]; then
+  export COMPOSE_PROFILES=monitoring
+  echo "Monitoring on: ${mem_mb} MB of RAM"
+  $COMPOSE pull -q loki alloy grafana
+else
+  echo "Monitoring off: ${mem_mb} MB of RAM, needs ${MONITORING_MIN_MB}"
+  $COMPOSE --profile monitoring rm -sf loki alloy grafana >/dev/null 2>&1 || true
+fi
+
 echo "Starting the stack…"
 $COMPOSE up -d --no-build --remove-orphans
 # Configs are bind-mounted: containers that were not recreated keep the old ones until a reload

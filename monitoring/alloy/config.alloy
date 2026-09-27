@@ -1,0 +1,69 @@
+// Grafana Alloy: collects the logs of this project's containers and ships them to Loki.
+// Labels: service (docker compose service), container, level (where the line carries one).
+
+discovery.docker "project" {
+	host             = "unix:///var/run/docker.sock"
+	refresh_interval = "15s"
+
+	filter {
+		name   = "label"
+		values = ["com.docker.compose.project=magistral-400"]
+	}
+}
+
+discovery.relabel "project" {
+	targets = []
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		target_label  = "service"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+}
+
+loki.source.docker "project" {
+	host          = "unix:///var/run/docker.sock"
+	targets       = discovery.docker.project.targets
+	relabel_rules = discovery.relabel.project.rules
+	forward_to    = [loki.process.project.receiver]
+}
+
+loki.process "project" {
+	// Python services: a traceback is one entry, not thirty lines
+	stage.match {
+		selector = "{service=~\"backend|ml-service\"}"
+
+		stage.multiline {
+			firstline     = "^(\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d|[A-Z]+:\\s|[A-Z]{4,5} +\\[)"
+			max_wait_time = "3s"
+		}
+	}
+
+	// "2026-09-27 12:00:00,123 ERROR magistral: …" (our logging), "ERROR:    …" (uvicorn),
+	// "WARNI [alembic…] …" (migrations, run at every backend start)
+	stage.regex {
+		expression = "^(?:\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d,\\d+ )?(?P<level>DEBUG|INFO|WARNING|WARNI|ERROR|CRITICAL|CRITI)(?::|\\s)"
+	}
+
+	stage.template {
+		source   = "level"
+		template = "{{ if eq .Value \"WARNI\" }}warning{{ else if eq .Value \"CRITI\" }}critical{{ else }}{{ ToLower .Value }}{{ end }}"
+	}
+
+	stage.labels {
+		values = {level = ""}
+	}
+
+	forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}

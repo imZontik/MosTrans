@@ -7,8 +7,10 @@ user ──► nginx ──► frontend (React + TS, web view)
                           │   │  │      ──► Valkey       (живые лидерборды, кэш, очередь специвентов, rate limit)
                           │   │  └──────► ml service   (оценка ответов, черновики сценариев, ассистент)
                           │   │                 └──► GigaChat API | Ollama (Qwen 2.5, локально) | эвристика
-                          │   └──/metrics──► Prometheus
-                          └────────────────► (Grafana, Loki и S3 — следующий этап)
+                          │   └──/metrics──► Prometheus ──┐
+                          │                                ├──► Grafana (дашборды)
+    логи всех контейнеров ──► Alloy ──► Loki ──────────────┘
+                          └────────────────► (S3 — следующий этап)
 ```
 
 ## Backend: три слоя
@@ -52,9 +54,13 @@ backend/app/
 
 Целевая нагрузка — до 500 одновременных пользователей и 3000 сотрудников. Этого хватает с одним async-инстансом backend. Горизонтальное масштабирование: `docker compose up --scale backend=N`. Планировщик турниров защищён локом в Valkey, схема БД — advisory lock в PostgreSQL. Prometheus находит все реплики через DNS.
 
+## Мониторинг
+
+Профиль `monitoring` в Docker Compose: Prometheus собирает метрики, Grafana Alloy забирает логи всех контейнеров проекта через Docker и отправляет в Loki (хранение 7 дней), Grafana показывает и то и другое на провиженном дашборде «Магистраль 400». Alloy склеивает трейсбеки Python в одну запись и ставит метки `service`, `container`, `level`. Лимиты памяти: Grafana 400 МБ, Loki 256 МБ, Alloy 192 МБ; на VPS профиль включается сам при памяти от 1,5 ГБ. Grafana не публикуется наружу — только `127.0.0.1` и SSH-туннель.
+
 ## Метрики (Prometheus)
 
-`m400_runs_started_total`, `m400_runs_finished_total{outcome}`, `m400_decisions_total{quality,timed_out}`, `m400_decision_seconds`, `m400_points_awarded_total`, `m400_achievements_unlocked_total`, `m400_tournament_answers_total`, `m400_emergencies_total{source}`, `m400_ml_calls_total`, `m400_ml_grades_total{provider,verdict}` плюс стандартные HTTP-метрики.
+`m400_runs_started_total`, `m400_runs_finished_total{outcome}`, `m400_decisions_total{quality,timed_out}`, `m400_decision_seconds`, `m400_points_awarded_total`, `m400_achievements_unlocked_total`, `m400_tournament_answers_total`, `m400_emergencies_total{source}`, `m400_ml_calls_total`, `m400_ml_grades_total{provider,verdict}`, `m400_notifications_total{kind,priority}`, `m400_tournament_players` плюс стандартные HTTP-метрики и метрики самих Loki, Alloy и Grafana.
 
 ---
 
