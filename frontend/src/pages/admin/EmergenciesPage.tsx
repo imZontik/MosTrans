@@ -10,6 +10,7 @@ import { Card, PageHeader, SectionTitle } from '@/components/Card'
 import { Mascot } from '@/components/Mascot'
 import { DifficultyDots } from '@/components/Progress'
 import { Loading } from '@/components/States'
+import { Segmented } from '@/components/Segmented'
 import { cn } from '@/lib/cn'
 import { EMPLOYEES, pluralN } from '@/lib/plural'
 
@@ -162,22 +163,15 @@ export default function EmergenciesPage() {
           <div>
             <SectionTitle>2. Получатели</SectionTitle>
             <Card className="p-4">
-              <div className="flex gap-1 rounded-xl bg-ink/5 p-1">
-                {(
-                  [
-                    ['all', 'Все сотрудники'],
-                    ['selected', `Выбранные${selected.size ? ` (${selected.size})` : ''}`],
-                  ] as const
-                ).map(([k, label]) => (
-                  <button
-                    key={k}
-                    onClick={() => setTarget(k)}
-                    className={cn('flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition coarse:min-h-[44px]', target === k ? 'bg-surface shadow-sm' : 'text-muted')}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <Segmented
+                label="Получатели"
+                value={target}
+                onChange={setTarget}
+                options={[
+                  ['all', 'Все сотрудники'],
+                  ['selected', `Выбранные${selected.size ? ` (${selected.size})` : ''}`],
+                ]}
+              />
               {target === 'selected' && (
                 <div className="mt-3">
                   <div className="relative">
