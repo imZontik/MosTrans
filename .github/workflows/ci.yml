@@ -103,6 +103,22 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
 
+      - name: Mirror third-party images to ghcr.io
+        # Docker Hub is unreachable from the VPS: it takes Postgres, Grafana and the rest from our mirror.
+        # Registry-to-registry copy, nothing is downloaded here; deploy.sh maps the tags back.
+        run: |
+          cp .env.example .env
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile monitoring config --images \
+            | grep -v '^magistral-400-' | sort -u | while read -r image; do
+              tag=$(echo "$image" | sed 's#^docker.io/##; s#[/:]#-#g')
+              if docker buildx imagetools inspect "$IMAGES-mirror:$tag" >/dev/null 2>&1; then
+                echo "$image: already mirrored"
+              else
+                docker buildx imagetools create -t "$IMAGES-mirror:$tag" "$image"
+                echo "$image: mirrored"
+              fi
+            done
+
       - name: SSH access
         run: |
           install -m 700 -d ~/.ssh

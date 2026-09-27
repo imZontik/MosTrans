@@ -1,4 +1,18 @@
 {$SITE_ADDRESS::80} {
 	encode gzip
-	reverse_proxy nginx:80
+
+	# Grafana and pgAdmin behind their own logins; deploy.sh gives both a generated password
+	handle /grafana* {
+		reverse_proxy grafana:3000
+	}
+
+	handle_path /pgadmin* {
+		reverse_proxy pgadmin:80 {
+			header_up X-Script-Name /pgadmin
+		}
+	}
+
+	handle {
+		reverse_proxy nginx:80
+	}
 }

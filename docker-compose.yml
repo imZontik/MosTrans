@@ -92,8 +92,9 @@ services:
       - backend
       - ml-service
 
-  # --- Monitoring (profile "monitoring"): Grafana on top of Prometheus metrics and Loki logs.
-  # Locally: docker compose --profile monitoring up -d → http://localhost:3000
+  # --- Monitoring and admin tools (profile "monitoring"): Grafana on top of Prometheus metrics
+  # and Loki logs, pgAdmin for the database.
+  # Locally: docker compose --profile monitoring up -d → Grafana http://localhost:3000, pgAdmin http://localhost:5050
   # On the VPS deploy.sh turns the profile on by itself when the server has enough memory.
   loki:
     <<: *restart
@@ -151,6 +152,27 @@ services:
       - prometheus
       - loki
 
+  # pgAdmin for the database; the «Магистраль 400» server is added already, the DB password is asked once
+  pgadmin:
+    <<: *restart
+    image: dpage/pgadmin4:9.18
+    profiles: ["monitoring"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@m400.ru}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+      PGADMIN_DISABLE_POSTFIX: "true"
+      PGADMIN_CONFIG_UPGRADE_CHECK_ENABLED: "False"
+      GUNICORN_THREADS: "4"
+    mem_limit: 256m
+    ports:
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - ./monitoring/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
   # Local open-source LLM (Qwen 2.5) for answer grading and scenario drafts.
   # Enable with: docker compose --profile qwen up -d  and ML_PROVIDER=ollama in .env
   ollama:
@@ -168,3 +190,4 @@ volumes:
   loki-data:
   alloy-data:
   grafana-data:
+  pgadmin-data:
