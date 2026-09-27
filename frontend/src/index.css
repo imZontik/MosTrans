@@ -700,6 +700,99 @@
 .row-in {
   animation: row-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
+/*
+ * Emergency alarm: a night background under a breathing red glow, a hazard stripe running along the
+ * top, rings going out of the siren, a shaking bell, a live waveform and light sweeping the accept button.
+ */
+.emergency {
+  background-color: #0a0e1a;
+}
+.emergency :focus-visible {
+  outline-color: #fff;
+}
+.emergency-glow {
+  background:
+    radial-gradient(70% 45% at 50% 0%, rgb(226 26 26 / 0.55), transparent 70%),
+    radial-gradient(60% 40% at 50% 100%, rgb(226 26 26 / 0.28), transparent 70%);
+  animation: emergency-breathe 1.6s ease-in-out infinite alternate;
+}
+@keyframes emergency-breathe {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.emergency-stripe {
+  background: repeating-linear-gradient(-45deg, #ff3b3b 0 14px, #1a0508 14px 28px);
+  background-size: 40px 100%;
+  animation: emergency-stripe 0.8s linear infinite;
+}
+@keyframes emergency-stripe {
+  to {
+    background-position-x: 40px;
+  }
+}
+.emergency-ring {
+  animation: emergency-ring 1.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+@keyframes emergency-ring {
+  from {
+    transform: scale(0.7);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.emergency-shake {
+  transform-origin: 50% 20%;
+  animation: emergency-shake 1.2s ease-in-out infinite;
+}
+@keyframes emergency-shake {
+  0%,
+  50%,
+  100% {
+    transform: rotate(0);
+  }
+  10%,
+  30% {
+    transform: rotate(-12deg);
+  }
+  20%,
+  40% {
+    transform: rotate(12deg);
+  }
+}
+.wave-bar {
+  transform-origin: 50% 50%;
+  animation: wave-bar 0.7s ease-in-out infinite alternate;
+}
+@keyframes wave-bar {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.emergency-accept::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgb(226 26 26 / 0.14) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: emergency-sweep 2.2s ease-in-out infinite;
+}
+@keyframes emergency-sweep {
+  60%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Dashboard sparkline: the line draws itself, the area and the end dot fade in after it */
 @keyframes spark-draw {
   from {
@@ -839,6 +932,12 @@
   .stage-light,
   .row-in,
   .feed-in,
+  .emergency-glow,
+  .emergency-stripe,
+  .emergency-ring,
+  .emergency-shake,
+  .wave-bar,
+  .emergency-accept::after,
   .spark-draw,
   .spark-fade,
   .pop-in,
