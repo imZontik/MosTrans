@@ -33,7 +33,7 @@ from app.repositories.models import (
     UserAchievement,
 )
 from app.seed.content.emergencies import EMERGENCY_SCENARIOS
-from app.seed.content.scenarios import TRAINING_SCENARIOS
+from app.seed.content.scenarios import RETIRED_SLUGS, TRAINING_SCENARIOS
 from app.seed.content.tournament_questions import QUESTION_POOL
 
 log = logging.getLogger(__name__)
@@ -145,6 +145,10 @@ async def _seed_scenarios(session: AsyncSession) -> None:
         elif existing.created_by is None:
             for key, value in fields.items():
                 setattr(existing, key, value)
+    # scenarios the seed no longer ships leave the catalog (their runs stay in the history)
+    retired = await session.scalars(select(Scenario).where(Scenario.slug.in_(RETIRED_SLUGS), Scenario.created_by.is_(None)))
+    for scenario in retired:
+        scenario.is_published = False
     await session.flush()
 
 
