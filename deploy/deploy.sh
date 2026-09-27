@@ -102,45 +102,46 @@ case "${1:-load}" in
     ;;
 esac
 
-# pgAdmin: the login password equals .env, and it knows the database password itself (a pgpass file in
-# its storage, taken from POSTGRES_PASSWORD), so nobody has to look it up on the server
-pgadmin_cli() { $COMPOSE exec -T -w /pgadmin4 -e PYTHONWARNINGS=ignore pgadmin /venv/bin/python3 setup.py "$@" 2>&1; }
+# pgAdmin takes its login password only when its storage is first created. So the storage remembers a
+# fingerprint of that password, and when .env holds another one the storage is recreated (it keeps nothing
+# but the server list and UI settings): the password from .env always works, no pgAdmin CLI involved.
+PGADMIN_VOLUME=magistral-400_pgadmin-data
+pgadmin_fingerprint() { printf '%s' "$(env_value PGADMIN_PASSWORD)" | sha256sum | cut -d' ' -f1; }
+reset_pgadmin_if_password_changed() {
+  local have
+  [ -n "$($COMPOSE ps --status running -q pgadmin)" ] || return 0
+  have=$($COMPOSE exec -T pgadmin cat /var/lib/pgadmin/.password-sha256 2>/dev/null || true)
+  if [ "$have" != "$(pgadmin_fingerprint)" ]; then
+    echo "pgAdmin password changed: recreating its storage"
+    $COMPOSE rm -sf pgadmin >/dev/null
+    docker volume rm -f "$PGADMIN_VOLUME" >/dev/null
+  fi
+}
+
+# After start: remember the password fingerprint, and give pgAdmin the database password (a pgpass file in
+# the user's storage, from POSTGRES_PASSWORD; servers.json points at it), so nobody looks it up on the server
 sync_pgadmin() {
-  local email out storage
+  local email storage db_password bs='\'
   email=$(env_value PGADMIN_EMAIL)
   email=${email:-admin@m400.ru}
   for _ in $(seq 1 40); do
     $COMPOSE exec -T pgadmin wget -qO /dev/null http://127.0.0.1/misc/ping >/dev/null 2>&1 && break
     sleep 3
   done
-  out=$(pgadmin_cli update-user "$email" --password "$(env_value PGADMIN_PASSWORD)" --admin || true)
-  if echo "$out" | grep -qF "$email"; then
-    echo "pgAdmin password matches .env ($email)"
-  else
-    echo "pgAdmin password not synced: $(echo "$out" | tail -4 | tr '\n' ' ')"
-  fi
-  # pgAdmin looks for the PassFile of servers.json in the user's storage: <storage>/<email with @ → _>
+  pgadmin_fingerprint | $COMPOSE exec -T pgadmin sh -c 'cat > /var/lib/pgadmin/.password-sha256'
+  # pgAdmin looks for the PassFile in the user's storage: <storage>/<email with @ → _>
   storage="/var/lib/pgadmin/storage/$(echo "$email" | sed 's#@#_#g; s#/#slash#g')"
-  local db_password
   db_password=$(env_value POSTGRES_PASSWORD)
   db_password=${db_password:-magistral}
   # pgpass escapes backslashes and colons (quoted replacements: literal in every bash version)
-  local bs='\'
   db_password=${db_password//"$bs"/"$bs$bs"}
   db_password=${db_password//:/"$bs:"}
   printf 'postgres:5432:*:*:%s\n' "$db_password" \
     | $COMPOSE exec -T pgadmin sh -c "mkdir -p '$storage' && umask 077 && cat > '$storage/pgpass'"
-  # Servers loaded before the PassFile existed get it once; later deploys leave the server list alone
-  if ! $COMPOSE exec -T pgadmin test -f /var/lib/pgadmin/.servers-passfile-v2; then
-    out=$(pgadmin_cli load-servers /pgadmin4/servers.json --user "$email" --replace || true)
-    if echo "$out" | grep -q "Added"; then
-      echo "pgAdmin servers reloaded with the PassFile"
-      $COMPOSE exec -T pgadmin touch /var/lib/pgadmin/.servers-passfile-v2
-    else
-      echo "pgAdmin servers not reloaded: $(echo "$out" | tail -4 | tr '\n' ' ')"
-    fi
-  fi
+  echo "pgAdmin ready: login from .env, database password provided ($email)"
 }
+
+[ -n "${COMPOSE_PROFILES:-}" ] && reset_pgadmin_if_password_changed
 
 echo "Starting the stack…"
 $COMPOSE up -d --no-build --remove-orphans
