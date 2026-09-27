@@ -32,7 +32,8 @@
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2 (async) |
 | ML service | FastAPI; GigaChat / Qwen 2.5 через Ollama / эвристика |
 | Данные | PostgreSQL 17, Valkey 8 |
-| Инфраструктура | nginx, Prometheus, Docker Compose |
+| Инфраструктура | nginx, Caddy, Docker Compose |
+| Мониторинг | Prometheus (метрики), Loki + Grafana Alloy (логи), Grafana (дашборды) |
 
 Архитектура описана в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), экономика очков — в [docs/ECONOMY.md](docs/ECONOMY.md).
 
@@ -51,6 +52,20 @@ docker compose up -d --build
 * Приложение: http://localhost:8080
 * API (Swagger): http://localhost:8080/api/docs
 * Prometheus: http://localhost:9090
+
+### Мониторинг
+
+Grafana, Loki и сборщик логов Alloy — отдельный профиль, чтобы не занимать память, когда они не нужны:
+
+```bash
+docker compose --profile monitoring up -d
+```
+
+Grafana: http://localhost:3000 (`admin` / `admin`), pgAdmin: http://localhost:5050 (`admin@m400.ru` / `admin`, сервер «Магистраль 400» уже добавлен, пароль БД — `magistral`). Источники Prometheus и Loki и дашборд «Магистраль 400» подключаются сами: обучение (рейсы, исходы, качество и время решений), турнир, специвенты и уведомления, API и ИИ-наставник, состояние и память сервисов, логи всех контейнеров с фильтром по сервису, уровню и тексту. Логи хранятся 7 дней.
+
+На сервере `deploy.sh` включает этот профиль сам, если у VPS от 1,5 ГБ памяти (всё вместе занимает около 700 МБ). Grafana и pgAdmin открываются по HTTPS на основном домене: `https://<домен>/grafana/` (логин `admin`) и `https://<домен>/pgadmin/` (логин из `PGADMIN_EMAIL`, по умолчанию `admin@m400.ru`). Пароли хранятся в секретах репозитория `GRAFANA_ADMIN_PASSWORD` и `PGADMIN_PASSWORD` (Settings → Secrets and variables → Actions): поменяли секрет, перезапустили деплой — и Grafana, и pgAdmin приняли новый пароль. Если секретов нет, `deploy.sh` сам генерирует пароли в `.env` на сервере вместо `admin`.
+
+Docker Hub с сервера недоступен, поэтому CI копирует сторонние образы (Postgres, Grafana и остальные) в зеркало в ghcr.io, а `deploy.sh` берёт их оттуда.
 
 При первом запуске создаются 8 учебных сценариев, 4 специвента, 35 сотрудников с историей обучения, прошедший турнир и **турнир, который идёт прямо сейчас**.
 

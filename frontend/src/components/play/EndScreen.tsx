@@ -4,9 +4,11 @@ import { cn } from '@/lib/cn'
 import { fmtNumber, OUTCOME_META, QUALITY_META, scaleTone, TONE_TEXT } from '@/lib/format'
 import { plural, POINTS } from '@/lib/plural'
 import { stationFor } from '@/lib/route'
+import { useDaily } from '@/hooks/useDaily'
 import { AchievementRow } from '../AchievementBadge'
 import { Button, ButtonLink } from '../Button'
 import { Confetti } from '../Confetti'
+import { DailyResult } from '../Daily'
 import { CountUp } from '../CountUp'
 import { Mascot } from '../Mascot'
 import { NightPanel, SpeedLines } from '../NightPanel'
@@ -45,13 +47,18 @@ export function EndScreen({
   backTo: string
 }) {
   const summary = run.summary
+  const daily = useDaily()
   const outcome = summary?.outcome ?? run.outcome ?? 'partial'
   const meta = OUTCOME_META[outcome]
   const backLabel = backTo.startsWith('/admin')
     ? 'К редактору сценария'
     : backTo === '/profile'
       ? 'В профиль'
-      : 'К расписанию'
+      : backTo === '/daily'
+        ? 'К заданию дня'
+        : backTo === '/'
+          ? 'На главную'
+          : 'К расписанию'
 
   const actions = (
     <div className="flex flex-col gap-2 sm:flex-row">
@@ -121,6 +128,11 @@ export function EndScreen({
           </p>
         </div>
       </NightPanel>
+
+      {/* the day's task: counted with a stamp, or how close this run came */}
+      {daily.journal && !backTo.startsWith('/admin') && (
+        <DailyResult j={daily.journal} run={run} onRestart={onRestart} restarting={restarting} />
+      )}
 
       {/* the two scales as rings, and where the points came from */}
       <section className="card p-5 sm:p-6">

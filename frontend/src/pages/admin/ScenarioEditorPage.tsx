@@ -9,6 +9,7 @@ import { Card } from '@/components/Card'
 import { ErrorState } from '@/components/States'
 import { EditorSkeleton } from '@/components/Skeleton'
 import { GraphEditor } from '@/components/admin/GraphEditor'
+import { Segmented } from '@/components/Segmented'
 import { cn } from '@/lib/cn'
 import { CATEGORY_TITLES, POSITION_TITLES } from '@/lib/format'
 
@@ -257,22 +258,15 @@ export default function ScenarioEditorPage() {
         </label>
       </Card>
 
-      <div className="flex gap-1 rounded-xl bg-ink/5 p-1 sm:w-fit">
-        {(
-          [
-            ['nodes', 'Ветки и узлы'],
-            ['json', 'JSON'],
-          ] as const
-        ).map(([k, label]) => (
-          <button
-            key={k}
-            onClick={() => switchTab(k)}
-            className={cn('flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition coarse:min-h-[44px]', tab === k ? 'bg-surface shadow-sm' : 'text-muted')}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        label="Вид редактора"
+        value={tab}
+        onChange={switchTab}
+        options={[
+          ['nodes', 'Ветки и узлы'],
+          ['json', 'JSON'],
+        ]}
+      />
 
       {tab === 'nodes' ? (
         <GraphEditor graph={graph} onChange={updateGraph} />

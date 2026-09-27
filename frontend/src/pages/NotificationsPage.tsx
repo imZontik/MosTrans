@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/Card'
 import { NotificationDialog } from '@/components/NotificationDialog'
 import { Segmented } from '@/components/Segmented'
 import { EmptyState, ErrorState, Loading } from '@/components/States'
+import { useSeen } from '@/hooks/useSeen'
 import { cn } from '@/lib/cn'
 import { dayLabel, PRIORITIES, PRIORITY_META, timeLabel } from '@/lib/notifications'
 import { useNotifications } from '@/notifications/NotificationsContext'
@@ -28,6 +29,24 @@ export default function NotificationsPage() {
   const [marking, setMarking] = useState(false)
   const [viewing, setViewing] = useState<AppNotification | null>(null)
   const closeViewing = useCallback(() => setViewing(null), [])
+  // read while this page is open: they keep the «new» tint until the person leaves
+  const [fresh, setFresh] = useState<Set<number>>(() => new Set())
+
+  // a notification that has been on screen counts as read, like in a messenger
+  const markSeen = useCallback(
+    (ids: number[]) => {
+      setItems((prev) => prev?.map((x) => (ids.includes(x.id) ? { ...x, read: true } : x)) ?? null)
+      setFresh((prev) => new Set([...prev, ...ids]))
+      api.readNotifications(ids).then(
+        (r) => setUnread(r.unread),
+        () => {
+          /* stays unread on the server and shows up as new next time */
+        },
+      )
+    },
+    [setUnread],
+  )
+  const watch = useSeen(markSeen)
 
   const setFilter = (key: 'show' | 'tag', value: string | null) => {
     const p = new URLSearchParams(params)
@@ -139,8 +158,8 @@ export default function NotificationsPage() {
             <h2 className="mb-2 px-1 text-sm font-semibold text-muted">{g.day}</h2>
             <ul className="card divide-y divide-line/70 overflow-hidden">
               {g.items.map((n) => (
-                <li key={n.id}>
-                  <Item n={n} onOpen={() => open(n)} />
+                <li key={n.id} data-seen-id={n.id} ref={n.read ? undefined : watch}>
+                  <Item n={n} fresh={fresh.has(n.id)} onOpen={() => open(n)} />
                 </li>
               ))}
             </ul>
@@ -174,7 +193,7 @@ function TagChip({ active, onClick, children }: { active: boolean; onClick: () =
   )
 }
 
-function Item({ n, onOpen }: { n: AppNotification; onOpen: () => void }) {
+function Item({ n, fresh, onOpen }: { n: AppNotification; fresh: boolean; onOpen: () => void }) {
   const meta = PRIORITY_META[n.priority]
   return (
     <button
@@ -183,10 +202,16 @@ function Item({ n, onOpen }: { n: AppNotification; onOpen: () => void }) {
       aria-haspopup="dialog"
       className={cn(
         'relative flex w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-ink/[.03] sm:px-5',
-        !n.read && 'bg-brand-soft/25 dark:bg-white/[.03]',
+        (!n.read || fresh) && 'bg-brand-soft/25 dark:bg-white/[.03]',
       )}
     >
-      {!n.read && <span className="absolute left-0 top-4 bottom-4 w-[3px] rounded-r-full bg-brand" aria-hidden />}
+      {/* the unread mark fades once the notification has been seen */}
+      {(!n.read || fresh) && (
+        <span
+          className={cn('absolute bottom-4 left-0 top-4 w-[3px] rounded-r-full bg-brand transition-opacity duration-700', n.read && 'opacity-0')}
+          aria-hidden
+        />
+      )}
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ink/[.05] text-xl" aria-hidden>
         {n.icon}
       </span>

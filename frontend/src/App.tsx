@@ -14,6 +14,7 @@ import LeaderboardPage from '@/pages/LeaderboardPage'
 import ProfilePage from '@/pages/ProfilePage'
 import AchievementsPage from '@/pages/AchievementsPage'
 import NotificationsPage from '@/pages/NotificationsPage'
+import DailyPage from '@/pages/DailyPage'
 import { NotificationsProvider } from '@/notifications/NotificationsContext'
 const DashboardPage = lazy(() => import('@/pages/admin/DashboardPage'))
 const EmployeesPage = lazy(() => import('@/pages/admin/EmployeesPage'))
@@ -60,6 +61,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="scenarios" element={<ScenariosPage />} />
+          <Route path="daily" element={<DailyPage />} />
           <Route path="tournament" element={<TournamentPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="profile" element={<ProfilePage />} />

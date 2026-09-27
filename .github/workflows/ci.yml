@@ -44,22 +44,82 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build
 
-  # Images are built here, not on the VPS: 1 GB of RAM is enough to run the stack but not to build the frontend
+  # Images are built here, not on the VPS: 1 GB of RAM is enough to run the stack but not to build the frontend.
+  # They go to GitHub Container Registry with a layer cache, and the server pulls only the layers that changed
+  # (usually just the code): pushing whole image archives from GitHub to the VPS became far too slow.
+  # Uploading archives stays as a fallback for when the server cannot reach the registry.
   deploy:
     needs: test
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     concurrency: deploy
     # Deploys queue up behind each other, so a stuck one must not hold the queue for hours
-    timeout-minutes: 25
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGES: ghcr.io/imzontik/mostrans
+      TAG: ${{ github.sha }}
+      TARGET: deploy@${{ secrets.DEPLOY_HOST }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build images
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: ${{ env.IMAGES }}-backend:${{ env.TAG }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      - name: Build ML service
+        uses: docker/build-push-action@v6
+        with:
+          context: ml-service
+          push: true
+          tags: ${{ env.IMAGES }}-ml-service:${{ env.TAG }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=ml-service
+          cache-to: type=gha,scope=ml-service,mode=max
+
+      - name: Build frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: ${{ env.IMAGES }}-frontend:${{ env.TAG }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+      - name: Mirror third-party images to ghcr.io
+        # Docker Hub is unreachable from the VPS: it takes Postgres, Grafana and the rest from our mirror.
+        # A one-line rebuild (same layers) adds the source label, which links the package to this repository:
+        # without it the job token may not write there. deploy.sh maps the tags back to the usual names.
         run: |
           cp .env.example .env
-          docker compose build backend ml-service frontend
-          docker save magistral-400-backend magistral-400-ml-service magistral-400-frontend | gzip -1 > images.tar.gz
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile monitoring config --images \
+            | grep -v '^magistral-400-' | sort -u | while read -r image; do
+              tag=$(echo "$image" | sed 's#^docker.io/##; s#[/:]#-#g')
+              if docker buildx imagetools inspect "$IMAGES-thirdparty:$tag" >/dev/null 2>&1; then
+                echo "$image: already mirrored"
+              else
+                printf 'FROM %s\nLABEL org.opencontainers.image.source=https://github.com/%s\n' "$image" "$GITHUB_REPOSITORY" \
+                  | docker buildx build --quiet --platform linux/amd64 -t "$IMAGES-thirdparty:$tag" --push -
+                echo "$image: mirrored"
+              fi
+            done
 
       - name: SSH access
         run: |
@@ -79,8 +139,6 @@ jobs:
 
       - name: Server answers over SSH
         timeout-minutes: 3
-        env:
-          TARGET: deploy@${{ secrets.DEPLOY_HOST }}
         run: |
           for attempt in 1 2 3; do
             if ssh "$TARGET" true; then exit 0; fi
@@ -90,14 +148,58 @@ jobs:
           echo "::error::The VPS does not answer over SSH: check that it is running and has free memory (reboot it from the hosting panel if it is stuck)"
           exit 1
 
-      - name: Upload and restart
-        timeout-minutes: 15
-        env:
-          TARGET: deploy@${{ secrets.DEPLOY_HOST }}
+      - name: Upload configs
+        timeout-minutes: 5
         run: |
-          ssh "$TARGET" 'mkdir -p /opt/magistral/nginx /opt/magistral/prometheus /opt/magistral/caddy'
-          scp docker-compose.yml docker-compose.prod.yml deploy/deploy.sh images.tar.gz "$TARGET":/opt/magistral/
+          ssh "$TARGET" 'mkdir -p /opt/magistral/nginx /opt/magistral/prometheus /opt/magistral/caddy /opt/magistral/images && rm -f /opt/magistral/images.tar.gz'
+          scp docker-compose.yml docker-compose.prod.yml deploy/deploy.sh "$TARGET":/opt/magistral/
           scp nginx/nginx.conf "$TARGET":/opt/magistral/nginx/
           scp prometheus/prometheus.yml "$TARGET":/opt/magistral/prometheus/
           scp caddy/Caddyfile "$TARGET":/opt/magistral/caddy/
-          ssh "$TARGET" 'bash /opt/magistral/deploy.sh'
+          ssh "$TARGET" 'rm -rf /opt/magistral/monitoring'
+          scp -r monitoring "$TARGET":/opt/magistral/
+
+      - name: Passwords from GitHub secrets
+        timeout-minutes: 2
+        env:
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          PGADMIN_PASSWORD: ${{ secrets.PGADMIN_PASSWORD }}
+        run: |
+          # Grafana and pgAdmin passwords live in the repository secrets: change them there and redeploy.
+          # Through stdin, so they never appear in a command line; unset secrets leave the server's .env as is.
+          printf 'GRAFANA_ADMIN_PASSWORD=%s\nPGADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" "$PGADMIN_PASSWORD" \
+            | ssh "$TARGET" 'bash /opt/magistral/deploy.sh secrets'
+
+      - name: Pull images on the server and restart
+        id: pull
+        continue-on-error: true
+        # The first deploy with monitoring also pulls Grafana, Loki and Alloy from Docker Hub
+        timeout-minutes: 20
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The job token lets the server read this repository's images; it expires when the job ends
+          echo "$GH_TOKEN" | ssh "$TARGET" "timeout 60 docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+          trap 'ssh "$TARGET" "docker logout ghcr.io" >/dev/null 2>&1 || true' EXIT
+          # The server stops itself too, so a fallback never races with a pull still running there
+          ssh "$TARGET" "timeout 1080 bash /opt/magistral/deploy.sh pull $IMAGES $TAG"
+
+      - name: Fallback — upload image archives and restart
+        if: steps.pull.outcome == 'failure'
+        timeout-minutes: 15
+        run: |
+          echo "::warning::The server could not pull from ghcr.io, uploading image archives instead"
+          for svc in backend ml-service frontend; do
+            docker pull -q "$IMAGES-$svc:$TAG"
+            docker tag "$IMAGES-$svc:$TAG" "magistral-400-$svc:latest"
+            docker save "magistral-400-$svc:latest" | gzip -1 > "$svc.tar.gz"
+          done
+          ls -lh ./*.tar.gz
+          # One connection per image: a slow link is often slow per connection
+          pids=()
+          for svc in backend ml-service frontend; do
+            scp "$svc.tar.gz" "$TARGET":/opt/magistral/images/ &
+            pids+=($!)
+          done
+          for pid in "${pids[@]}"; do wait "$pid"; done
+          ssh "$TARGET" 'bash /opt/magistral/deploy.sh load'

@@ -9,12 +9,13 @@ export function useStartRun() {
   const [error, setError] = useState<string | null>(null)
 
   const start = useCallback(
-    async (scenarioId: number, restart = false) => {
+    // `from`: where the run's end screen leads back to
+    async (scenarioId: number, restart = false, from?: string) => {
       setPending(scenarioId)
       setError(null)
       try {
         const run = await api.startRun(scenarioId, restart)
-        navigate(`/play/${run.id}`)
+        navigate(`/play/${run.id}`, from ? { state: { from } } : undefined)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Не удалось начать сценарий')
       } finally {
