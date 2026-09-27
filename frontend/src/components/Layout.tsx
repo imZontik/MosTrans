@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bell, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
+import { Bell, CircleHelp, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
 import { api } from '@/api/client'
 import type { Me } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
@@ -13,6 +13,7 @@ import { Avatar } from './Avatar'
 import { Progress } from './Progress'
 import { ThemeCycleButton, ThemeSwitch } from './ThemeToggle'
 import { NAV, TabBar } from './TabBar'
+import { openTour, TourHost } from './onboarding/Tours'
 
 
 // Desktop sidebar: full (icons + words) or a 76px rail of icons; the choice is remembered per browser.
@@ -87,6 +88,19 @@ export function Layout() {
           )}
         </nav>
 
+        <button
+          type="button"
+          onClick={() => openTour('employee')}
+          className={cn(
+            'group relative mb-2 flex min-h-[44px] items-center gap-3 rounded-xl text-muted transition-colors hover:bg-ink/[.05] hover:text-ink',
+            collapsed ? 'justify-center' : 'px-3',
+          )}
+        >
+          <CircleHelp className="h-5 w-5 shrink-0" aria-hidden />
+          <span className={collapsed ? 'sr-only' : 'text-sm'}>Как это работает</span>
+          {collapsed && <RailTip>Как это работает</RailTip>}
+        </button>
+
         {/* settings row: theme and sign-out */}
         <div className={cn('mt-auto flex items-center gap-1', collapsed ? 'flex-col' : 'px-1')}>
           {collapsed ? <ThemeCycleButton /> : <ThemeSwitch className="flex-1" />}
@@ -111,12 +125,9 @@ export function Layout() {
           <Logo />
           <div className="flex items-center gap-1">
             <BellLink count={unread.total} urgent={unread.high > 0} />
-            {isStaff && (
-              <NavLink to="/admin" className="flex min-h-[44px] items-center px-2 text-sm font-medium text-ink underline decoration-line underline-offset-4">
-                Панель руководителя
-              </NavLink>
-            )}
-            <ThemeCycleButton />
+            {isStaff && <PanelSwitch />}
+            {/* staff on a narrow phone: the theme lives in the profile, the switch to the panel gets the room */}
+            <ThemeCycleButton className={cn(isStaff && 'max-[399px]:hidden')} />
           </div>
         </header>
 
@@ -127,7 +138,25 @@ export function Layout() {
 
       {/* phones and tablets: the bottom bar */}
       <TabBar />
+      <TourHost kind="employee" />
     </div>
+  )
+}
+
+/**
+ * Phones: the way into the lead's panel, a night-line pill with the panel's icon. The whole 44px
+ * header height is the tap target; below 360px only the icon shows.
+ */
+function PanelSwitch() {
+  return (
+    <NavLink to="/admin" className="group flex h-11 items-center px-0.5" aria-label="Панель руководителя">
+      <span className="night-line-flat flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold text-white shadow-[0_6px_16px_-8px_rgb(10_16_30/.8)] ring-1 ring-inset ring-white/15 transition-transform dark:[background:linear-gradient(180deg,rgb(255_90_61/.28),rgb(200_16_30/.22))] dark:ring-[#FF6A4D]/45 group-active:scale-95 min-[360px]:pr-3.5">
+        <LayoutDashboard className="h-4 w-4 text-[#FF7A5C]" aria-hidden />
+        <span className="max-[359px]:sr-only" aria-hidden>
+          Панель
+        </span>
+      </span>
+    </NavLink>
   )
 }
 

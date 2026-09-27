@@ -1,12 +1,13 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bot, FileText, Gauge, LayoutGrid, LogOut, Megaphone, Siren, Smartphone, Sparkles, Trophy, Users, X, type LucideIcon } from 'lucide-react'
+import { Bot, ChevronRight, CircleHelp, FileText, Gauge, LayoutGrid, LogOut, Megaphone, Siren, Smartphone, Sparkles, Trophy, Users, X, type LucideIcon } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { cn } from '@/lib/cn'
 import { Logo } from './Logo'
 import { Avatar } from './Avatar'
 import { PageSkeleton } from './Skeleton'
 import { ThemeSwitch } from './ThemeToggle'
+import { openTour, TourHost } from './onboarding/Tours'
 
 const NAV = [
   { to: '/admin', label: 'Дашборд', icon: Gauge, end: true },
@@ -50,7 +51,15 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto px-1">
+        <button
+          type="button"
+          onClick={() => openTour('lead')}
+          className="mt-auto flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-sm text-white/65 transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <CircleHelp className="h-5 w-5" aria-hidden />
+          Как устроена панель
+        </button>
+        <div className="mt-2 px-1">
           <ThemeSwitch night />
         </div>
         <div className="mt-4 space-y-3 border-t border-white/15 px-3 pt-4">
@@ -82,13 +91,14 @@ export function AdminLayout() {
         <header className="night-line-flat sticky top-0 z-30 pt-[env(safe-area-inset-top)] lg:hidden">
           <div className="flex h-14 items-center justify-between gap-2 pl-4 pr-2 sm:pr-3">
             <Logo light subtitle="Панель руководителя" className="min-w-0" />
-            <NavLink
-              to="/"
-              aria-label="Открыть приложение проводника"
-              title="Открыть приложение проводника"
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white/75 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              <Smartphone className="h-5 w-5" aria-hidden />
+            {/* the way back to the conductor's app: a white pill, the twin of «Панель» over there */}
+            <NavLink to="/" className="group flex h-11 shrink-0 items-center px-0.5" aria-label="Открыть приложение проводника">
+              <span className="flex h-9 items-center gap-1.5 rounded-full bg-white px-2.5 text-sm font-semibold text-[#1C2430] shadow-[0_6px_16px_-8px_rgb(0_0_0/.6)] transition-transform group-active:scale-95 min-[360px]:pr-3.5">
+                <Smartphone className="h-4 w-4 text-[#E21A1A]" aria-hidden />
+                <span className="max-[359px]:sr-only" aria-hidden>
+                  Проводник
+                </span>
+              </span>
             </NavLink>
           </div>
         </header>
@@ -100,6 +110,7 @@ export function AdminLayout() {
       </div>
 
       <AdminTabBar />
+      <TourHost kind="lead" />
     </div>
   )
 }
@@ -239,6 +250,23 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
           })}
         </nav>
         <div className="mx-4 mt-4 space-y-3 border-t border-line/70 pb-4 pt-4">
+          <button
+            type="button"
+            onClick={() => {
+              onClose()
+              openTour('lead')
+            }}
+            className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-brand-soft px-3.5 text-left ring-1 ring-inset ring-brand/20 transition-colors hover:bg-brand-soft/70"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand text-white" aria-hidden>
+              <CircleHelp className="h-[18px] w-[18px]" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold leading-tight">Как устроена панель</span>
+              <span className="block text-xs text-muted">Короткий тур, 6 шагов</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted" aria-hidden />
+          </button>
           <ThemeSwitch labels />
           <NavLink to="/" className="flex min-h-[48px] items-center gap-3 rounded-xl px-1 font-medium text-ink transition-colors hover:bg-ink/[.04]">
             <Smartphone className="h-5 w-5 text-muted" aria-hidden />
