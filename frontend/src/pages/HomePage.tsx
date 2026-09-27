@@ -106,9 +106,9 @@ function RouteHero({ user, li }: { user: Me; li: LevelInfo }) {
       </div>
 
       {/* departure board: the next stop, how far to it, the points */}
-      {/* phones: the station gets its own row, the two numbers share the one below */}
+      {/* phones: only the two numbers, so the day's task shows up sooner */}
       <dl className="relative mt-5 grid max-w-xl grid-cols-2 rounded-2xl bg-white/[.05] ring-1 ring-inset ring-white/10 sm:grid-cols-[1.4fr_1fr_1fr]">
-        <BoardCell label={onTheWay ? 'Следующая' : 'Маршрут'} className="col-span-2 border-b border-white/10 sm:col-span-1 sm:border-b-0">
+        <BoardCell label={onTheWay ? 'Следующая' : 'Маршрут'} className="hidden sm:block">
           {onTheWay ? pos.next!.name : 'Пройден'}
         </BoardCell>
         <BoardCell label="Осталось" className="sm:border-l sm:border-white/10">
