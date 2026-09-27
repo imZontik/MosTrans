@@ -56,13 +56,28 @@ async def lifespan(_: FastAPI):
     await engine.dispose()
 
 
+TAGS_METADATA = [
+    {"name": "auth", "description": "Вход и регистрация. JWT — в `Authorization: Bearer` или `?token=`."},
+    {"name": "profile", "description": "Профиль: уровень, очки, достижения, рейтинг, история прохождений."},
+    {"name": "scenarios", "description": "Сценарии обучения с учётом должности, рекомендации и граф сценария."},
+    {"name": "runs", "description": "Прохождение сценария: старт, ответы, текущее состояние, итог с начислением очков."},
+    {"name": "leaderboard", "description": "Рейтинг по периодам (`week`/`all`) и разрезам (`company`/`depot`/`team`)."},
+    {"name": "tournaments", "description": "Еженедельные турниры: текущий вопрос, участие, ответы, таблица."},
+    {"name": "emergencies", "description": "Экстренные события для проводника (периодический опрос)."},
+    {"name": "notifications", "description": "Уведомления сотрудника и массовые рассылки для руководителей."},
+    {"name": "admin", "description": "Админ-панель (роли `lead`/`admin`): аналитика, сотрудники, сценарии, турниры, отчёты, ИИ."},
+    {"name": "reports", "description": "Отчёт о прогрессе обучения для HR/LMS (JSON и Excel)."},
+    {"name": "system", "description": "Служебные эндпоинты."},
+]
+
 app = FastAPI(
     title="Магистраль 400 API",
-    description="Геймифицированное обучение проводников ВСМ",
+    description="Геймифицированное обучение проводников ВСМ.",
     version="0.1.0",
     lifespan=lifespan,
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
+    openapi_tags=TAGS_METADATA,
 )
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 

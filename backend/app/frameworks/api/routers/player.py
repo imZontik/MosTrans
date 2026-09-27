@@ -22,67 +22,67 @@ router = APIRouter()
 
 # --- auth -------------------------------------------------------------------
 
-@router.post("/auth/login", tags=["auth"])
+@router.post("/auth/login", tags=["auth"], summary="Вход, выдача JWT")
 async def login(body: LoginIn, request: Request, session: AsyncSession = Depends(get_session)):
     ip = request.client.host if request.client else "unknown"
     return await auth.login(session, body.email, body.password, ip)
 
 
-@router.post("/auth/register", tags=["auth"])
+@router.post("/auth/register", tags=["auth"], summary="Регистрация проводника")
 async def register(body: RegisterIn, session: AsyncSession = Depends(get_session)):
     return await auth.register(session, body.email, body.password, body.full_name, body.position, body.team, body.depot)
 
 
 # --- profile ----------------------------------------------------------------
 
-@router.get("/me", tags=["profile"])
+@router.get("/me", tags=["profile"], summary="Полный профиль")
 async def me(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await profile.profile(session, user, full=True)
 
 
-@router.get("/me/runs", tags=["profile"])
+@router.get("/me/runs", tags=["profile"], summary="История прохождений")
 async def my_runs(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await profile.history(session, user.id)
 
 
-@router.get("/achievements", tags=["profile"])
+@router.get("/achievements", tags=["profile"], summary="Каталог достижений с прогрессом")
 async def achievements(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await profile.achievements_catalogue(session, user)
 
 
-@router.get("/users/{user_id}", tags=["profile"])
+@router.get("/users/{user_id}", tags=["profile"], summary="Публичный профиль сотрудника")
 async def public_profile(user_id: int, _: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await profile.public_profile(session, user_id)
 
 
 # --- scenarios & runs -------------------------------------------------------
 
-@router.get("/scenarios", tags=["scenarios"])
+@router.get("/scenarios", tags=["scenarios"], summary="Список доступных сценариев")
 async def list_scenarios(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await catalog.list_scenarios(session, user)
 
 
-@router.get("/scenarios/recommended", tags=["scenarios"])
+@router.get("/scenarios/recommended", tags=["scenarios"], summary="Рекомендованный сценарий по слабым местам")
 async def recommended(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await catalog.recommended(session, user)
 
 
-@router.get("/scenarios/{scenario_id}", tags=["scenarios"])
+@router.get("/scenarios/{scenario_id}", tags=["scenarios"], summary="Сценарий и первый узел графа")
 async def get_scenario(scenario_id: int, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await catalog.get_scenario(session, user, scenario_id)
 
 
-@router.post("/runs", tags=["runs"])
+@router.post("/runs", tags=["runs"], summary="Начать прохождение")
 async def start_run(body: StartRunIn, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await play.start_run(session, user, body.scenario_id, body.restart)
 
 
-@router.get("/runs/{run_id}", tags=["runs"])
+@router.get("/runs/{run_id}", tags=["runs"], summary="Текущее состояние забега")
 async def get_run(run_id: int, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await play.get_run(session, user, run_id)
 
 
-@router.post("/runs/{run_id}/answer", tags=["runs"])
+@router.post("/runs/{run_id}/answer", tags=["runs"], summary="Ответ на узел")
 async def answer(
     run_id: int,
     body: AnswerIn,
@@ -99,14 +99,14 @@ async def answer(
     return result
 
 
-@router.post("/runs/{run_id}/abandon", tags=["runs"])
+@router.post("/runs/{run_id}/abandon", tags=["runs"], summary="Прервать забег")
 async def abandon(run_id: int, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await play.abandon_run(session, user, run_id)
 
 
 # --- leaderboard ------------------------------------------------------------
 
-@router.get("/leaderboard", tags=["leaderboard"])
+@router.get("/leaderboard", tags=["leaderboard"], summary="Рейтинг")
 async def get_leaderboard(
     period: Literal["week", "all"] = "week",
     scope: Literal["company", "depot", "team"] = "company",
@@ -119,15 +119,15 @@ async def get_leaderboard(
     return await leaderboard.leaderboard(session, cache, user, period, limit, scope, unit)
 
 
-@router.get("/leaderboard/units", tags=["leaderboard"])
+@router.get("/leaderboard/units", tags=["leaderboard"], summary="Доступные депо и бригады")
 async def leaderboard_units(_: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
-    """Depots and brigades available for ``scope``/``unit``."""
+    """Депо и бригады, доступные для `scope`/`unit`."""
     return await leaderboard.units(session)
 
 
 # --- tournaments ------------------------------------------------------------
 
-@router.get("/tournaments/current", tags=["tournaments"])
+@router.get("/tournaments/current", tags=["tournaments"], summary="Текущий турнир")
 async def current_tournament(
     user: User = Depends(current_user),
     session: AsyncSession = Depends(get_session),
@@ -136,12 +136,12 @@ async def current_tournament(
     return await tournaments.current(session, board, user)
 
 
-@router.get("/tournaments", tags=["tournaments"])
+@router.get("/tournaments", tags=["tournaments"], summary="Последние турниры")
 async def recent_tournaments(_: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await tournaments.recent(session)
 
 
-@router.post("/tournaments/{tournament_id}/join", tags=["tournaments"])
+@router.post("/tournaments/{tournament_id}/join", tags=["tournaments"], summary="Участие в турнире")
 async def join_tournament(
     tournament_id: int,
     user: User = Depends(current_user),
@@ -151,7 +151,7 @@ async def join_tournament(
     return await tournaments.join(session, board, user, tournament_id)
 
 
-@router.post("/tournaments/{tournament_id}/answer", tags=["tournaments"])
+@router.post("/tournaments/{tournament_id}/answer", tags=["tournaments"], summary="Ответ на вопрос турнира")
 async def tournament_answer(
     tournament_id: int,
     body: TournamentAnswerIn,
@@ -162,7 +162,7 @@ async def tournament_answer(
     return await tournaments.answer(session, board, user, tournament_id, body.index, body.option)
 
 
-@router.get("/tournaments/{tournament_id}/leaderboard", tags=["tournaments"])
+@router.get("/tournaments/{tournament_id}/leaderboard", tags=["tournaments"], summary="Живая таблица турнира")
 async def tournament_leaderboard(
     tournament_id: int,
     limit: int = Query(default=20, ge=1, le=100),
@@ -175,18 +175,19 @@ async def tournament_leaderboard(
 
 # --- emergencies ------------------------------------------------------------
 
-@router.get("/emergencies/pending", tags=["emergencies"])
+@router.get("/emergencies/pending", tags=["emergencies"], summary="Ожидающее экстренное событие")
 async def pending_emergency(
     user: User = Depends(current_user),
     session: AsyncSession = Depends(get_session),
     queue: EmergencyQueue = Depends(get_emergency_queue),
 ):
+    """Ожидающее экстренное событие для сотрудника. Опрашивать поллингом раз в ~20 секунд."""
     return await emergencies.pending(session, queue, user)
 
 
 # --- notifications ----------------------------------------------------------
 
-@router.get("/notifications", tags=["notifications"])
+@router.get("/notifications", tags=["notifications"], summary="Входящие уведомления")
 async def notification_list(
     unread: bool = False,
     priority: Priority | None = None,
@@ -198,20 +199,20 @@ async def notification_list(
     return await notifications.inbox(session, user, unread=unread, priority=priority, before=before, limit=limit)
 
 
-@router.get("/notifications/summary", tags=["notifications"])
+@router.get("/notifications/summary", tags=["notifications"], summary="Счётчики непрочитанных")
 async def notification_summary(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
-    """Unread counters and the newest unread notification: what the bell polls."""
+    """Счётчики непрочитанных и самое свежее непрочитанное уведомление — то, что опрашивает «колокольчик»."""
     return await notifications.summary(session, user)
 
 
-@router.post("/notifications/read-all", tags=["notifications"])
+@router.post("/notifications/read-all", tags=["notifications"], summary="Отметить всё прочитанным")
 async def notification_read_all(
     body: ReadAllIn, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)
 ):
     return await notifications.read_all(session, user, body.priority)
 
 
-@router.post("/notifications/{notification_id}/read", tags=["notifications"])
+@router.post("/notifications/{notification_id}/read", tags=["notifications"], summary="Отметить уведомление прочитанным")
 async def notification_read(
     notification_id: int, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)
 ):

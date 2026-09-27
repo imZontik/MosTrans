@@ -37,7 +37,7 @@
 Архитектура описана в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), экономика очков — в [docs/ECONOMY.md](docs/ECONOMY.md).
 
 **Документация для сдачи:**
-* API — [docs/API.md](docs/API.md) (Swagger: `/api/docs`)
+* API — Swagger UI: `/api/docs` (OpenAPI: `/api/openapi.json`)
 * Пользовательские сценарии и примеры — [docs/USER_FLOW.md](docs/USER_FLOW.md)
 * Ограничения и план развития — [docs/ROADMAP.md](docs/ROADMAP.md)
 
