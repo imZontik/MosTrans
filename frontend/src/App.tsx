@@ -13,7 +13,6 @@ import TournamentPage from '@/pages/TournamentPage'
 import LeaderboardPage from '@/pages/LeaderboardPage'
 import ProfilePage from '@/pages/ProfilePage'
 import AchievementsPage from '@/pages/AchievementsPage'
-import RunHistoryPage from '@/pages/RunHistoryPage'
 import NotificationsPage from '@/pages/NotificationsPage'
 import { NotificationsProvider } from '@/notifications/NotificationsContext'
 const DashboardPage = lazy(() => import('@/pages/admin/DashboardPage'))
@@ -65,7 +64,6 @@ export default function App() {
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/achievements" element={<AchievementsPage />} />
-          <Route path="profile/history" element={<RunHistoryPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="users/:userId" element={<ProfilePage />} />
           <Route path="users/:userId/achievements" element={<AchievementsPage />} />

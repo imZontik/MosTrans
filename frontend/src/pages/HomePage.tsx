@@ -69,7 +69,7 @@ function RouteHero({ user, li }: { user: Me; li: LevelInfo }) {
   const onTheWay = !!pos.next && li.next_threshold !== null
 
   return (
-    <NightPanel aria-labelledby="route-station" stripe className="-mx-2 px-5 py-5 sm:mx-0 sm:px-7 sm:py-6 lg:px-8">
+    <NightPanel aria-labelledby="route-station" className="-mx-2 px-5 py-5 sm:mx-0 sm:px-7 sm:py-6 lg:px-8">
       <SpeedLines rows={[16, 44]} />
 
       <div className="relative">
