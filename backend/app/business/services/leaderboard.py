@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.business.services.presenters import user_brief
+from app.business.services.presenters import user_public
 from app.business.tournament import MSK, iso_week
 from app.repositories.cache import Cache
 from app.repositories.models import User
@@ -75,16 +75,16 @@ async def leaderboard(
     top = ranking[:limit]
     users = await users_repo.get_many([uid for uid, _ in top] + [me.id])
     entries = [
-        {"rank": i + 1, "value": value, "is_me": uid == me.id, **user_brief(users[uid])}
+        {"rank": i + 1, "value": value, "is_me": uid == me.id, **user_public(users[uid])}
         for i, (uid, value) in enumerate(top)
         if uid in users
     ]
     my_index = next((i for i, (uid, _) in enumerate(ranking) if uid == me.id), None)
     my_entry = None
     if my_index is not None:
-        my_entry = {"rank": my_index + 1, "value": ranking[my_index][1], "is_me": True, **user_brief(me)}
+        my_entry = {"rank": my_index + 1, "value": ranking[my_index][1], "is_me": True, **user_public(me)}
     elif me.role in PLAYER_ROLES and in_unit:
-        my_entry = {"rank": None, "value": 0, "is_me": True, **user_brief(me)}
+        my_entry = {"rank": None, "value": 0, "is_me": True, **user_public(me)}
     return {
         "period": period,
         "scope": scope,

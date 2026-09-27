@@ -172,7 +172,7 @@ function TournamentArena({
         {scheduled ? (
           <LastChampions item={history[0]} startsAt={t.starts_at} meId={user?.id} />
         ) : (
-          <LiveBoard t={t} board={board} playing={playing} meName={user?.full_name ?? ''} myScore={entry?.score ?? null} />
+          <LiveBoard t={t} board={board} playing={playing} meName={user?.public_name ?? ''} myScore={entry?.score ?? null} />
         )}
       </div>
 

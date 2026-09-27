@@ -1,8 +1,8 @@
-import { useEffect, useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, Award, ChevronRight, Compass, GraduationCap, History, Target } from 'lucide-react'
+import { ArrowRight, Award, ChevronRight, Compass, Eye, GraduationCap, History, Target } from 'lucide-react'
 import { api } from '@/api/client'
-import type { AchievementCatalogItem, Competency, LevelInfo, Me, PublicProfile, Qualification } from '@/api/types'
+import type { AchievementCatalogItem, Competency, LevelInfo, Me, NameDisplay, PublicProfile, Qualification } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { useAsync } from '@/hooks/useAsync'
 import { Medallion } from '@/components/AchievementBadge'
@@ -16,6 +16,7 @@ import { Progress } from '@/components/Progress'
 import { RouteTrack } from '@/components/RouteTrack'
 import { Disclosure } from '@/components/Disclosure'
 import { RunHistory } from '@/components/RunHistory'
+import { Segmented } from '@/components/Segmented'
 import { ThemeSwitch } from '@/components/ThemeToggle'
 import { ErrorState } from '@/components/States'
 import { BadgesSkeleton, ProfileSkeleton } from '@/components/Skeleton'
@@ -81,6 +82,7 @@ export default function ProfilePage() {
             to={`${base}/achievements`}
           />
           {isMe && <RecentRuns runs={runs.data ?? []} loading={runs.loading && !runs.data} />}
+          {isMe && me && <NameVisibility me={me} onSaved={refresh} />}
           {isMe && (
             <section className="card space-y-4 p-5 lg:hidden" aria-labelledby="look">
               <div>
@@ -312,6 +314,56 @@ function RecentRuns({ runs, loading }: { runs: Parameters<typeof RunHistory>[0][
     >
       <RunHistory items={runs} linked />
     </Disclosure>
+  )
+}
+
+// --- privacy ---------------------------------------------------------------------
+
+/** «Иван С.» or «Иван Смирнов»: how colleagues see you in the rating, tournaments and your profile. */
+function NameVisibility({ me, onSaved }: { me: Me; onSaved: () => Promise<void> }) {
+  const [value, setValue] = useState<NameDisplay>(me.name_display)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => setValue(me.name_display), [me.name_display])
+
+  const change = async (next: NameDisplay) => {
+    const was = value
+    setValue(next)
+    setError(null)
+    try {
+      await api.setNameDisplay(next)
+      await onSaved()
+    } catch (e) {
+      setValue(was)
+      setError(e instanceof Error ? e.message : 'Не удалось сохранить')
+    }
+  }
+
+  const words = me.full_name.trim().split(/\s+/)
+  const short = words.length > 1 ? `${words[0]} ${words[words.length - 1][0]}.` : me.full_name
+  return (
+    <section className="card space-y-4 p-5 sm:p-6" aria-labelledby="name-visibility">
+      <div>
+        <h2 id="name-visibility" className="flex items-center gap-2.5 text-lg font-semibold">
+          <IconPlate icon={Eye} tint="bg-ink/[.06]" tone="text-ink" />
+          Как вас видят коллеги
+        </h2>
+        <p className="mt-1.5 text-sm text-muted">Имя в рейтинге, турнирах и в вашем профиле для других сотрудников. Руководитель всегда видит ФИО полностью.</p>
+      </div>
+      <Segmented<NameDisplay>
+        label="Как показывать имя"
+        value={value}
+        onChange={change}
+        options={[
+          ['short', short],
+          ['full', me.full_name],
+        ]}
+      />
+      {error && (
+        <p className="text-sm text-brand" role="alert">
+          {error}
+        </p>
+      )}
+    </section>
   )
 }
 

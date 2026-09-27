@@ -20,6 +20,13 @@ class RegisterIn(BaseModel):
     depot: str = Field(default="", max_length=255, description="Депо", example="Депо Москва")
 
 
+class NameDisplayIn(BaseModel):
+    name_display: Literal["short", "full"] = Field(
+        description="Как коллеги видят имя в рейтинге, турнирах и профиле: short — «Иван С.», full — «Иван Смирнов»",
+        example="short",
+    )
+
+
 class StartRunIn(BaseModel):
     scenario_id: int = Field(description="ID сценария", example=1)
     restart: bool = Field(default=False, description="Перезапустить прохождение, если есть незавершённое")

@@ -22,6 +22,7 @@ import type {
   LeaderboardUnits,
   LoginResponse,
   Me,
+  NameDisplay,
   NotificationPage,
   NotificationPriority,
   NotificationSummary,
@@ -163,6 +164,7 @@ export const api = {
   // auth & profile
   login: (email: string, password: string) => post<LoginResponse>('/auth/login', { email, password }),
   me: () => get<Me>('/me'),
+  setNameDisplay: (value: NameDisplay) => patch<Me>('/me/name-display', { name_display: value }),
   myRuns: () => get<RunHistoryItem[]>('/me/runs'),
   achievements: () => get<AchievementCatalogItem[]>('/achievements'),
   user: (id: number) => get<PublicProfile>(`/users/${id}`),

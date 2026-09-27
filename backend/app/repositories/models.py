@@ -35,6 +35,8 @@ class User(Base):
     position: Mapped[str] = mapped_column(String(32), default="conductor")
     team: Mapped[str] = mapped_column(String(255), default="")  # brigade
     depot: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    # how colleagues see the name in ratings and tournaments: short «Иван С.» | full «Иван Смирнов»
+    name_display: Mapped[str] = mapped_column(String(8), default="short", server_default="short")
     points: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_active_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

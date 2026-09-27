@@ -32,9 +32,15 @@ export interface LevelInfo {
   progress: number // 0..1
 }
 
+/** How colleagues see the name in ratings, tournaments and a profile: «Иван С.» or «Иван Смирнов» */
+export type NameDisplay = 'short' | 'full'
+
 export interface UserFull extends UserBrief {
   email: string
   role: Role
+  name_display: NameDisplay
+  /** the name as colleagues see it */
+  public_name: string
   level_info: LevelInfo
   created_at: string
   last_active_at: string | null

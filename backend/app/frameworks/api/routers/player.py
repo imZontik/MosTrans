@@ -12,7 +12,7 @@ from app.frameworks.api.deps import (
     get_ml,
     get_session,
 )
-from app.frameworks.api.schemas import AnswerIn, LoginIn, Priority, ReadAllIn, ReadManyIn, RegisterIn, StartRunIn, TournamentAnswerIn
+from app.frameworks.api.schemas import AnswerIn, LoginIn, NameDisplayIn, Priority, ReadAllIn, ReadManyIn, RegisterIn, StartRunIn, TournamentAnswerIn
 from app.repositories.cache import Cache, EmergencyQueue, TournamentBoard
 from app.repositories.ml_gateway import MLGateway
 from app.repositories.models import User
@@ -38,6 +38,11 @@ async def register(body: RegisterIn, session: AsyncSession = Depends(get_session
 @router.get("/me", tags=["profile"], summary="Полный профиль")
 async def me(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
     return await profile.profile(session, user, full=True)
+
+
+@router.patch("/me/name-display", tags=["profile"], summary="Как коллеги видят моё имя")
+async def set_name_display(body: NameDisplayIn, user: User = Depends(current_user), session: AsyncSession = Depends(get_session)):
+    return await profile.set_name_display(session, user, body.name_display)
 
 
 @router.get("/me/runs", tags=["profile"], summary="История прохождений")

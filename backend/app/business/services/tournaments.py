@@ -14,7 +14,7 @@ from app.business.achievements import tournament_achievements, week_number
 from app.business import notifications as msg
 from app.business.errors import AppError, Conflict, NotFound
 from app.business.services import notifications
-from app.business.services.presenters import user_brief
+from app.business.services.presenters import user_public
 from app.business.tournament import iso_week, pick_questions, public_question, status_of, weekly_window
 from app.frameworks.config import get_settings
 from app.frameworks.metrics import ACHIEVEMENTS, ACTIVE_TOURNAMENT_PLAYERS, POINTS_AWARDED, TOURNAMENT_ANSWERS
@@ -113,7 +113,7 @@ async def recent(session: AsyncSession) -> list[dict]:
         if t.finalized:
             users = await UserRepository(session).get_many([e.user_id for e in entries[:3]])
             winners = [
-                {"place": e.place, "score": e.score, **user_brief(users[e.user_id])}
+                {"place": e.place, "score": e.score, **user_public(users[e.user_id])}
                 for e in entries[:3]
                 if e.user_id in users
             ]
@@ -216,7 +216,7 @@ async def leaderboard(session: AsyncSession, board: TournamentBoard, user: User,
         total = len(entries)
     users = await UserRepository(session).get_many([uid for uid, _ in rows])
     entries_view = [
-        {"rank": i + 1, "score": score, "is_me": uid == user.id, **user_brief(users[uid])}
+        {"rank": i + 1, "score": score, "is_me": uid == user.id, **user_public(users[uid])}
         for i, (uid, score) in enumerate(rows)
         if uid in users
     ]

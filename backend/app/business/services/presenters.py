@@ -21,12 +21,32 @@ def user_brief(user: User) -> dict:
     }
 
 
+def short_name(full_name: str) -> str:
+    """«Иван Смирнов» -> «Иван С.»: the first name and the initial of the last word (the surname)."""
+    words = full_name.split()
+    if len(words) < 2:
+        return full_name.strip()
+    return f"{words[0]} {words[-1][0]}."
+
+
+def public_name(user: User) -> str:
+    """The name colleagues see, as the employee chose it in the profile."""
+    return user.full_name if user.name_display == "full" else short_name(user.full_name)
+
+
+def user_public(user: User) -> dict:
+    """``user_brief`` for other employees: ratings, tournaments, a colleague's profile."""
+    return {**user_brief(user), "full_name": public_name(user)}
+
+
 def user_full(user: User) -> dict:
     level = level_for(user.points)
     return {
         **user_brief(user),
         "email": user.email,
         "role": user.role,
+        "name_display": user.name_display,
+        "public_name": public_name(user),
         "level_info": {
             "level": level.level,
             "title": level.title,

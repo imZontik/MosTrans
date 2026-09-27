@@ -6,7 +6,7 @@ from app.business.achievements import CATALOGUE
 from app.business.catalog import CATEGORIES, POSITIONS, position_rank, position_title
 from app.business.errors import NotFound
 from app.business.services.catalog import category_stats
-from app.business.services.presenters import achievement_view, scenario_brief, user_brief, user_full
+from app.business.services.presenters import achievement_view, scenario_brief, user_full, user_public
 from app.repositories.achievements import AchievementRepository
 from app.repositories.models import User
 from app.repositories.runs import RunRepository
@@ -64,7 +64,7 @@ async def _qualification(session: AsyncSession, user: User) -> dict | None:
 async def profile(session: AsyncSession, user: User, *, full: bool) -> dict:
     users = UserRepository(session)
     achievements = await AchievementRepository(session).list_for(user.id)
-    data = user_full(user) if full else user_brief(user)
+    data = user_full(user) if full else user_public(user)
     return {
         **data,
         "rank": await users.rank_by_points(user.points, PLAYER_ROLES) if user.role in PLAYER_ROLES else None,
@@ -80,6 +80,13 @@ async def public_profile(session: AsyncSession, user_id: int) -> dict:
     if user is None:
         raise NotFound("Сотрудник не найден")
     return await profile(session, user, full=False)
+
+
+async def set_name_display(session: AsyncSession, user: User, value: str) -> dict:
+    """Short «Иван С.» or full «Иван Смирнов»: how colleagues see the employee."""
+    user.name_display = value
+    await session.commit()
+    return await profile(session, user, full=True)
 
 
 async def achievements_catalogue(session: AsyncSession, user: User) -> list[dict]:
