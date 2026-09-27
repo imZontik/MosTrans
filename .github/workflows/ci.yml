@@ -50,6 +50,8 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     concurrency: deploy
+    # Deploys queue up behind each other, so a stuck one must not hold the queue for hours
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -65,8 +67,31 @@ jobs:
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/id_ed25519
+          # Never wait for a prompt, give up on a silent server, notice a dropped connection within a minute
+          cat > ~/.ssh/config <<'EOF'
+          Host *
+            BatchMode yes
+            ConnectTimeout 20
+            ServerAliveInterval 15
+            ServerAliveCountMax 4
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Server answers over SSH
+        timeout-minutes: 3
+        env:
+          TARGET: deploy@${{ secrets.DEPLOY_HOST }}
+        run: |
+          for attempt in 1 2 3; do
+            if ssh "$TARGET" true; then exit 0; fi
+            echo "SSH attempt $attempt failed, retrying…"
+            sleep 15
+          done
+          echo "::error::The VPS does not answer over SSH: check that it is running and has free memory (reboot it from the hosting panel if it is stuck)"
+          exit 1
 
       - name: Upload and restart
+        timeout-minutes: 15
         env:
           TARGET: deploy@${{ secrets.DEPLOY_HOST }}
         run: |
