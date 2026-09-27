@@ -105,16 +105,18 @@ jobs:
 
       - name: Mirror third-party images to ghcr.io
         # Docker Hub is unreachable from the VPS: it takes Postgres, Grafana and the rest from our mirror.
-        # Registry-to-registry copy, nothing is downloaded here; deploy.sh maps the tags back.
+        # A one-line rebuild (same layers) adds the source label, which links the package to this repository:
+        # without it the job token may not write there. deploy.sh maps the tags back to the usual names.
         run: |
           cp .env.example .env
           docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile monitoring config --images \
             | grep -v '^magistral-400-' | sort -u | while read -r image; do
               tag=$(echo "$image" | sed 's#^docker.io/##; s#[/:]#-#g')
-              if docker buildx imagetools inspect "$IMAGES-mirror:$tag" >/dev/null 2>&1; then
+              if docker buildx imagetools inspect "$IMAGES-thirdparty:$tag" >/dev/null 2>&1; then
                 echo "$image: already mirrored"
               else
-                docker buildx imagetools create -t "$IMAGES-mirror:$tag" "$image"
+                printf 'FROM %s\nLABEL org.opencontainers.image.source=https://github.com/%s\n' "$image" "$GITHUB_REPOSITORY" \
+                  | docker buildx build --quiet --platform linux/amd64 -t "$IMAGES-thirdparty:$tag" --push -
                 echo "$image: mirrored"
               fi
             done

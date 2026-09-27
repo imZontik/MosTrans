@@ -71,7 +71,7 @@ case "${1:-load}" in
       docker rmi "$prefix-$svc:$tag" >/dev/null
       echo "  $svc: $((SECONDS - start)) s"
     done
-    ensure_third_party "$prefix-mirror"
+    ensure_third_party "$prefix-thirdparty"
     ;;
   load)
     echo "Loading images…"
