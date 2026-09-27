@@ -56,6 +56,9 @@ for _ in $(seq 1 40); do
   if fetch /api/health | grep -q '"ok"' && fetch / | grep -q 'id="root"'; then
     docker image prune -f >/dev/null
     echo "Deployed: API and web app are up"
+    # The VPS is small: every deploy log shows how much memory is left
+    free -m
+    docker stats --no-stream --format 'table {{.Name}}\t{{.MemUsage}}'
     exit 0
   fi
   sleep 3
