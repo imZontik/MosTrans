@@ -1047,6 +1047,56 @@
   animation: reveal-in 0.35s ease-out both;
 }
 
+
+/* Onboarding tour: the dialog rises, slides move in the direction you go, pictures bob gently */
+@keyframes tour-fade {
+  from {
+    opacity: 0;
+  }
+}
+.tour-fade {
+  animation: tour-fade 0.3s ease-out both;
+}
+@keyframes tour-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+}
+.tour-rise {
+  animation: tour-rise 0.4s cubic-bezier(0.3, 0.9, 0.3, 1) both;
+}
+@keyframes tour-next {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+@keyframes tour-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+.tour-next {
+  animation: tour-next 0.38s cubic-bezier(0.3, 0.9, 0.3, 1) both;
+}
+.tour-prev {
+  animation: tour-prev 0.38s cubic-bezier(0.3, 0.9, 0.3, 1) both;
+}
+@keyframes tour-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -5px;
+  }
+}
+.tour-float {
+  animation: tour-float 4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1094,7 +1144,12 @@
   .today-pulse,
   .flame,
   .token-shine::after,
-  .reveal-in {
+  .reveal-in,
+  .tour-fade,
+  .tour-rise,
+  .tour-next,
+  .tour-prev,
+  .tour-float {
     animation: none !important;
   }
   .twinkle {
