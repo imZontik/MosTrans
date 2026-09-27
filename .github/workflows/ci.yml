@@ -159,6 +159,17 @@ jobs:
           ssh "$TARGET" 'rm -rf /opt/magistral/monitoring'
           scp -r monitoring "$TARGET":/opt/magistral/
 
+      - name: Passwords from GitHub secrets
+        timeout-minutes: 2
+        env:
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          PGADMIN_PASSWORD: ${{ secrets.PGADMIN_PASSWORD }}
+        run: |
+          # Grafana and pgAdmin passwords live in the repository secrets: change them there and redeploy.
+          # Through stdin, so they never appear in a command line; unset secrets leave the server's .env as is.
+          printf 'GRAFANA_ADMIN_PASSWORD=%s\nPGADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" "$PGADMIN_PASSWORD" \
+            | ssh "$TARGET" 'bash /opt/magistral/deploy.sh secrets'
+
       - name: Pull images on the server and restart
         id: pull
         continue-on-error: true

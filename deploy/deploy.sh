@@ -18,6 +18,22 @@ fi
 
 env_value() { grep -E "^$1=" .env | tail -1 | cut -d= -f2- || true; }
 
+# deploy.sh secrets < KEY=VALUE lines: CI passes the passwords kept in GitHub secrets through stdin,
+# so they never show up in a command line or a log. Only these keys are taken.
+if [ "${1:-}" = "secrets" ]; then
+  while IFS='=' read -r key value; do
+    case "$key" in
+      GRAFANA_ADMIN_PASSWORD | PGADMIN_PASSWORD) ;;
+      *) continue ;;
+    esac
+    [ -n "$value" ] || continue
+    sed -i "/^$key=/d" .env
+    printf '%s=%s\n' "$key" "$value" >> .env
+    echo "$key: from GitHub secrets"
+  done
+  exit 0
+fi
+
 # Grafana and pgAdmin are on the internet: never with a default password. A missing one is generated
 # into .env (read it on the server: grep PASSWORD /opt/magistral/.env); the value is never printed here.
 ensure_secret() {
@@ -106,6 +122,27 @@ for _ in $(seq 1 40); do
         echo "Grafana password matches .env"
       else
         echo "Grafana is still starting: its password will be synced on the next deploy"
+      fi
+      # pgAdmin too, once it answers (its first start creates its own database)
+      pgadmin_email=$(env_value PGADMIN_EMAIL)
+      pgadmin_email=${pgadmin_email:-admin@m400.ru}
+      synced=""
+      for _ in $(seq 1 30); do
+        if $COMPOSE exec -T pgadmin wget -qO- http://127.0.0.1/misc/ping >/dev/null 2>&1; then
+          if $COMPOSE exec -T -w /pgadmin4 pgadmin /venv/bin/python3 setup.py update-user "$pgadmin_email" \
+            --password "$(env_value PGADMIN_PASSWORD)" --admin 2>/dev/null | grep -qF "$pgadmin_email"; then
+            synced=yes
+          fi
+          break
+        fi
+        sleep 3
+      done
+      if [ -n "$synced" ]; then echo "pgAdmin password matches .env ($pgadmin_email)"; else echo "pgAdmin password not synced this time"; fi
+      db_password=$(env_value POSTGRES_PASSWORD)
+      if [ -z "$db_password" ] || [ "$db_password" = "magistral" ]; then
+        echo "Database password for pgAdmin: the default one from .env.example"
+      else
+        echo "Database password for pgAdmin: POSTGRES_PASSWORD in the server's .env"
       fi
     fi
     # The VPS is small: every deploy log shows how much memory is left
