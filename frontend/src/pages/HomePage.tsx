@@ -4,6 +4,7 @@ import { api } from '@/api/client'
 import type { LevelInfo, Me, Recommended } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
 import { useAsync } from '@/hooks/useAsync'
+import { useDaily, useMinute } from '@/hooks/useDaily'
 import { useStartRun } from '@/hooks/useStartRun'
 import { Button, ButtonLink } from '@/components/Button'
 import { CategoryTag, CoverTile } from '@/components/Category'
@@ -16,6 +17,7 @@ import { ScoreRing } from '@/components/ScoreRing'
 import { TournamentBanner } from '@/components/TournamentBanner'
 import { VovaTip } from '@/components/VovaTip'
 import { NextRunSkeleton } from '@/components/Skeleton'
+import { DailyTicket, DailyTicketSkeleton } from '@/components/Daily'
 import { cn } from '@/lib/cn'
 import { firstName, fmtNumber, scaleTone, TONE_TEXT } from '@/lib/format'
 import { plural, pluralN, POINTS, SCENARIOS } from '@/lib/plural'
@@ -30,8 +32,8 @@ function greeting() {
 }
 
 /**
- * Home, «смена»: where I am on the line, the next run, Вова's tip and the tournament,
- * then my scales. Phones stack them in that order.
+ * Home, «смена»: where I am on the line, the day's task, the next run, Вова's tip and the
+ * tournament, then my scales. Phones stack them in that order.
  */
 export default function HomePage() {
   const { user, refresh } = useAuth()
@@ -48,6 +50,7 @@ export default function HomePage() {
   return (
     <div className="space-y-5 lg:space-y-6">
       <RouteHero user={user} li={user.level_info} />
+      <DailyCard />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(300px,1fr)] lg:gap-6">
         <NextRun loading={recommended.loading} rec={recommended.data} />
@@ -61,6 +64,15 @@ export default function HomePage() {
       <Indicators user={user} />
     </div>
   )
+}
+
+/** The day's task as a ticket; nothing when there is no task (no runs open yet) or it didn't load. */
+function DailyCard() {
+  const now = useMinute()
+  const { journal, loading } = useDaily()
+  if (loading) return <DailyTicketSkeleton />
+  if (!journal?.today) return null
+  return <DailyTicket j={journal} now={now} from="/" more />
 }
 
 /** «Маршрут» on the night line: the station, a departure board for the next one, the line to St Petersburg. */
