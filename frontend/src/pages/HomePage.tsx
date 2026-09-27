@@ -18,6 +18,7 @@ import { TournamentBanner } from '@/components/TournamentBanner'
 import { VovaTip } from '@/components/VovaTip'
 import { NextRunSkeleton } from '@/components/Skeleton'
 import { DailyTicket, DailyTicketSkeleton } from '@/components/Daily'
+import { PanelCard } from '@/components/PanelEntry'
 import { cn } from '@/lib/cn'
 import { firstName, fmtNumber, scaleTone, TONE_TEXT } from '@/lib/format'
 import { plural, pluralN, POINTS, SCENARIOS } from '@/lib/plural'
@@ -36,7 +37,7 @@ function greeting() {
  * tournament, then my scales. Phones stack them in that order.
  */
 export default function HomePage() {
-  const { user, refresh } = useAuth()
+  const { user, isStaff, refresh } = useAuth()
   const recommended = useAsync(() => api.recommended(), [])
   const tournament = useAsync(() => api.currentTournament(), [])
 
@@ -49,6 +50,8 @@ export default function HomePage() {
 
   return (
     <div className="space-y-5 lg:space-y-6">
+      {/* staff on phones: the panel is one tap away, first thing on the screen (desktop has it in the sidebar) */}
+      {isStaff && <PanelCard className="lg:hidden" />}
       <RouteHero user={user} li={user.level_info} />
       <DailyCard />
 
