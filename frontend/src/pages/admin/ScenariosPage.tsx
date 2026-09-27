@@ -9,9 +9,13 @@ import { Button, ButtonLink } from '@/components/Button'
 import { Card, PageHeader } from '@/components/Card'
 import { DifficultyDots } from '@/components/Progress'
 import { ErrorState, Loading } from '@/components/States'
+import { CoverTile } from '@/components/Category'
+import { Segmented } from '@/components/Segmented'
 import { cn } from '@/lib/cn'
 import { fmtDate } from '@/lib/format'
 import { ENDINGS, FORKS, pluralN } from '@/lib/plural'
+
+const NODES: [string, string, string] = ['узел', 'узла', 'узлов']
 
 const BLANK: ScenarioInput = {
   title: 'Новый сценарий',
@@ -117,7 +121,7 @@ export default function AdminScenariosPage() {
         title="Сценарии"
         subtitle="Контент тренажёра: публикация, редактирование и предпросмотр"
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full gap-2 min-[400px]:grid-cols-[auto_1fr] sm:flex sm:w-auto">
             <Button variant="secondary" onClick={create} loading={busy === 'new'} icon={<Plus className="h-4 w-4" />}>
               Создать
             </Button>
@@ -128,23 +132,18 @@ export default function AdminScenariosPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {(
-          [
+      <div className="scrollbar-none -mx-4 mb-4 overflow-x-auto px-4 [mask-image:linear-gradient(90deg,black_calc(100%-24px),transparent)] sm:mx-0 sm:px-0 sm:[mask-image:none]">
+        <Segmented
+          label="Показать"
+          value={filter}
+          onChange={setFilter}
+          options={[
             ['all', 'Все'],
             ['published', 'Опубликованные'],
             ['draft', 'Черновики'],
             ['emergency', 'Специвенты'],
-          ] as const
-        ).map(([k, label]) => (
-          <button
-            key={k}
-            onClick={() => setFilter(k)}
-            className={cn('chip border', filter === k ? 'btn-ink border-transparent' : 'border-line bg-surface text-ink shadow-card hover:border-ink/40')}
-          >
-            {label}
-          </button>
-        ))}
+          ]}
+        />
       </div>
 
       {error && <p className="mb-4 card border-l-4 border-l-brand px-4 py-3" role="alert">{error}</p>}
@@ -156,49 +155,58 @@ export default function AdminScenariosPage() {
       ) : (
         <Card className="divide-y divide-line">
           {items.map((s) => (
-            <div key={s.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-              <Link to={`/admin/scenarios/${s.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-bg text-2xl">{s.cover}</span>
-                <div className="min-w-0">
-                  <p className="truncate font-semibold hover:underline">{s.title}</p>
-                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-                    <span>
-                      {s.category_title}, {s.position_title.toLowerCase()}, {Object.keys(s.graph?.nodes ?? {}).length} узлов,{' '}
-                      {pluralN(s.forks ?? 0, FORKS)}, {pluralN(s.endings ?? 0, ENDINGS)}
-                      {s.updated_at ? `, изменён ${fmtDate(s.updated_at)}` : ''}
+            <div key={s.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+              <Link to={`/admin/scenarios/${s.id}`} className="group flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+                <CoverTile cover={s.cover} category={s.category} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold leading-snug group-hover:underline">{s.title}</p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+                    <span className="truncate">
+                      {s.category_title} · {s.position_title.toLowerCase()}
                     </span>
-                    <DifficultyDots value={s.difficulty} />
                     {s.kind === 'emergency' && <Badge tone="bad">Специвент</Badge>}
+                  </p>
+                  {/* the shape of the story: how big, how branchy, how hard */}
+                  <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                    <span>{pluralN(Object.keys(s.graph?.nodes ?? {}).length, NODES)}</span>
+                    <span>{pluralN(s.forks ?? 0, FORKS)}</span>
+                    <span>{pluralN(s.endings ?? 0, ENDINGS)}</span>
+                    <DifficultyDots value={s.difficulty} />
+                    {s.updated_at && <span className="hidden sm:inline">изменён {fmtDate(s.updated_at)}</span>}
                   </p>
                 </div>
               </Link>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2 border-t border-line/60 pt-3 sm:border-0 sm:pt-0">
                 <button
                   onClick={() => togglePublish(s)}
                   disabled={busy === s.id}
-                  className={cn(
-                    // 28px switch, 44px tap area
-                    'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition after:absolute after:-inset-2',
-                    s.is_published ? 'bg-ok' : 'bg-ink/15',
-                  )}
+                  role="switch"
+                  aria-checked={s.is_published}
+                  aria-label={s.is_published ? 'Снять с публикации' : 'Опубликовать'}
+                  className="group/sw flex min-h-[44px] min-w-0 items-center gap-2.5 rounded-xl pr-1"
                   title={s.is_published ? 'Снять с публикации' : 'Опубликовать'}
                 >
-                  <span className={cn('h-5 w-5 rounded-full bg-white transition', s.is_published ? 'translate-x-6' : 'translate-x-1')} />
+                  <span className={cn('relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors', s.is_published ? 'bg-ok' : 'bg-ink/15')}>
+                    <span className={cn('h-5 w-5 rounded-full bg-white shadow transition-transform', s.is_published ? 'translate-x-6' : 'translate-x-1')} />
+                  </span>
+                  <span className={cn('text-left text-xs font-semibold sm:w-[92px]', s.is_published ? 'text-ok' : 'text-muted')}>
+                    {s.is_published ? 'Опубликован' : 'Черновик'}
+                  </span>
                 </button>
-                <span className={cn('w-24 text-xs font-semibold', s.is_published ? 'text-ok' : 'text-muted')}>
-                  {s.is_published ? 'Опубликован' : 'Черновик'}
-                </span>
-                <Button size="sm" variant="ghost" onClick={() => preview(s)} title="Предпросмотр" disabled={busy === s.id}>
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <ButtonLink to={`/admin/scenarios/${s.id}`} size="sm" variant="secondary">
-                  <Pencil className="h-4 w-4" />
-                </ButtonLink>
-                {!s.is_published && (
-                  <Button size="sm" variant="danger" onClick={() => remove(s)} title="Удалить" disabled={busy === s.id}>
-                    <Trash2 className="h-4 w-4" />
+                <span className="ml-auto flex items-center gap-1.5">
+                  <Button size="sm" variant="ghost" onClick={() => preview(s)} aria-label="Предпросмотр" title="Предпросмотр" disabled={busy === s.id} className="w-11 px-0">
+                    <Eye className="h-4 w-4" />
                   </Button>
-                )}
+                  <ButtonLink to={`/admin/scenarios/${s.id}`} size="sm" variant="secondary" className="min-w-11 px-3">
+                    <Pencil className="h-4 w-4" />
+                    <span className="max-[399px]:sr-only sm:sr-only">Изменить</span>
+                  </ButtonLink>
+                  {!s.is_published && (
+                    <Button size="sm" variant="danger" onClick={() => remove(s)} aria-label="Удалить" title="Удалить" disabled={busy === s.id} className="w-11 px-0">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </span>
               </div>
             </div>
           ))}

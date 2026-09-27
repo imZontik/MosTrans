@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bot, Send } from 'lucide-react'
+import { Bot, Send, Sparkles } from 'lucide-react'
 import { api } from '@/api/client'
 import type { AssistantResponse, AssistantTable } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
@@ -66,10 +66,10 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-11rem)] flex-col lg:min-h-[calc(100vh-4rem)]">
+    <div className="flex min-h-[calc(100dvh-172px-env(safe-area-inset-bottom))] flex-col lg:min-h-[calc(100vh-4rem)]">
       <div className="mb-4 flex items-center gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">ИИ-ассистент</h1>
+          <h1 className="text-2xl font-semibold tracking-[-0.005em] lg:text-[40px] lg:leading-[1.05]">ИИ-ассистент</h1>
           <p className="mt-1 text-muted">Спросите о команде обычными словами. Ответ строится по текущим данным.</p>
         </div>
       </div>
@@ -82,16 +82,33 @@ export default function AssistantPage() {
               <p className="text-base font-semibold">Задайте вопрос о команде</p>
               <p className="mt-1 max-w-md text-muted">
                 Ассистент видит уровни, шкалы безопасности и лояльности, активность и частые ошибки всех сотрудников. Начните с
-                готового вопроса внизу.
+                готового вопроса.
               </p>
             </div>
           </div>
+        )}
+        {messages.length === 0 && (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {SUGGESTIONS.map((q) => (
+              <li key={q}>
+                <button
+                  type="button"
+                  onClick={() => ask(q)}
+                  disabled={busy}
+                  className="card lift flex min-h-[56px] w-full items-center gap-3 px-4 py-3 text-left text-[15px] leading-snug disabled:opacity-50"
+                >
+                  <Sparkles className="h-4 w-4 shrink-0 text-brand" aria-hidden />
+                  <span className="flex-1">{q}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
 
         {messages.map((m) =>
           m.role === 'user' ? (
             <div key={m.id} className="flex justify-end gap-2">
-              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-ink px-4 py-3 text-[15px] text-inverse shadow-card">{m.text}</div>
+              <div className="max-w-[85%] rounded-[20px] rounded-br-md bg-brand-soft px-4 py-3 text-[15px] text-ink ring-1 ring-inset ring-brand/20">{m.text}</div>
               {user && <Avatar name={user.full_name} size="sm" />}
             </div>
           ) : (
@@ -99,7 +116,7 @@ export default function AssistantPage() {
               <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink text-inverse" aria-hidden>
                 <Bot className="h-4 w-4" />
               </div>
-              <div className={cn('min-w-0 max-w-full flex-1 rounded-2xl rounded-bl-md border bg-surface p-4 sm:max-w-[90%]', m.error ? 'border-bad/30' : 'border-line')}>
+              <div className={cn('min-w-0 max-w-full flex-1 rounded-[20px] rounded-bl-md border bg-surface p-4 shadow-card sm:max-w-[90%] dark:bg-surface-2', m.error ? 'border-bad/30' : 'border-line/80')}>
                 <p className={cn('whitespace-pre-wrap text-[15px] leading-relaxed', m.error && 'text-bad')}>{m.text}</p>
                 {m.data?.table && m.data.table.rows.length > 0 && <ResultTable table={m.data.table} />}
                 {m.data && (
@@ -128,8 +145,9 @@ export default function AssistantPage() {
         <div ref={bottom} />
       </div>
 
-      <div className="sticky bottom-0 -mx-4 mt-6 bg-bg/85 px-4 pb-4 pt-3 backdrop-blur-xl sm:mx-0 sm:px-0">
-        <div className="scrollbar-none mb-2 flex gap-2 overflow-x-auto">
+      <div className="sticky bottom-[calc(58px+env(safe-area-inset-bottom))] -mx-4 mt-6 bg-bg/85 px-4 pb-3 pt-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:bottom-0 lg:mx-0 lg:px-0 lg:pb-4">
+        {messages.length > 0 && (
+        <div className="scrollbar-none -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 [mask-image:linear-gradient(90deg,black_calc(100%-32px),transparent)] sm:mx-0 sm:px-0">
           {SUGGESTIONS.map((s) => (
             <button
               key={s}
@@ -141,15 +159,16 @@ export default function AssistantPage() {
             </button>
           ))}
         </div>
+        )}
         <form onSubmit={submit} className="flex gap-2">
           <input
-            className="input"
-            placeholder="Например: у кого низкая лояльность пассажиров?"
+            className="input h-12 rounded-2xl"
+            placeholder="Спросите о команде"
             value={input}
             maxLength={1000}
             onChange={(e) => setInput(e.target.value)}
           />
-          <Button type="submit" disabled={input.trim().length < 2} loading={busy} className="shrink-0 px-4">
+          <Button type="submit" disabled={input.trim().length < 2} loading={busy} className="h-12 w-12 shrink-0 rounded-2xl px-0" aria-label="Спросить">
             {!busy && <Send className="h-4 w-4" />}
           </Button>
         </form>

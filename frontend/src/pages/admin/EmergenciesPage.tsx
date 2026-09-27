@@ -80,18 +80,26 @@ export default function EmergenciesPage() {
     <div className="space-y-6">
       <PageHeader title="Специвенты" subtitle="Внезапные экстренные ситуации посреди рабочего дня" />
 
-      <section className="border-l-2 border-brand pl-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-          <Mascot className="h-16 w-16 shrink-0" mood="alarm" />
-          <div>
-            <h2 className="text-lg font-semibold">Как это работает</h2>
-            <p className="mt-1 max-w-2xl text-muted">
+      {/* the gist in one card; the details open on demand instead of filling a phone's first screen */}
+      <section className="card flex items-start gap-3.5 p-4 sm:p-5">
+        <Mascot className="h-14 w-14 shrink-0" mood="alarm" />
+        <div className="min-w-0">
+          <h2 className="font-semibold">Как это работает</h2>
+          <p className="mt-0.5 text-sm text-muted">Тревога на весь экран, голосовое сообщение и решение под таймером. Результаты — в аналитике.</p>
+          <details className="group mt-1.5 text-sm">
+            <summary className="inline-flex min-h-[40px] cursor-pointer list-none items-center gap-1 font-medium text-ink/80 hover:text-ink [&::-webkit-details-marker]:hidden">
+              Подробнее
+              <span className="transition-transform group-open:rotate-180" aria-hidden>
+                ▾
+              </span>
+            </summary>
+            <p className="max-w-2xl text-muted">
               У сотрудника посреди рабочего дня срабатывает тревога: на весь экран — сирена и заранее записанное голосовое
               сообщение (например, от коллеги из другого вагона). Нужно быстро принять решение под таймером. На уровне
-              <b> Hard</b> голосовое приходит на английском — от иностранного пассажира. Результаты попадают в аналитику
-              как «Специвенты».
+              <b> Hard</b> голосовое приходит на английском — от иностранного пассажира. Результаты попадают в аналитику как
+              «Специвенты».
             </p>
-          </div>
+          </details>
         </div>
       </section>
 

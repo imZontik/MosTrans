@@ -91,8 +91,8 @@ export default function EmployeesPage() {
         <ErrorState message={list.error} onRetry={list.reload} />
       ) : (
         <>
-        {/* phones: cards with what matters, sorted by a picker; the full table from md */}
-        <div className="md:hidden">
+        {/* phones and tablets: cards with what matters, sorted by a picker; the full table from lg */}
+        <div className="lg:hidden">
           <label className="mb-3 flex items-center gap-2 text-sm text-muted">
             Сортировка
             <select
@@ -148,7 +148,7 @@ export default function EmployeesPage() {
             </ul>
           )}
         </div>
-        <Card className="hidden overflow-hidden md:block">
+        <Card className="hidden overflow-hidden lg:block">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px] text-sm">
               <thead className="bg-ink/[.03]">
