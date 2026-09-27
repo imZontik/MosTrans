@@ -906,6 +906,147 @@
   animation: advance-fill 1.8s linear both;
 }
 
+
+/*
+ * «Задание дня»: a ticket with a tear-off stub, the conductor's stamp that lands on it when the task
+ * is done, the week pass whose days get punched, and the metal tokens the series earns.
+ */
+.daily-notch {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: rgb(var(--bg));
+  box-shadow: inset 0 0 0 1px rgb(var(--line) / 0.7);
+}
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-14deg) scale(1.9);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(-14deg) scale(0.92);
+  }
+  75% {
+    transform: rotate(-14deg) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-14deg) scale(1);
+  }
+}
+.stamp {
+  transform: rotate(-14deg);
+}
+.stamp-in {
+  animation: stamp-in 0.55s cubic-bezier(0.3, 0.9, 0.3, 1) 0.15s both;
+}
+@keyframes stamp-thud {
+  0%,
+  30% {
+    transform: none;
+  }
+  45% {
+    transform: translateY(2px) scale(0.995);
+  }
+  70% {
+    transform: none;
+  }
+}
+.stamp-thud {
+  animation: stamp-thud 0.7s ease-out 0.15s both;
+}
+@keyframes punch {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.punch {
+  animation: punch 0.45s cubic-bezier(0.3, 0.9, 0.3, 1) both;
+}
+@keyframes today-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--brand) / 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(var(--brand) / 0);
+  }
+}
+.today-pulse {
+  animation: today-pulse 2.2s ease-in-out infinite;
+}
+@keyframes flame {
+  0%,
+  100% {
+    transform: scale(1) rotate(-2deg);
+  }
+  50% {
+    transform: scale(1.08) rotate(2deg);
+  }
+}
+.flame {
+  transform-origin: 50% 90%;
+  animation: flame 1.6s ease-in-out infinite;
+}
+.token-bronze {
+  background: radial-gradient(circle at 32% 28%, #f3c89a, #c98a4b 45%, #8a5528);
+}
+.token-silver {
+  background: radial-gradient(circle at 32% 28%, #ffffff, #c9d0d9 45%, #8791a0);
+}
+.token-gold {
+  background: radial-gradient(circle at 32% 28%, #fff1b8, #e5b53a 45%, #a87812);
+}
+.token-platinum {
+  background: radial-gradient(circle at 32% 28%, #f2fbff, #a9c7da 45%, #5f8298);
+}
+.token-shine {
+  position: relative;
+  overflow: hidden;
+}
+.token-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.65) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: token-shine 4.5s ease-in-out infinite;
+}
+@keyframes token-shine {
+  0%,
+  60% {
+    transform: translateX(-120%);
+  }
+  85%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.reveal-in {
+  animation: reveal-in 0.35s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -946,7 +1087,14 @@
   .podium-rise,
   .podium-drop,
   .trophy-shine,
-  .points-pop {
+  .points-pop,
+  .stamp-in,
+  .stamp-thud,
+  .punch,
+  .today-pulse,
+  .flame,
+  .token-shine::after,
+  .reveal-in {
     animation: none !important;
   }
   .twinkle {

@@ -133,7 +133,7 @@ export default function PlayPage() {
     setRestarting(true)
     try {
       const next = await api.startRun(run.scenario.id, true)
-      navigate(`/play/${next.id}`, { replace: true })
+      navigate(`/play/${next.id}`, { replace: true, state: location.state })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Не удалось перезапустить')
     } finally {
