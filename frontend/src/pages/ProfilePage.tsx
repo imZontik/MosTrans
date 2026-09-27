@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, Award, ChevronRight, Compass, Eye, GraduationCap, History, Target } from 'lucide-react'
+import { ArrowRight, Award, ChevronRight, CircleHelp, Compass, Eye, GraduationCap, History, Target } from 'lucide-react'
 import { api } from '@/api/client'
 import type { AchievementCatalogItem, Competency, LevelInfo, Me, NameDisplay, PublicProfile, Qualification } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
@@ -18,6 +18,7 @@ import { Disclosure } from '@/components/Disclosure'
 import { RunHistory } from '@/components/RunHistory'
 import { Segmented } from '@/components/Segmented'
 import { ThemeSwitch } from '@/components/ThemeToggle'
+import { openTour } from '@/components/onboarding/Tours'
 import { ErrorState } from '@/components/States'
 import { BadgesSkeleton, ProfileSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/cn'
@@ -92,6 +93,9 @@ export default function ProfilePage() {
                 <p className="mt-0.5 text-muted">«Системная» повторяет настройку телефона</p>
               </div>
               <ThemeSwitch labels />
+              <Button variant="secondary" block onClick={() => openTour('employee')} icon={<CircleHelp className="h-4 w-4" aria-hidden />}>
+                Как устроено приложение
+              </Button>
               <Button variant="secondary" block onClick={logout}>
                 Выйти из аккаунта
               </Button>
