@@ -104,7 +104,7 @@ esac
 
 # pgAdmin: the login password equals .env, and it knows the database password itself (a pgpass file in
 # its storage, taken from POSTGRES_PASSWORD), so nobody has to look it up on the server
-pgadmin_cli() { $COMPOSE exec -T -w /pgadmin4 pgadmin /venv/bin/python3 setup.py "$@" 2>&1; }
+pgadmin_cli() { $COMPOSE exec -T -w /pgadmin4 -e PYTHONWARNINGS=ignore pgadmin /venv/bin/python3 setup.py "$@" 2>&1; }
 sync_pgadmin() {
   local email out storage
   email=$(env_value PGADMIN_EMAIL)
@@ -117,7 +117,7 @@ sync_pgadmin() {
   if echo "$out" | grep -qF "$email"; then
     echo "pgAdmin password matches .env ($email)"
   else
-    echo "pgAdmin password not synced: $(echo "$out" | tail -2 | tr '\n' ' ')"
+    echo "pgAdmin password not synced: $(echo "$out" | tail -4 | tr '\n' ' ')"
   fi
   # pgAdmin looks for the PassFile of servers.json in the user's storage: <storage>/<email with @ → _>
   storage="/var/lib/pgadmin/storage/$(echo "$email" | sed 's#@#_#g; s#/#slash#g')"
@@ -131,10 +131,14 @@ sync_pgadmin() {
   printf 'postgres:5432:*:*:%s\n' "$db_password" \
     | $COMPOSE exec -T pgadmin sh -c "mkdir -p '$storage' && umask 077 && cat > '$storage/pgpass'"
   # Servers loaded before the PassFile existed get it once; later deploys leave the server list alone
-  if ! $COMPOSE exec -T pgadmin test -f /var/lib/pgadmin/.servers-passfile; then
+  if ! $COMPOSE exec -T pgadmin test -f /var/lib/pgadmin/.servers-passfile-v2; then
     out=$(pgadmin_cli load-servers /pgadmin4/servers.json --user "$email" --replace || true)
-    echo "pgAdmin servers reloaded: $(echo "$out" | tail -1)"
-    $COMPOSE exec -T pgadmin touch /var/lib/pgadmin/.servers-passfile
+    if echo "$out" | grep -q "Added"; then
+      echo "pgAdmin servers reloaded with the PassFile"
+      $COMPOSE exec -T pgadmin touch /var/lib/pgadmin/.servers-passfile-v2
+    else
+      echo "pgAdmin servers not reloaded: $(echo "$out" | tail -4 | tr '\n' ' ')"
+    fi
   fi
 }
 
