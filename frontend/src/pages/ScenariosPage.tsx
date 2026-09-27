@@ -298,7 +298,9 @@ function ScenarioCard({ s, index, loading, onStart }: { s: CatalogItem; index: n
                 type="button"
                 disabled={locked || loading}
                 onClick={() => onStart(false)}
-                className={cn('text-left after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ink/40', locked ? 'cursor-not-allowed' : 'press')}
+                // no `press` here: a transform on :active would make this button the containing block of
+                // its ::after, shrinking the card-wide hit area mid-tap so the click gets lost
+                className={cn('text-left after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ink/40', locked && 'cursor-not-allowed')}
               >
                 {s.title}
                 <span className="sr-only">{locked ? ', закрыт' : `: ${st.action.toLowerCase()}`}</span>
@@ -317,7 +319,6 @@ function ScenarioCard({ s, index, loading, onStart }: { s: CatalogItem; index: n
           </p>
         </div>
       </div>
-      <p className={cn('line-clamp-2 px-4 pt-3 text-sm leading-relaxed sm:px-5', locked ? 'text-muted/80' : 'text-muted')}>{s.description}</p>
 
       <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pb-4 pt-4 text-sm text-muted min-[400px]:gap-x-4 sm:px-5">
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap">

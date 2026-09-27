@@ -1,6 +1,6 @@
-import { useEffect, useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, Award, ChevronRight, Compass, GraduationCap, History, Target } from 'lucide-react'
+import { ArrowRight, Award, ChevronDown, ChevronRight, Compass, GraduationCap, History, Target } from 'lucide-react'
 import { api } from '@/api/client'
 import type { AchievementCatalogItem, Competency, LevelInfo, Me, PublicProfile, Qualification } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
@@ -24,6 +24,7 @@ import { routePosition, STATIONS, stationFor } from '@/lib/route'
 
 // the showcase: this many of your best badges; the whole collection is on its own page
 const SHOWCASE = 4
+const TRIPS: [string, string, string] = ['рейс', 'рейса', 'рейсов']
 
 /**
  * Profile: who and where on the route, four numbers, and then only what helps next: the promotion,
@@ -294,17 +295,57 @@ function Showcase({ items, loading, total, to }: { items: AchievementCatalogItem
 
 // --- recent runs -----------------------------------------------------------------
 
+/**
+ * Your runs, folded by default: the header says how many and how they went, and opens the whole
+ * list right here (no separate page). A run opens its debrief.
+ */
 function RecentRuns({ runs, loading }: { runs: Parameters<typeof RunHistory>[0]['items']; loading: boolean }) {
+  const [open, setOpen] = useState(false)
+  const success = runs.filter((r) => r.outcome === 'success').length
   return (
-    <section className="card p-5 sm:p-6" aria-labelledby="recent">
-      <div className="mb-1 flex items-center justify-between gap-3">
-        <h2 id="recent" className="flex items-center gap-2.5 text-lg font-semibold">
-          <IconPlate icon={History} tint="bg-ink/[.06]" tone="text-ink" />
-          Последние рейсы
-        </h2>
-        {runs.length > 0 && <AllLink to="/profile/history">Вся история</AllLink>}
+    <section className="card overflow-hidden" aria-labelledby="recent">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={loading || !runs.length}
+        aria-expanded={open}
+        aria-controls="recent-list"
+        className="flex w-full items-center gap-3 p-5 text-left transition-colors hover:bg-ink/[.02] disabled:cursor-default sm:p-6"
+      >
+        <IconPlate icon={History} tint="bg-ink/[.06]" tone="text-ink" />
+        <span className="min-w-0 flex-1">
+          <span id="recent" className="block text-lg font-semibold leading-tight">
+            История рейсов
+          </span>
+          <span className="block text-sm text-muted">
+            {loading
+              ? 'Загружаем'
+              : runs.length
+                ? `${runs.length} ${plural(runs.length, TRIPS)} · ${success} успешных`
+                : 'Завершённых рейсов пока нет'}
+          </span>
+        </span>
+        {runs.length > 0 && (
+          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-muted">
+            <span className="hidden min-[400px]:inline">{open ? 'Свернуть' : 'Показать'}</span>
+            <ChevronDown className={cn('h-5 w-5 transition-transform duration-300', open && 'rotate-180')} aria-hidden />
+          </span>
+        )}
+      </button>
+      {/* 0fr → 1fr: the list unfolds to its own height; hidden from focus while folded */}
+      <div
+        id="recent-list"
+        className={cn(
+          'grid transition-[grid-template-rows,visibility] duration-300 ease-[cubic-bezier(.3,.8,.3,1)]',
+          open ? 'visible grid-rows-[1fr]' : 'invisible grid-rows-[0fr]',
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="border-t border-line/70 px-5 pb-2 sm:px-6">
+            <RunHistory items={runs} linked />
+          </div>
+        </div>
       </div>
-      {loading ? <Loading rows={2} /> : <RunHistory items={runs} limit={3} linked />}
     </section>
   )
 }

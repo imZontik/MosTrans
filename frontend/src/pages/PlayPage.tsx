@@ -338,7 +338,6 @@ function RunIntro({ run }: { run: RunView }) {
           <c.icon className="h-3.5 w-3.5" aria-hidden />
           {s.category_title}
         </p>
-        {s.description && <p className="mt-1 text-sm leading-relaxed text-muted">{s.description}</p>}
         <p className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs text-muted">
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" aria-hidden />
@@ -383,7 +382,6 @@ function RunSide({ run }: { run: RunView }) {
           <c.icon className="h-3.5 w-3.5" aria-hidden />
           {s.category_title}
         </p>
-        {s.description && <p className="mt-3 text-sm leading-relaxed text-muted">{s.description}</p>}
         <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line/70 pt-3 text-sm text-muted">
           <span className="inline-flex items-center gap-1.5">
             <Clock className="h-4 w-4" aria-hidden />

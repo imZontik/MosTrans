@@ -49,11 +49,9 @@ export function EndScreen({
   const meta = OUTCOME_META[outcome]
   const backLabel = backTo.startsWith('/admin')
     ? 'К редактору сценария'
-    : backTo === '/profile/history'
-      ? 'К истории рейсов'
-      : backTo === '/profile'
-        ? 'В профиль'
-        : 'К расписанию'
+    : backTo === '/profile'
+      ? 'В профиль'
+      : 'К расписанию'
 
   const actions = (
     <div className="flex flex-col gap-2 sm:flex-row">
