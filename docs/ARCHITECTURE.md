@@ -55,3 +55,133 @@ backend/app/
 ## Метрики (Prometheus)
 
 `m400_runs_started_total`, `m400_runs_finished_total{outcome}`, `m400_decisions_total{quality,timed_out}`, `m400_decision_seconds`, `m400_points_awarded_total`, `m400_achievements_unlocked_total`, `m400_tournament_answers_total`, `m400_emergencies_total{source}`, `m400_ml_calls_total`, `m400_ml_grades_total{provider,verdict}` плюс стандартные HTTP-метрики.
+
+---
+
+## Диаграммы последовательности
+
+### 1. Прохождение сценария (основной цикл)
+
+```mermaid
+sequenceDiagram
+    participant U as Проводник (frontend)
+    participant API as Backend (FastAPI)
+    participant E as Движок (engine.py)
+    participant ML as ML-сервис
+    participant PG as PostgreSQL
+    participant V as Valkey
+
+    U->>API: POST /runs {scenario_id}
+    API->>PG: создать Run (loyalty, safety из initial)
+    API-->>U: первый узел графа + timer/deadline
+
+    loop пока узел не end
+        U->>API: POST /runs/{id}/answer {node_id, action}
+        API->>E: apply_answer(node, action, elapsed)
+        alt action = answer (свободный текст)
+            API->>ML: POST /v1/grade (рубрика, идеал, ответ)
+            ML-->>API: score 0..10
+        end
+        E-->>API: next node, effects, points, quality, feedback
+        alt таймаут
+            E-->>API: ветка timeout (quality=bad, штраф)
+        end
+        API->>PG: сохранить decisions, обновить loyalty/safety
+        API-->>U: следующий узел / итог
+    end
+
+    API->>E: auto_outcome(decisions) → success|partial|fail
+    API->>PG: начислить points (economy.run_reward)
+    API->>E: evaluate() → новые достижения
+    API->>PG: grant achievements
+    API->>V: invalidate leaderboard cache
+    API-->>U: summary + debrief + reward + level_up
+```
+
+### 2. Таймер и таймаут (сервер — источник времени)
+
+```mermaid
+sequenceDiagram
+    participant U as Проводник
+    participant API as Backend
+    participant E as Движок
+
+    API->>U: узел choice {timer: 20, deadline}
+    U->>API: answer {action: "choose"} (в срок)
+    API->>E: elapsed > timer + grace?
+    alt ответ вовремя
+        E-->>API: применить выбранный вариант
+    else ответ после deadline
+        API->>E: action = "timeout" (сервер)
+        E-->>API: ветка timeout, quality=bad, штраф
+    end
+    API-->>U: следующий узел + последствия
+```
+
+### 3. Еженедельный турнир
+
+```mermaid
+sequenceDiagram
+    participant S as Scheduler (async task)
+    participant API as Backend
+    participant PG as PostgreSQL
+    participant V as Valkey (sorted set)
+    participant U as Проводник
+
+    loop каждые N секунд (lock в Valkey)
+        S->>PG: создать/финализировать турниры недели
+    end
+
+    U->>API: GET /tournaments/current
+    API->>V: live-лидерборд (TournamentBoard)
+    API-->>U: вопрос + countdown
+
+    U->>API: POST /tournaments/{id}/answer {index, option}
+    API->>V: ZADD (очки, время)
+    API-->>U: новый вопрос
+
+    U->>API: GET /tournaments/{id}/leaderboard
+    API->>V: топ-N
+    API-->>U: место, отрыв
+```
+
+### 4. Специвент (экстренное событие)
+
+```mermaid
+sequenceDiagram
+    participant Admin as Руководитель
+    participant API as Backend
+    participant V as Valkey (очередь)
+    participant U as Проводник
+
+    Admin->>API: POST /admin/emergencies/dispatch {scenario_id, user_ids}
+    API->>V: RPUSH emergency:pending:{user_id}
+    API-->>Admin: 200
+
+    loop каждые 20 сек (polling)
+        U->>API: GET /emergencies/pending
+        API->>V: LRANGE/BPOP
+        alt есть событие
+            API-->>U: голосовое + текст специвента
+            U->>U: полноэкранный оверлей «Принять вызов»
+        else нет события
+            API-->>U: null
+        end
+    end
+```
+
+### 5. Отчёт для HR (интеграция)
+
+```mermaid
+sequenceDiagram
+    participant HR as HR-система / LMS
+    participant API as Backend
+    participant PG as PostgreSQL
+
+    HR->>API: GET /admin/reports/training?days=30 (JWT staff)
+    API->>PG: аналитика (overview, employees, top_mistakes)
+    API-->>HR: JSON-отчёт
+    HR->>API: GET /admin/reports/training.xlsx?days=30
+    API->>PG: аналитика
+    API-->>HR: Excel-файл (сводка, сотрудники, компетенции, ошибки)
+```

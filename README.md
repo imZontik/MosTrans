@@ -36,6 +36,11 @@
 
 Архитектура описана в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), экономика очков — в [docs/ECONOMY.md](docs/ECONOMY.md).
 
+**Документация для сдачи:**
+* API — [docs/API.md](docs/API.md) (Swagger: `/api/docs`)
+* Пользовательские сценарии и примеры — [docs/USER_FLOW.md](docs/USER_FLOW.md)
+* Ограничения и план развития — [docs/ROADMAP.md](docs/ROADMAP.md)
+
 ## Запуск
 
 ```bash
