@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { api } from '@/api/client'
 import type { AppNotification, UnreadCounts } from '@/api/types'
 import { useAuth } from '@/auth/AuthContext'
+import { NotificationDialog } from '@/components/NotificationDialog'
 import { usePolling } from '@/hooks/usePolling'
 import { cn } from '@/lib/cn'
 import { PRIORITY_META } from '@/lib/notifications'
@@ -31,6 +32,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [unread, setUnread] = useState<UnreadCounts>(ZERO)
   const [version, setVersion] = useState(0)
   const [toast, setToast] = useState<AppNotification | null>(null)
+  // a toast opened in full
+  const [viewing, setViewing] = useState<AppNotification | null>(null)
+  const closeViewing = useCallback(() => setViewing(null), [])
   // newest unread id we have already seen; null until the first answer (no toast for what was there before)
   const seen = useRef<number | null>(null)
 
@@ -68,17 +72,26 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ unread, version, setUnread, refresh }}>
       {children}
-      {toast && !hideToast && <Toast item={toast} onClose={() => setToast(null)} onRead={(u) => setUnread(u)} />}
+      {toast && !hideToast && (
+        <Toast
+          item={toast}
+          onClose={() => setToast(null)}
+          onOpen={() => {
+            setViewing(toast)
+            setToast(null)
+          }}
+          onRead={(u) => setUnread(u)}
+        />
+      )}
+      <NotificationDialog item={viewing} onClose={closeViewing} />
     </Ctx.Provider>
   )
 }
 
-function Toast({ item, onClose, onRead }: { item: AppNotification; onClose: () => void; onRead: (u: UnreadCounts) => void }) {
-  const navigate = useNavigate()
+function Toast({ item, onClose, onOpen, onRead }: { item: AppNotification; onClose: () => void; onOpen: () => void; onRead: (u: UnreadCounts) => void }) {
   const meta = PRIORITY_META[item.priority]
   const open = async () => {
-    onClose()
-    navigate(item.link ?? '/notifications')
+    onOpen()
     try {
       onRead((await api.readNotification(item.id)).unread)
     } catch {
@@ -92,7 +105,7 @@ function Toast({ item, onClose, onRead }: { item: AppNotification; onClose: () =
       className="toast-in fixed inset-x-3 bottom-[calc(74px+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md lg:inset-x-auto lg:bottom-6 lg:right-6"
     >
       <div className="card flex items-start gap-3 p-3.5 pr-2 shadow-lift">
-        <button type="button" onClick={open} className="flex min-w-0 flex-1 items-start gap-3 text-left">
+        <button type="button" onClick={open} aria-haspopup="dialog" className="flex min-w-0 flex-1 items-start gap-3 text-left">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink/[.05] text-xl" aria-hidden>
             {item.icon}
           </span>

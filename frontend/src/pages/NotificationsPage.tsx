@@ -1,10 +1,11 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { CheckCheck, ChevronRight } from 'lucide-react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { CheckCheck } from 'lucide-react'
 import { api } from '@/api/client'
 import type { AppNotification, NotificationPriority } from '@/api/types'
 import { Button } from '@/components/Button'
 import { PageHeader } from '@/components/Card'
+import { NotificationDialog } from '@/components/NotificationDialog'
 import { Segmented } from '@/components/Segmented'
 import { EmptyState, ErrorState, Loading } from '@/components/States'
 import { cn } from '@/lib/cn'
@@ -14,7 +15,6 @@ import { useNotifications } from '@/notifications/NotificationsContext'
 type Show = 'all' | 'unread'
 
 export default function NotificationsPage() {
-  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const show: Show = params.get('show') === 'unread' ? 'unread' : 'all'
   const tagParam = params.get('tag')
@@ -26,6 +26,8 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [marking, setMarking] = useState(false)
+  const [viewing, setViewing] = useState<AppNotification | null>(null)
+  const closeViewing = useCallback(() => setViewing(null), [])
 
   const setFilter = (key: 'show' | 'tag', value: string | null) => {
     const p = new URLSearchParams(params)
@@ -54,12 +56,12 @@ export default function NotificationsPage() {
     load()
   }, [show, tag, version]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const open = async (n: AppNotification) => {
+  const open = (n: AppNotification) => {
     if (!n.read) {
       setItems((prev) => prev?.map((x) => (x.id === n.id ? { ...x, read: true } : x)) ?? null)
       api.readNotification(n.id).then((r) => setUnread(r.unread), () => {})
     }
-    if (n.link) navigate(n.link)
+    setViewing({ ...n, read: true })
   }
 
   const readAll = async () => {
@@ -153,6 +155,8 @@ export default function NotificationsPage() {
           </Button>
         </div>
       )}
+
+      <NotificationDialog item={viewing} onClose={closeViewing} />
     </div>
   )
 }
@@ -176,6 +180,7 @@ function Item({ n, onOpen }: { n: AppNotification; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
+      aria-haspopup="dialog"
       className={cn(
         'relative flex w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-ink/[.03] sm:px-5',
         !n.read && 'bg-brand-soft/25 dark:bg-white/[.03]',
@@ -196,9 +201,8 @@ function Item({ n, onOpen }: { n: AppNotification; onOpen: () => void }) {
           {!n.read && <span className="sr-only">, не прочитано</span>}
         </span>
         <span className={cn('mt-1 block leading-snug', n.read ? 'font-medium text-ink/85' : 'font-semibold text-ink')}>{n.title}</span>
-        {n.body && <span className="mt-1 block whitespace-pre-line text-sm leading-relaxed text-muted">{n.body}</span>}
+        {n.body && <span className="mt-1 line-clamp-2 block text-sm leading-relaxed text-muted">{n.body}</span>}
       </span>
-      {n.link && <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-muted" aria-hidden />}
     </button>
   )
 }
