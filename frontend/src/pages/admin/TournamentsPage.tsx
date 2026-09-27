@@ -7,6 +7,8 @@ import { Badge, type Tone } from '@/components/Badge'
 import { Button } from '@/components/Button'
 import { Card, PageHeader, SectionTitle } from '@/components/Card'
 import { ErrorState, Loading } from '@/components/States'
+import { MedalDisc } from '@/components/Podium'
+import { cn } from '@/lib/cn'
 import { fmtDate } from '@/lib/format'
 import { pluralN, PEOPLE, QUESTIONS } from '@/lib/plural'
 
@@ -107,7 +109,7 @@ export default function AdminTournamentsPage() {
           // the duration control drops under the title on 320px phones
           className="flex-wrap"
           action={
-            <label className="flex items-center gap-2 text-sm text-muted">
+            <label className="flex items-center gap-2 whitespace-normal text-sm text-muted">
               «Запустить сейчас» на
               <input
                 type="number"
@@ -130,30 +132,45 @@ export default function AdminTournamentsPage() {
         ) : (
           <Card className="divide-y divide-line">
             {(list.data ?? []).map((t) => (
-              <div key={t.id} className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-bg">
-                    <Trophy className="h-5 w-5 text-ink" />
+              <div key={t.id} className="flex flex-col gap-3 p-4 sm:p-5 md:flex-row md:items-start md:gap-5">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <span
+                    className={cn(
+                      'grid h-11 w-11 shrink-0 place-items-center rounded-xl ring-1 ring-inset',
+                      t.status === 'live' ? 'bg-brand-soft text-brand ring-brand/25' : 'bg-rarity-legendary-soft text-rarity-legendary-ink ring-rarity-legendary/20',
+                    )}
+                    aria-hidden
+                  >
+                    <Trophy className="h-5 w-5" />
                   </span>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate font-semibold">{t.title}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold leading-snug">{t.title}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       <Badge tone={STATUS[t.status].tone}>{STATUS[t.status].label}</Badge>
                       {t.finalized && <Badge tone="ok">Итоги подведены</Badge>}
                     </div>
-                    <p className="text-xs text-muted">
-                      С {fmtDate(t.starts_at, true)} до {fmtDate(t.ends_at, true)}. {pluralN(t.questions_total, QUESTIONS)},{' '}
-                      {pluralN(t.participants, PEOPLE)}
+                    <p className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+                      <span>
+                        {fmtDate(t.starts_at, true)} — {fmtDate(t.ends_at, true)}
+                      </span>
+                      <span>{pluralN(t.questions_total, QUESTIONS)}</span>
+                      <span>{pluralN(t.participants, PEOPLE)}</span>
                     </p>
                     {t.winners.length > 0 && (
-                      <p className="mt-1 text-xs">
-                        {t.winners.map((w, i) => `${['🥇', '🥈', '🥉'][i]} ${w.full_name} (${w.score})`).join('   ')}
-                      </p>
+                      <ol className="mt-3 grid gap-1.5 sm:grid-cols-3 sm:gap-2" aria-label="Призёры">
+                        {t.winners.map((w, i) => (
+                          <li key={w.id} className="flex min-w-0 items-center gap-2 rounded-xl bg-ink/[.035] px-2.5 py-1.5 text-sm ring-1 ring-inset ring-line/60">
+                            <MedalDisc place={i + 1} className="h-5 w-5 text-xs" />
+                            <span className="min-w-0 flex-1 truncate">{w.full_name}</span>
+                            <span className="digits shrink-0 font-semibold">{w.score}</span>
+                          </li>
+                        ))}
+                      </ol>
                     )}
                   </div>
                 </div>
                 {!t.finalized && (
-                  <div className="flex shrink-0 gap-2">
+                  <div className="grid shrink-0 gap-2 min-[400px]:grid-cols-2 md:flex md:flex-col">
                     {t.status !== 'live' && (
                       <Button size="sm" variant="secondary" loading={busy === `start-${t.id}`} onClick={() => startNow(t)} icon={<Play className="h-4 w-4" />}>
                         Запустить сейчас

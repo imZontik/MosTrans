@@ -152,7 +152,7 @@ export default function ScenarioEditorPage() {
           </div>
         </div>
         {/* phones: an action bar pinned to the bottom, so «Сохранить» is always under the thumb */}
-        <div className="flex flex-wrap gap-2 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-30 max-md:flex-nowrap max-md:border-t max-md:border-line/70 max-md:bg-surface/90 max-md:px-4 max-md:pb-[calc(12px+env(safe-area-inset-bottom))] max-md:pt-3 max-md:shadow-dock max-md:backdrop-blur-xl">
+        <div className="flex flex-wrap gap-2 max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(58px+env(safe-area-inset-bottom))] max-md:z-30 max-md:flex-nowrap max-md:border-t max-md:border-line/70 max-md:bg-surface/90 max-md:px-4 max-md:pb-3 max-md:pt-3 max-md:shadow-dock max-md:backdrop-blur-xl">
           <Button variant="secondary" onClick={validate} loading={busy === 'validate'} icon={<ShieldCheck className="h-4 w-4" />} aria-label="Проверить граф" className="max-sm:px-3.5">
             <span className="max-sm:sr-only">Проверить</span>
           </Button>
